@@ -13,7 +13,7 @@
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Target Image</h2>
           <div class="bg-gray-800 rounded-lg p-4">
-            Image Uploader
+            <ImageUploader @image-uploaded="setTargetImage" />
           </div>
         </div>
 
@@ -24,7 +24,7 @@
             <canvas ref="canvas" width="200" height="200" class="w-full rounded-lg bg-white"/>
             <div class="mt-4 flex items-center justify-between">
               <div class="text-sm text-gray-400">
-                Generation: 33 | Fitness: 0.74
+                Generation: {{generation}} | Fitness: 0.74
               </div>
               <div class="flex gap-2">
                 <UButton :disabled="isEvolving" color="success" @click="startEvolution">
@@ -63,7 +63,9 @@
 
 <script setup lang="ts">
 const canvas = ref<HTMLCanvasElement | null>(null)
+const targetImage = ref('')
 const isEvolving = ref(false)
+const generation = ref(0)
 
 const evolutionParams = reactive<Params>({
   populationSize: 200,
@@ -71,7 +73,16 @@ const evolutionParams = reactive<Params>({
   shapesPerIndividual: 150
 })
 
+const setTargetImage = async (imageData: string) => {
+  targetImage.value = imageData
+}
+
 const startEvolution = async () => {
+  if (!targetImage.value) {
+    alert('Please upload a target image first!')
+    return
+  }
+
   isEvolving.value = true
 }
 
