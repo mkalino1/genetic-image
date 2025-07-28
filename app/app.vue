@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-const canvas = ref<HTMLCanvasElement | null>(null)
+const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const targetImage = ref('')
 const isEvolving = ref(false)
 const generation = ref(0)
