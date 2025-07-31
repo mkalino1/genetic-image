@@ -63,8 +63,11 @@
 
 <script setup lang="ts">
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
-const targetImage = ref('')
 const isEvolving = ref(false)
+
+const targetImage = ref('')
+const targetImageData = ref<ImageData | null>(null)
+
 const generation = ref(0)
 
 const evolutionParams = reactive<Params>({
@@ -75,6 +78,21 @@ const evolutionParams = reactive<Params>({
 
 const setTargetImage = async (imageData: string) => {
   targetImage.value = imageData
+
+  // Initialize offscreen target canvas
+  const img = new window.Image()
+  img.src = targetImage.value
+  await new Promise<void>((resolve) => {
+    img.onload = () => {
+      const targetCanvas = document.createElement('canvas')
+      targetCanvas.width = 200
+      targetCanvas.height = 200
+      const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true })!
+      targetCtx.drawImage(img, 0, 0, 200, 200)
+      targetImageData.value = targetCtx.getImageData(0, 0, 200, 200)
+      resolve()
+    }
+  })
 }
 
 const startEvolution = async () => {
