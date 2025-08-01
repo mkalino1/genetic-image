@@ -1,75 +1,20 @@
-# Nuxt Minimal Starter
+# Genetic Image Evolution
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A web application that uses genetic algorithm to recreate target images using geometric shapes. Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation.
 
-## Setup
+:construction: Work in progress :construction:
 
-Make sure to install dependencies:
+## Features
 
-```bash
-# npm
-npm install
+- 🔄 **Real-time evolution** with live visual updates
+- ⚙️ **Configurable parameters** (population size, mutation rate, shapes per individual)
+- 🧬 **Hybrid fitness function** combining SSIM and Euclidean distance
+- 🔺 **Multiple shape types** (circles, rectangles, triangles)
+- 🎨 **Modern Vue.js interface** with Nuxt UI
 
-# pnpm
-pnpm install
+## Built with
 
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- Vue.js 3 + Nuxt 4 + TypeScript
+- HTML5 Canvas for rendering
+- Custom genetic algorithm implementation
+- SSIM and Euclidean distance for image comparison

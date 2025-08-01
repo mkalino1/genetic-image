@@ -24,7 +24,7 @@
             <canvas ref="canvas" width="200" height="200" class="w-full rounded-lg bg-white"/>
             <div class="mt-4 flex items-center justify-between">
               <div class="text-sm text-gray-400">
-                Generation: {{generation}} | Fitness: 0.74
+                Generation: {{ generation }} | Fitness: {{ bestFitness.toFixed(2) }}
               </div>
               <div class="flex gap-2">
                 <UButton :disabled="isEvolving" color="success" @click="startEvolution">
@@ -69,16 +69,43 @@ const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
 
 const generation = ref(0)
+const bestFitness = ref(0)
 
-const evolutionParams = reactive<Params>({
+const evolutionParams = reactive<EvolutionParams>({
   populationSize: 200,
   mutationRate: 0.08,
   shapesPerIndividual: 150
 })
 
+let geneticAlgorithm: GeneticAlgorithm | null = null
+let animationId: number | null = null
+
+const startEvolution = async () => {
+  if (!targetImage.value) {
+    alert('Please upload a target image first!')
+    return
+  }
+  isEvolving.value = true
+  geneticAlgorithm = new GeneticAlgorithm(canvas.value as HTMLCanvasElement, targetImageData.value!, evolutionParams)
+  evolve()
+}
+
+const stopEvolution = () => {
+  isEvolving.value = false
+  if (animationId !== null) {
+    cancelAnimationFrame(animationId)
+    animationId = null
+  }
+}
+
+const evolve = () => {
+  if (!isEvolving.value) return
+  if (geneticAlgorithm) geneticAlgorithm.evolve()
+  animationId = requestAnimationFrame(evolve)
+}
+
 const setTargetImage = async (imageData: string) => {
   targetImage.value = imageData
-
   // Initialize offscreen target canvas
   const img = new window.Image()
   img.src = targetImage.value
@@ -93,18 +120,5 @@ const setTargetImage = async (imageData: string) => {
       resolve()
     }
   })
-}
-
-const startEvolution = async () => {
-  if (!targetImage.value) {
-    alert('Please upload a target image first!')
-    return
-  }
-
-  isEvolving.value = true
-}
-
-const stopEvolution = () => {
-  isEvolving.value = false
 }
 </script>

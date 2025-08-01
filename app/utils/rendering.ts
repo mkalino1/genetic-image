@@ -1,9 +1,6 @@
 /**
  * Renders an individual (collection of shapes) to a canvas context.
  * 
- * This function takes an individual from the genetic algorithm population and renders
- * all its shapes to the provided canvas context.
- * 
  * @param individual - The individual to render, containing an array of shapes
  * @param ctx - The 2D canvas rendering context where the individual will be drawn
  */
