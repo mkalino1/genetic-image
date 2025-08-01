@@ -73,7 +73,7 @@ const bestFitness = ref(0)
 
 const evolutionParams = reactive<EvolutionParams>({
   populationSize: 200,
-  mutationRate: 0.08,
+  mutationRate: 0.12,
   shapesPerIndividual: 150
 })
 
