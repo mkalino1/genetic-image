@@ -22,6 +22,9 @@ export class GeneticAlgorithm {
   // State
   population: Individual[]
   bestFitness: number
+  generation: number
+  variance: number
+  adaptiveMutationRate: number
 
   constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: Partial<EvolutionParams> = {}) {
     this.displayCanvas = displayCanvas
@@ -44,6 +47,9 @@ export class GeneticAlgorithm {
     // State
     this.population = initializePopulation(this.populationSize, this.shapesPerIndividual)
     this.bestFitness = 0
+    this.generation = 0
+    this.variance = 0
+    this.adaptiveMutationRate = this.mutationRate
   }
 
   evolve(): void {
@@ -70,7 +76,7 @@ export class GeneticAlgorithm {
     this.ensureDiversity()
 
     // Calculate adaptive mutation rate based on population variance
-    const adaptiveMutationRate = this.calculateAdaptiveMutationRate()
+    this.adaptiveMutationRate = this.calculateAdaptiveMutationRate()
 
     // Create new population through crossover and mutation
     this.population = createNewGeneration(
@@ -78,7 +84,7 @@ export class GeneticAlgorithm {
       this.populationSize,
       this.eliteSize,
       this.shapesPerIndividual,
-      adaptiveMutationRate
+      this.adaptiveMutationRate
     )
     
     this.generation++

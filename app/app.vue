@@ -21,11 +21,15 @@
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Evolved Image</h2>
           <div class="bg-gray-800 rounded-lg p-4">
-            <canvas ref="canvas" width="200" height="200" class="w-full rounded-lg bg-white"/>
-            <div class="mt-4 flex items-center justify-between">
-              <div class="text-sm text-gray-400">
-                Generation: {{ generation }} | Fitness: {{ bestFitness.toFixed(2) }}
-              </div>
+            <canvas ref="canvas" width="200" height="200" class="w-full rounded-lg bg-white" />
+            <div class="mt-4 space-y-3">
+              <MetricsDisplay
+                :generation="generation"
+                :best-fitness="bestFitness"
+                :variance="variance"
+                :adaptive-mutation-rate="adaptiveMutationRate"
+              />
+              
               <div class="flex gap-2">
                 <UButton :disabled="isEvolving" color="success" @click="startEvolution">
                   {{ isEvolving ? 'Evolving...' : 'Start Evolution' }}
@@ -68,13 +72,16 @@ const isEvolving = ref(false)
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
 
+// Metrics
 const generation = ref(0)
 const bestFitness = ref(0)
+const variance = ref(0)
+const adaptiveMutationRate = ref(0)
 
 const evolutionParams = reactive<EvolutionParams>({
-  populationSize: 200,
-  mutationRate: 0.12,
-  shapesPerIndividual: 150
+  populationSize: 100,
+  mutationRate: 0.1,
+  shapesPerIndividual: 100
 })
 
 let geneticAlgorithm: GeneticAlgorithm | null = null
@@ -100,7 +107,14 @@ const stopEvolution = () => {
 
 const evolve = () => {
   if (!isEvolving.value) return
-  if (geneticAlgorithm) geneticAlgorithm.evolve()
+  if (geneticAlgorithm) {
+    geneticAlgorithm.evolve()
+    // Update UI with current values
+    generation.value = geneticAlgorithm.generation
+    bestFitness.value = geneticAlgorithm.bestFitness
+    variance.value = geneticAlgorithm.variance
+    adaptiveMutationRate.value = geneticAlgorithm.adaptiveMutationRate
+  }
   animationId = requestAnimationFrame(evolve)
 }
 
