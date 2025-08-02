@@ -53,7 +53,7 @@ export class Shape {
     return `rgb(${this.color.r},${this.color.g},${this.color.b})`
   }
 
-  render(ctx: CanvasRenderingContext2D): void {
+  render(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
     ctx.save()
     ctx.globalAlpha = this.alpha
     ctx.fillStyle = this.colorString()
@@ -73,18 +73,18 @@ export class Shape {
     ctx.restore()
   }
 
-  renderCircle(ctx: CanvasRenderingContext2D): void {
+  renderCircle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
     const radius = Math.min(this.width, this.height) / 2
     ctx.beginPath()
     ctx.arc(0, 0, radius, 0, Math.PI * 2)
     ctx.fill()
   }
 
-  renderRectangle(ctx: CanvasRenderingContext2D): void {
+  renderRectangle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
     ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height)
   }
 
-  renderTriangle(ctx: CanvasRenderingContext2D): void {
+  renderTriangle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
     ctx.beginPath()
     ctx.moveTo(0, -this.height / 2)
     ctx.lineTo(-this.width / 2, this.height / 2)

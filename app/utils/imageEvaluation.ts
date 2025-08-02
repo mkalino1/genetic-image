@@ -6,10 +6,8 @@
  * @param ctx - The 2D canvas rendering context
  * @param targetImageData - The target image data to compare against
  */
-export function evaluatePopulation(population: Individual[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, targetImageData: ImageData): void {
+export function evaluatePopulation(population: Individual[], canvas: HTMLCanvasElement, ctx: OffscreenCanvasRenderingContext2D, targetImageData: ImageData): void {
   for (const individual of population) {
-    // Clears the canvas to ensure a fresh rendering
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
     // Renders the individual's shapes to the canvas
     renderIndividual(individual, ctx)
     // Captures the rendered image data

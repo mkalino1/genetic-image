@@ -5,22 +5,35 @@ export interface EvolutionParams {
 }
 
 export class GeneticAlgorithm {
-  canvas: HTMLCanvasElement
-  ctx: CanvasRenderingContext2D
+  // Onscreen and offscreen canvas for rendering
+  displayCanvas: HTMLCanvasElement
+  displayCtx: CanvasRenderingContext2D
+  offscreenCtx: OffscreenCanvasRenderingContext2D
+
+  // Target image data
   targetImageData: ImageData
+  
+  // Parameters
   populationSize: number
   mutationRate: number
   shapesPerIndividual: number
   eliteSize: number
+  
+  // State
   population: Individual[]
   bestFitness: number
 
-  constructor(canvas: HTMLCanvasElement, targetImageData: ImageData, params: Partial<EvolutionParams> = {}) {
-    this.canvas = canvas
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    if (!ctx) throw new Error('Could not get 2D context')
-    this.ctx = ctx
+  constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: Partial<EvolutionParams> = {}) {
+    this.displayCanvas = displayCanvas
+    const displayCtx = displayCanvas.getContext('2d', { willReadFrequently: true })
+    if (!displayCtx) throw new Error('Could not get 2D context')
+    this.displayCtx = displayCtx
     this.targetImageData = targetImageData
+
+    // Initialize offscreen canvas
+    const offscreenCanvas = new OffscreenCanvas(displayCanvas.width, displayCanvas.height)
+    this.offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true })!
+    if (!this.offscreenCtx) throw new Error('Could not get offscreen 2D context')
 
     // Parameters
     this.populationSize = params.populationSize ?? 50
@@ -37,7 +50,7 @@ export class GeneticAlgorithm {
     if (this.population.length === 0) return
 
     // Evaluate fitness for all individuals
-    evaluatePopulation(this.population, this.canvas, this.ctx, this.targetImageData)
+    evaluatePopulation(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData)
 
     // Sort by fitness (best first)
     this.population.sort((a, b) => b.fitness - a.fitness)
@@ -48,7 +61,7 @@ export class GeneticAlgorithm {
       this.bestFitness = best.fitness
     }
     if (best) {
-      renderIndividual(best, this.ctx)
+      renderIndividual(best, this.displayCtx)
     }
     
     // Check for stagnation and inject randomness if needed
