@@ -64,8 +64,13 @@ export class GeneticAlgorithm {
       renderIndividual(best, this.displayCtx)
     }
     
-    // Check for stagnation and inject randomness if needed
+    this.variance = this.calculateVariance()
+    
+    // Inject random individuals if stagnation (low variance) detected
     this.ensureDiversity()
+
+    // Calculate adaptive mutation rate based on population variance
+    const adaptiveMutationRate = this.calculateAdaptiveMutationRate()
 
     // Create new population through crossover and mutation
     this.population = createNewGeneration(
@@ -73,24 +78,42 @@ export class GeneticAlgorithm {
       this.populationSize,
       this.eliteSize,
       this.shapesPerIndividual,
-      this.mutationRate
+      adaptiveMutationRate
     )
     
     this.generation++
   }
 
   private ensureDiversity(): void {
-    if (this.generation > 50 && this.generation % 20 === 0) {
-      // Simple diversity check based on fitness variance
-      const fitnesses = this.population.map(ind => ind.fitness)
-      const meanFitness = fitnesses.reduce((a, b) => a + b, 0) / fitnesses.length
-      const variance = fitnesses.reduce((sum, fitness) => sum + Math.pow(fitness - meanFitness, 2), 0) / fitnesses.length
-      
-      if (variance < 0.003) { // Low variance indicates low diversity
+    if (this.generation > 50 && this.generation % 30 === 0) {
+      if (this.variance < 0.001) { // Low variance indicates low diversity
         console.log('Low diversity detected, injecting random individuals...')
-        this.injectRandomIndividuals(0.4)
+        this.injectRandomIndividuals(0.2)
       }
     }
+  }
+
+  private calculateVariance(): number {
+    // Calculate population variance based on fitness
+    const fitnesses = this.population.map(ind => ind.fitness)
+    const meanFitness = fitnesses.reduce((a, b) => a + b, 0) / fitnesses.length
+    const variance = fitnesses.reduce((sum, fitness) => 
+      sum + Math.pow(fitness - meanFitness, 2), 0) / fitnesses.length
+    
+    return variance
+  }
+
+  private calculateAdaptiveMutationRate(): number {
+    // High variance = lower mutation rate (exploitation). Low variance = higher mutation rate (exploration)
+    const baseRate = this.mutationRate
+    const diversityFactor = Math.max(0.1, Math.min(2.0, 0.01 / (this.variance + 0.001)))
+    const adaptiveRate = baseRate * diversityFactor
+    
+    // Add some randomness to prevent getting stuck
+    const jitter = 0.1 * Math.random()
+    const finalRate = Math.max(0.01, Math.min(0.5, adaptiveRate + jitter))
+    
+    return finalRate
   }
 
   private injectRandomIndividuals(percentage: number): void {
