@@ -13,6 +13,9 @@ export class GeneticAlgorithm {
   // Target image data
   targetImageData: ImageData
   
+  // Worker pool for parallel fitness calculations
+  workerPool: WorkerPool
+  
   // Parameters
   populationSize: number
   mutationRate: number
@@ -50,13 +53,21 @@ export class GeneticAlgorithm {
     this.generation = 0
     this.variance = 0
     this.adaptiveMutationRate = this.mutationRate
+
+    // Initialize worker pool for parallel fitness calculations
+    this.workerPool = new WorkerPool(this.populationSize)
   }
 
-  evolve(): void {
+  async evolve(): Promise<void> {
     if (this.population.length === 0) return
 
-    // Evaluate fitness for all individuals
-    evaluatePopulation(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData)
+    // Evaluate fitness for all individuals using Web Workers or fallback
+    const useWorkers = true
+    if (useWorkers) {
+      await evaluatePopulation(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData, this.workerPool)
+    } else {
+      await evaluatePopulationFallback(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData)
+    }
 
     // Sort by fitness (best first)
     this.population.sort((a, b) => b.fitness - a.fitness)
@@ -90,11 +101,17 @@ export class GeneticAlgorithm {
     this.generation++
   }
 
+  cleanup(): void {
+    if (this.workerPool) {
+      this.workerPool.terminate()
+    }
+  }
+
   private ensureDiversity(): void {
-    if (this.generation > 50 && this.generation % 30 === 0) {
+    if (this.generation > 50 && this.generation % 20 === 0) {
       if (this.variance < 0.001) { // Low variance indicates low diversity
         console.log('Low diversity detected, injecting random individuals...')
-        this.injectRandomIndividuals(0.2)
+        this.injectRandomIndividuals(0.4)
       }
     }
   }
@@ -112,12 +129,12 @@ export class GeneticAlgorithm {
   private calculateAdaptiveMutationRate(): number {
     // High variance = lower mutation rate (exploitation). Low variance = higher mutation rate (exploration)
     const baseRate = this.mutationRate
-    const diversityFactor = Math.max(0.1, Math.min(2.0, 0.01 / (this.variance + 0.001)))
+    const diversityFactor = Math.max(0.5, Math.min(1.5, 0.005 / (this.variance + 0.001)))
     const adaptiveRate = baseRate * diversityFactor
     
     // Add some randomness to prevent getting stuck
-    const jitter = 0.1 * Math.random()
-    const finalRate = Math.max(0.01, Math.min(0.5, adaptiveRate + jitter))
+    const jitter = 0.05 * Math.random()
+    const finalRate = Math.max(0.01, Math.min(0.3, adaptiveRate + jitter))
     
     return finalRate
   }

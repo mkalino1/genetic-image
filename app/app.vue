@@ -21,7 +21,7 @@
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Evolved Image</h2>
           <div class="bg-gray-800 rounded-lg p-4">
-            <canvas ref="canvas" width="200" height="200" class="w-full rounded-lg bg-white" />
+            <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg bg-white blur-xs" />
             <div class="mt-4 space-y-3">
               <MetricsDisplay
                 :generation="generation"
@@ -79,9 +79,9 @@ const variance = ref(0)
 const adaptiveMutationRate = ref(0)
 
 const evolutionParams = reactive<EvolutionParams>({
-  populationSize: 100,
-  mutationRate: 0.1,
-  shapesPerIndividual: 100
+  populationSize: 500,
+  mutationRate: 0.05,
+  shapesPerIndividual: 150
 })
 
 let geneticAlgorithm: GeneticAlgorithm | null = null
@@ -103,12 +103,15 @@ const stopEvolution = () => {
     cancelAnimationFrame(animationId)
     animationId = null
   }
+  if (geneticAlgorithm) {
+    geneticAlgorithm.cleanup()
+  }
 }
 
-const evolve = () => {
+const evolve = async () => {
   if (!isEvolving.value) return
   if (geneticAlgorithm) {
-    geneticAlgorithm.evolve()
+    await geneticAlgorithm.evolve()
     // Update UI with current values
     generation.value = geneticAlgorithm.generation
     bestFitness.value = geneticAlgorithm.bestFitness
@@ -126,11 +129,11 @@ const setTargetImage = async (imageData: string) => {
   await new Promise<void>((resolve) => {
     img.onload = () => {
       const targetCanvas = document.createElement('canvas')
-      targetCanvas.width = 200
-      targetCanvas.height = 200
+      targetCanvas.width = 160
+      targetCanvas.height = 160
       const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true })!
-      targetCtx.drawImage(img, 0, 0, 200, 200)
-      targetImageData.value = targetCtx.getImageData(0, 0, 200, 200)
+      targetCtx.drawImage(img, 0, 0, 160, 160)
+      targetImageData.value = targetCtx.getImageData(0, 0, 160, 160)
       resolve()
     }
   })

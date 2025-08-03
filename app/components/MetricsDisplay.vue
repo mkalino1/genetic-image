@@ -6,15 +6,15 @@
     </div>
     <div class="bg-gray-700 rounded p-2">
       <div class="text-gray-400">Best Fitness</div>
-      <div class="font-mono">{{ bestFitness.toFixed(3) }}</div>
+      <div class="font-mono">{{ bestFitness.toFixed(6) }}</div>
     </div>
     <div class="bg-gray-700 rounded p-2">
       <div class="text-gray-400">Variance</div>
-      <div class="font-mono">{{ variance.toFixed(5) }}</div>
+      <div class="font-mono">{{ variance.toFixed(10) }}</div>
     </div>
     <div class="bg-gray-700 rounded p-2">
       <div class="text-gray-400">Adaptive Mutation Rate</div>
-      <div class="font-mono">{{ adaptiveMutationRate.toFixed(3) }}</div>
+      <div class="font-mono">{{ adaptiveMutationRate.toFixed(4) }}</div>
     </div>
   </div>
 </template>

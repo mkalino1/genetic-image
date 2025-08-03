@@ -31,10 +31,10 @@ export class Shape {
 
   constructor(params: ShapeParams = {}) {
     this.type = params.type ?? ['circle', 'rectangle', 'triangle'][Math.floor(Math.random() * 3)] as ShapeType
-    this.x = params.x ?? Math.random() * 200
-    this.y = params.y ?? Math.random() * 200
-    this.width = params.width ?? Math.random() * 50 + 10
-    this.height = params.height ?? Math.random() * 50 + 10
+    this.x = params.x ?? Math.random() * 160
+    this.y = params.y ?? Math.random() * 160
+    this.width = params.width ?? Math.random() * 50 + 5
+    this.height = params.height ?? Math.random() * 50 + 5
     this.rotation = params.rotation ?? Math.random() * Math.PI * 2
     this.color = params.color ?? Shape.randomColor()
     this.alpha = params.alpha ?? Math.random() * 0.8 + 0.2
@@ -98,9 +98,9 @@ export class Shape {
     this.y += (Math.random() - 0.5) * 4
 
     this.width += (Math.random() - 0.5) * 4
-    this.width = Math.max(10, this.width)
+    this.width = Math.max(5, this.width)
     this.height += (Math.random() - 0.5) * 4
-    this.height = Math.max(10, this.height)
+    this.height = Math.max(5, this.height)
 
     this.rotation += (Math.random() - 0.5) * Math.PI * 0.2
 
