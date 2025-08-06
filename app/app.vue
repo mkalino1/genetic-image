@@ -61,6 +61,11 @@
           </div>
         </div>
       </div>
+
+      <!-- Fitness Chart -->
+      <div class="mt-8">
+        <FitnessChart :fitness-data="fitnessHistory" />
+      </div>
     </div>
   </div>
 </template>
@@ -78,6 +83,9 @@ const bestFitness = ref(0)
 const variance = ref(0)
 const adaptiveMutationRate = ref(0)
 
+// Fitness history for chart
+const fitnessHistory = ref<{ generation: number; fitness: number }[]>([])
+
 const evolutionParams = reactive<EvolutionParams>({
   populationSize: 500,
   mutationRate: 0.05,
@@ -93,6 +101,8 @@ const startEvolution = async () => {
     return
   }
   isEvolving.value = true
+  // Reset fitness history when starting new evolution
+  fitnessHistory.value = []
   geneticAlgorithm = new GeneticAlgorithm(canvas.value as HTMLCanvasElement, targetImageData.value!, evolutionParams)
   evolve()
 }
@@ -117,6 +127,12 @@ const evolve = async () => {
     bestFitness.value = geneticAlgorithm.bestFitness
     variance.value = geneticAlgorithm.variance
     adaptiveMutationRate.value = geneticAlgorithm.adaptiveMutationRate
+    
+    // Add fitness data to history for chart
+    fitnessHistory.value.push({
+      generation: geneticAlgorithm.generation,
+      fitness: geneticAlgorithm.bestFitness
+    })
   }
   animationId = requestAnimationFrame(evolve)
 }
