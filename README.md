@@ -4,6 +4,8 @@ A web application that uses genetic algorithm to recreate target images using ge
 
 :construction: Work in progress :construction:
 
+[Try it here](https://genetic.nuxt.dev/)
+
 ## Features
 
 - 🔄 **Real-time evolution** with live visual updates

@@ -13,6 +13,7 @@
     "@nuxt/eslint": "^1.7.1",
     "@nuxt/test-utils": "^3.19.2",
     "@nuxt/ui": "^3.3.0",
+    "@nuxthub/core": "^0.9.0",
     "apexcharts": "^5.3.2",
     "eslint": "^9.32.0",
     "nuxt": "^4.0.1",
@@ -20,5 +21,8 @@
     "vue": "^3.5.17",
     "vue-router": "^4.5.1",
     "vue3-apexcharts": "^1.8.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.28.1"
   }
 }
