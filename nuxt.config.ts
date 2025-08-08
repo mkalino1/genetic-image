@@ -10,6 +10,9 @@ export default defineNuxtConfig({
   ],
   ssr: false,
   css: ['~/assets/main.css'],
+  routeRules: {
+    '/': { prerender: true }
+  },
   
   // Configure Vite for Web Workers
   vite: {
