@@ -61,13 +61,8 @@ export class GeneticAlgorithm {
   async evolve(): Promise<void> {
     if (this.population.length === 0) return
 
-    // Evaluate fitness for all individuals using Web Workers or fallback
-    const useWorkers = true
-    if (useWorkers) {
-      await evaluatePopulation(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData, this.workerPool)
-    } else {
-      await evaluatePopulationFallback(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData)
-    }
+    // Evaluate fitness for all individuals using Web Workers
+    await evaluatePopulation(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData, this.workerPool)
 
     // Sort by fitness (best first)
     this.population.sort((a, b) => b.fitness - a.fitness)

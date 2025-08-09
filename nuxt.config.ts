@@ -8,23 +8,8 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxthub/core'
   ],
-  ssr: false,
   css: ['~/assets/main.css'],
   routeRules: {
     '/': { prerender: true }
-  },
-  
-  // Configure Vite for Web Workers
-  vite: {
-    worker: {
-      format: 'es'
-    },
-    build: {
-      rollupOptions: {
-        output: {
-          format: 'es'
-        }
-      }
-    }
   }
 })

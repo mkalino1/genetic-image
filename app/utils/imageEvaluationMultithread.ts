@@ -27,7 +27,7 @@ export async function evaluatePopulation(population: Individual[], canvas: HTMLC
   }
 
   // Calculate fitness for all individuals in parallel using workers
-  const fitnessResults = await workerPool.calculateFitnessBatch(individualsToProcess, targetImageData)
+  const fitnessResults = await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData)
   
   // Assign fitness results back to individuals
   for (let i = 0; i < population.length; i++) {

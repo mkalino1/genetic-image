@@ -15,7 +15,7 @@ export class WorkerPool {
   private initializeWorkers(count: number): void {
     for (let i = 0; i < count; i++) {
       try {
-        const worker = new Worker(new URL('../workers/fitnessWorker.ts', import.meta.url), { type: 'module' })
+        const worker = new Worker(new URL('../workers/fitnessWorker.ts', import.meta.url))
         this.workers.push(worker)
       } catch (error) {
         console.error(`Failed to initialize worker ${i}:`, error)
@@ -53,7 +53,7 @@ export class WorkerPool {
     })
   }
 
-  async calculateFitnessBatch(individuals: FitnessTask[], targetImageData: ImageData): Promise<Map<number, number>> {
+  async calculateFitnessBatches(individuals: FitnessTask[], targetImageData: ImageData): Promise<Map<number, number>> {
     const results = new Map<number, number>()
     
     // Create batches - handle any population size
