@@ -1,9 +1,12 @@
+export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point'
+
 export function createNewGeneration(
   population: Individual[],
   populationSize: number,
   eliteSize: number,
   shapesPerIndividual: number,
-  mutationRate: number
+  mutationRate: number,
+  crossoverStrategy: CrossoverStrategy = 'uniform'
 ): Individual[] {
   const newPopulation: Individual[] = []
 
@@ -19,7 +22,7 @@ export function createNewGeneration(
   while (newPopulation.length < populationSize) {
     const parent1 = selectParent(population, shapesPerIndividual)
     const parent2 = selectParent(population, shapesPerIndividual)
-    const child = crossover(parent1, parent2, shapesPerIndividual)
+    const child = crossover(parent1, parent2, shapesPerIndividual, crossoverStrategy)
     mutate(child, mutationRate)
     newPopulation.push(child)
   }
@@ -52,18 +55,29 @@ function selectParent(population: Individual[], shapesPerIndividual: number): In
   return best
 }
 
-function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number): Individual {
+function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, strategy: CrossoverStrategy): Individual { 
+  switch (strategy) {
+    case 'uniform':
+      return uniformCrossover(parent1, parent2, shapesPerIndividual)
+    case 'single_point':
+      return singlePointCrossover(parent1, parent2, shapesPerIndividual)
+    case 'two_point':
+      return twoPointCrossover(parent1, parent2, shapesPerIndividual)
+    default:
+      return uniformCrossover(parent1, parent2, shapesPerIndividual)
+  }
+}
+
+function uniformCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number): Individual {
   const child: Individual = {
     shapes: [],
     fitness: 0
   }
 
-  // Uniform crossover
   for (let i = 0; i < shapesPerIndividual; i++) {
     const shape1 = parent1.shapes[i] ?? new Shape()
     const shape2 = parent2.shapes[i] ?? new Shape()
 
-    // Use clone to preserve prototype
     if (Math.random() < 0.5) {
       child.shapes.push(shape1.clone())
     } else {
@@ -71,6 +85,43 @@ function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual
     }
   }
 
+  return child
+}
+
+function singlePointCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number): Individual {
+  const crossoverPoint = Math.floor(Math.random() * shapesPerIndividual)
+  const child: Individual = { shapes: [], fitness: 0 }
+  
+  for (let i = 0; i < shapesPerIndividual; i++) {
+    const shape1 = parent1.shapes[i] ?? new Shape()
+    const shape2 = parent2.shapes[i] ?? new Shape()
+    
+    if (i < crossoverPoint) {
+      child.shapes.push(shape1.clone())
+    } else {
+      child.shapes.push(shape2.clone())
+    }
+  }
+  
+  return child
+}
+
+function twoPointCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number): Individual {
+  const point1 = Math.floor(Math.random() * shapesPerIndividual)
+  const point2 = Math.floor(Math.random() * (shapesPerIndividual - point1)) + point1
+  const child: Individual = { shapes: [], fitness: 0 }
+  
+  for (let i = 0; i < shapesPerIndividual; i++) {
+    const shape1 = parent1.shapes[i] ?? new Shape()
+    const shape2 = parent2.shapes[i] ?? new Shape()
+    
+    if (i < point1 || i >= point2) {
+      child.shapes.push(shape1.clone())
+    } else {
+      child.shapes.push(shape2.clone())
+    }
+  }
+  
   return child
 }
 

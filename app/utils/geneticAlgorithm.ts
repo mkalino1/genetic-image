@@ -2,6 +2,7 @@ export interface EvolutionParams {
   populationSize: number
   mutationRate: number
   shapesPerIndividual: number
+  crossoverStrategy: CrossoverStrategy
 }
 
 export class GeneticAlgorithm {
@@ -20,6 +21,7 @@ export class GeneticAlgorithm {
   populationSize: number
   mutationRate: number
   shapesPerIndividual: number
+  crossoverStrategy: CrossoverStrategy
   eliteSize: number
   
   // State
@@ -29,7 +31,7 @@ export class GeneticAlgorithm {
   variance: number
   adaptiveMutationRate: number
 
-  constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: Partial<EvolutionParams> = {}) {
+  constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: EvolutionParams) {
     this.displayCanvas = displayCanvas
     const displayCtx = displayCanvas.getContext('2d', { willReadFrequently: true })
     if (!displayCtx) throw new Error('Could not get 2D context')
@@ -42,9 +44,10 @@ export class GeneticAlgorithm {
     if (!this.offscreenCtx) throw new Error('Could not get offscreen 2D context')
 
     // Parameters
-    this.populationSize = params.populationSize ?? 50
-    this.mutationRate = params.mutationRate ?? 0.1
-    this.shapesPerIndividual = params.shapesPerIndividual ?? 20
+    this.populationSize = params.populationSize
+    this.mutationRate = params.mutationRate
+    this.shapesPerIndividual = params.shapesPerIndividual
+    this.crossoverStrategy = params.crossoverStrategy
     this.eliteSize = Math.max(1, Math.floor(this.populationSize * 0.1)) // Keep at least 1
 
     // State
@@ -90,7 +93,8 @@ export class GeneticAlgorithm {
       this.populationSize,
       this.eliteSize,
       this.shapesPerIndividual,
-      this.adaptiveMutationRate
+      this.adaptiveMutationRate,
+      this.crossoverStrategy
     )
     
     this.generation++

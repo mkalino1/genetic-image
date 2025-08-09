@@ -21,7 +21,7 @@
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Evolved Image</h2>
           <div class="bg-gray-800 rounded-lg p-4">
-            <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg bg-white blur-xs" />
+            <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg bg-white blur-[6px]" />
             <div class="mt-4 space-y-3">
               <MetricsDisplay
                 :generation="generation"
@@ -46,7 +46,7 @@
       <!-- Controls Section -->
       <div class="mt-8 bg-gray-800 rounded-lg p-6">
         <h2 class="text-2xl font-semibold mb-4">Evolution Parameters</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
             <label class="block text-sm font-medium mb-2">Population Size</label>
             <UInput v-model="evolutionParams.populationSize" type="number" min="10" max="1000" />
@@ -58,6 +58,13 @@
           <div>
             <label class="block text-sm font-medium mb-2">Shapes per Individual</label>
             <UInput v-model="evolutionParams.shapesPerIndividual" type="number" min="1" max="100" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">Crossover Strategy</label>
+            <USelect 
+              v-model="evolutionParams.crossoverStrategy"
+              :items="crossoverStrategyOptions"
+            />
           </div>
         </div>
       </div>
@@ -71,6 +78,13 @@
 </template>
 
 <script setup lang="ts">
+// Define crossover strategy options for the template
+const crossoverStrategyOptions: {label: string, value: CrossoverStrategy}[] = [
+  { label: 'Uniform', value: 'uniform'},
+  { label: 'Single Point', value: 'single_point'},
+  { label: 'Two Point', value: 'two_point'}
+]
+
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const isEvolving = ref(false)
 
@@ -89,7 +103,8 @@ const fitnessHistory = ref<{ generation: number; fitness: number }[]>([])
 const evolutionParams = reactive<EvolutionParams>({
   populationSize: 500,
   mutationRate: 0.05,
-  shapesPerIndividual: 150
+  shapesPerIndividual: 150,
+  crossoverStrategy: 'uniform'
 })
 
 let geneticAlgorithm: GeneticAlgorithm | null = null
