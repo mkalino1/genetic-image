@@ -1,4 +1,4 @@
-export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point'
+export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point' | 'randomized'
 
 export function createNewGeneration(
   population: Individual[],
@@ -55,7 +55,13 @@ function selectParent(population: Individual[], shapesPerIndividual: number): In
   return best
 }
 
-function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, strategy: CrossoverStrategy): Individual { 
+function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, strategy: CrossoverStrategy): Individual {
+  // If randomized, pick a random strategy
+  if (strategy === 'randomized') {
+    const strategies: CrossoverStrategy[] = ['uniform', 'single_point', 'two_point']
+    strategy = strategies[Math.floor(Math.random() * strategies.length)] as CrossoverStrategy
+  }
+  
   switch (strategy) {
     case 'uniform':
       return uniformCrossover(parent1, parent2, shapesPerIndividual)
