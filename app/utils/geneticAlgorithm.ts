@@ -94,7 +94,8 @@ export class GeneticAlgorithm {
       this.eliteSize,
       this.shapesPerIndividual,
       this.adaptiveMutationRate,
-      this.crossoverStrategy
+      this.crossoverStrategy,
+      this.bestFitness
     )
     
     this.generation++

@@ -1,4 +1,4 @@
-export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point' | 'randomized'
+export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point' | 'randomized' | 'adaptive'
 
 export function createNewGeneration(
   population: Individual[],
@@ -6,7 +6,8 @@ export function createNewGeneration(
   eliteSize: number,
   shapesPerIndividual: number,
   mutationRate: number,
-  crossoverStrategy: CrossoverStrategy = 'uniform'
+  crossoverStrategy: CrossoverStrategy,
+  bestFitness: number
 ): Individual[] {
   const newPopulation: Individual[] = []
 
@@ -22,7 +23,7 @@ export function createNewGeneration(
   while (newPopulation.length < populationSize) {
     const parent1 = selectParent(population, shapesPerIndividual)
     const parent2 = selectParent(population, shapesPerIndividual)
-    const child = crossover(parent1, parent2, shapesPerIndividual, crossoverStrategy)
+    const child = crossover(parent1, parent2, shapesPerIndividual, crossoverStrategy, bestFitness)
     mutate(child, mutationRate)
     newPopulation.push(child)
   }
@@ -55,11 +56,16 @@ function selectParent(population: Individual[], shapesPerIndividual: number): In
   return best
 }
 
-function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, strategy: CrossoverStrategy): Individual {
+function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, strategy: CrossoverStrategy, bestFitness: number): Individual {
   // If randomized, pick a random strategy
   if (strategy === 'randomized') {
     const strategies: CrossoverStrategy[] = ['uniform', 'single_point', 'two_point']
     strategy = strategies[Math.floor(Math.random() * strategies.length)] as CrossoverStrategy
+  }
+  
+  // If adaptive, choose strategy based on population fitness
+  if (strategy === 'adaptive') {
+    strategy = selectAdaptiveStrategy(bestFitness)
   }
   
   switch (strategy) {
@@ -71,6 +77,23 @@ function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual
       return twoPointCrossover(parent1, parent2, shapesPerIndividual)
     default:
       return uniformCrossover(parent1, parent2, shapesPerIndividual)
+  }
+}
+
+function selectAdaptiveStrategy(bestFitness: number): CrossoverStrategy {  
+  const lowFitnessThreshold = 0.92
+  const highFitnessThreshold = 0.97
+  
+  // Strategy selection based on best fitness level
+  if (bestFitness < lowFitnessThreshold) {
+    // Low best fitness: use uniform crossover for exploration
+    return 'uniform'
+  } else if (bestFitness > highFitnessThreshold) {
+    // High best fitness: use single point for exploitation
+    return 'single_point'
+  } else {
+    // Medium best fitness: use two point for balanced approach
+    return 'two_point'
   }
 }
 

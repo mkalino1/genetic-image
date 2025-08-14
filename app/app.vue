@@ -83,7 +83,8 @@ const crossoverStrategyOptions: {label: string, value: CrossoverStrategy}[] = [
   { label: 'Uniform', value: 'uniform'},
   { label: 'Single Point', value: 'single_point'},
   { label: 'Two Point', value: 'two_point'},
-  { label: 'Randomized', value: 'randomized'}
+  { label: 'Randomized', value: 'randomized'},
+  { label: 'Adaptive', value: 'adaptive'}
 ]
 
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
