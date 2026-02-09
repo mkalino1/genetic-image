@@ -23,14 +23,142 @@ self.onmessage = function(e: MessageEvent) {
 } 
 
 function calculateFitness(imageData: ImageData, targetImageData: ImageData): number {
-  // Hybrid fitness: combine SSIM and pixel-wise
-  const ssim = compareImagesSSIM(imageData, targetImageData)
-  const pixel = compareImagesEuclidean(imageData, targetImageData)
-  return 0.5 * ssim + 0.5 * pixel
+  // Use Delta_E perceptually-accurate color metric
+  const deltaE = compareImagesDeltaE(imageData, targetImageData)
+  // Use SSIM for structural similarity
+  // const ssim = compareImagesSSIM(imageData, targetImageData)
+  return deltaE //* 0.6 + ssim * 0.4 // Weighted combination of both metrics
 }
 
 /**
- * Compares two images using a structural similarity (SSIM)-like metric.
+ * Compares two images using Delta E CIE76 color difference metric.
+ * This measures perceived color difference the way human eyes see it.
+ * Returns a fitness score between 0 and 1, where 1 is a perfect match.
+ * @param {ImageData} evolvedImageData - The image data of the evolved image.
+ * @param {ImageData} targetImageData - The image data of the target image.
+ * @returns {number} Fitness score (0-1)
+ */
+function compareImagesDeltaE(evolvedImageData: ImageData, targetImageData: ImageData): number {
+  const targetData = targetImageData.data
+  const evolvedData = evolvedImageData.data
+
+  let totalDeltaE = 0
+  let pixelCount = 0
+
+  // Compare each pixel using Delta E
+  for (let i = 0; i < targetData.length; i += 4) {
+    const targetR = targetData[i]
+    const targetG = targetData[i + 1]
+    const targetB = targetData[i + 2]
+    const targetA = targetData[i + 3]
+    const evolvedR = evolvedData[i]
+    const evolvedG = evolvedData[i + 1]
+    const evolvedB = evolvedData[i + 2]
+    const evolvedA = evolvedData[i + 3]
+
+    if (
+      targetR === undefined || targetG === undefined || targetB === undefined || targetA === undefined ||
+      evolvedR === undefined || evolvedG === undefined || evolvedB === undefined || evolvedA === undefined
+    ) continue
+
+    // Convert RGB to Lab and calculate Delta E
+    const targetLab = rgbToLab(targetR, targetG, targetB)
+    const evolvedLab = rgbToLab(evolvedR, evolvedG, evolvedB)
+
+    const deltaE = Math.hypot(
+      targetLab[0]! - evolvedLab[0]!,
+      targetLab[1]! - evolvedLab[1]!,
+      targetLab[2]! - evolvedLab[2]!
+    )
+
+    totalDeltaE += deltaE
+    pixelCount++
+  }
+
+  const averageDeltaE = totalDeltaE / pixelCount
+  // Scale to 0-1 fitness (lower Delta E = higher fitness)
+  // A Delta E of 100 is roughly at the limit of human perception
+  return Math.max(0, 1 - (averageDeltaE / 100))
+}
+
+/**
+ * Convert RGB color to Lab color space.
+ * Lab is device-independent and perceptually uniform.
+ * @param {number} r - Red value (0-255)
+ * @param {number} g - Green value (0-255)
+ * @param {number} b - Blue value (0-255)
+ * @returns {number[]} [L, a, b] Lab color values
+ */
+function rgbToLab(r: number, g: number, b: number): number[] {
+  // Step 1: Convert RGB to XYZ
+  const xyz = rgbToXyz(r, g, b)
+  // Step 2: Convert XYZ to Lab
+  const lab = xyzToLab(xyz[0]!, xyz[1]!, xyz[2]!)
+  return lab
+}
+
+/**
+ * Convert RGB to XYZ color space.
+ * Uses D65 illuminant (standard daylight).
+ * @param {number} r - Red value (0-255)
+ * @param {number} g - Green value (0-255)
+ * @param {number} b - Blue value (0-255)
+ * @returns {number[]} [X, Y, Z] values
+ */
+function rgbToXyz(r: number, g: number, b: number): number[] {
+  // Normalize RGB to 0-1
+  let rLinear = r / 255
+  let gLinear = g / 255
+  let bLinear = b / 255
+
+  // Apply gamma correction (sRGB)
+  rLinear = rLinear > 0.04045 ? Math.pow((rLinear + 0.055) / 1.055, 2.4) : rLinear / 12.92
+  gLinear = gLinear > 0.04045 ? Math.pow((gLinear + 0.055) / 1.055, 2.4) : gLinear / 12.92
+  bLinear = bLinear > 0.04045 ? Math.pow((bLinear + 0.055) / 1.055, 2.4) : bLinear / 12.92
+
+  // Transform to XYZ (using sRGB matrix with D65 illuminant)
+  const x = rLinear * 0.4124 + gLinear * 0.3576 + bLinear * 0.1805
+  const y = rLinear * 0.2126 + gLinear * 0.7152 + bLinear * 0.0722
+  const z = rLinear * 0.0193 + gLinear * 0.1192 + bLinear * 0.9505
+
+  return [x, y, z]
+}
+
+/**
+ * Convert XYZ to Lab color space.
+ * Uses D65 illuminant reference white.
+ * @param {number} x - X value
+ * @param {number} y - Y value
+ * @param {number} z - Z value
+ * @returns {number[]} [L, a, b] Lab color values
+ */
+function xyzToLab(x: number, y: number, z: number): number[] {
+  // D65 illuminant reference white point
+  const refX = 0.95047
+  const refY = 1.0
+  const refZ = 1.08883
+
+  // Normalize by reference white
+  let xNorm = x / refX
+  let yNorm = y / refY
+  let zNorm = z / refZ
+
+  // Apply nonlinear transformation
+  const delta = 6 / 29
+  xNorm = xNorm > Math.pow(delta, 3) ? Math.pow(xNorm, 1 / 3) : xNorm / (3 * delta * delta) + 4 / 29
+  yNorm = yNorm > Math.pow(delta, 3) ? Math.pow(yNorm, 1 / 3) : yNorm / (3 * delta * delta) + 4 / 29
+  zNorm = zNorm > Math.pow(delta, 3) ? Math.pow(zNorm, 1 / 3) : zNorm / (3 * delta * delta) + 4 / 29
+
+  // Calculate Lab
+  const l = 116 * yNorm - 16
+  const a = 500 * (xNorm - yNorm)
+  const lab_b = 200 * (yNorm - zNorm)
+
+  return [l, a, lab_b]
+}
+
+/**
+ * Compares two images using a structural similarity SSIM metric.
  * Returns a fitness score between 0 and 1, where 1 is a perfect match.
  * @param {ImageData} evolvedImageData - The image data of the evolved image from canvas context.
  * @param {ImageData} targetImageData - The image data of the target image from canvas context.
@@ -42,7 +170,6 @@ function compareImagesSSIM(evolvedImageData: ImageData, targetImageData: ImageDa
   // Convert to grayscale for structural comparison
   const targetGray = toGrayscale(targetData)
   const evolvedGray = toGrayscale(evolvedData)
-  // Calculate SSIM-like metric
   const ssim = calculateSSIM(targetGray, evolvedGray)
   return ssim
 }
