@@ -7,7 +7,8 @@ export function createNewGeneration(
   shapesPerIndividual: number,
   mutationRate: number,
   crossoverStrategy: CrossoverStrategy,
-  bestFitness: number
+  bestFitness: number,
+  shapeMode: 'fixed' | 'polygon' = 'fixed'
 ): Individual[] {
   const newPopulation: Individual[] = []
 
@@ -21,9 +22,9 @@ export function createNewGeneration(
 
   // Generate rest of population through crossover and mutation
   while (newPopulation.length < populationSize) {
-    const parent1 = selectParent(population, shapesPerIndividual)
-    const parent2 = selectParent(population, shapesPerIndividual)
-    const child = crossover(parent1, parent2, shapesPerIndividual, crossoverStrategy, bestFitness)
+    const parent1 = selectParent(population, shapesPerIndividual, shapeMode)
+    const parent2 = selectParent(population, shapesPerIndividual, shapeMode)
+    const child = crossover(parent1, parent2, shapesPerIndividual, crossoverStrategy, bestFitness, shapeMode)
     mutate(child, mutationRate)
     newPopulation.push(child)
   }
@@ -31,13 +32,13 @@ export function createNewGeneration(
   return newPopulation
 }
 
-function selectParent(population: Individual[], shapesPerIndividual: number): Individual {
+function selectParent(population: Individual[], shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual {
   // Tournament selection
   const tournamentSize = 3
   let best: Individual | null = null
 
   if (population.length === 0) {
-    return createRandomIndividual(shapesPerIndividual)
+    return createRandomIndividual(shapesPerIndividual, shapeMode)
   }
 
   for (let i = 0; i < tournamentSize; i++) {
@@ -51,12 +52,12 @@ function selectParent(population: Individual[], shapesPerIndividual: number): In
 
   // Fallback: if best is still null, return a random individual
   if (!best) {
-    return createRandomIndividual(shapesPerIndividual)
+    return createRandomIndividual(shapesPerIndividual, shapeMode)
   }
   return best
 }
 
-function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, strategy: CrossoverStrategy, bestFitness: number): Individual {
+function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, strategy: CrossoverStrategy, bestFitness: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual {
   // If randomized, pick a random strategy
   if (strategy === 'randomized') {
     const strategies: CrossoverStrategy[] = ['uniform', 'single_point', 'two_point']
@@ -70,13 +71,13 @@ function crossover(parent1: Individual, parent2: Individual, shapesPerIndividual
   
   switch (strategy) {
     case 'uniform':
-      return uniformCrossover(parent1, parent2, shapesPerIndividual)
+      return uniformCrossover(parent1, parent2, shapesPerIndividual, shapeMode)
     case 'single_point':
-      return singlePointCrossover(parent1, parent2, shapesPerIndividual)
+      return singlePointCrossover(parent1, parent2, shapesPerIndividual, shapeMode)
     case 'two_point':
-      return twoPointCrossover(parent1, parent2, shapesPerIndividual)
+      return twoPointCrossover(parent1, parent2, shapesPerIndividual, shapeMode)
     default:
-      return uniformCrossover(parent1, parent2, shapesPerIndividual)
+      return uniformCrossover(parent1, parent2, shapesPerIndividual, shapeMode)
   }
 }
 
@@ -97,15 +98,15 @@ function selectAdaptiveStrategy(bestFitness: number): CrossoverStrategy {
   }
 }
 
-function uniformCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number): Individual {
+function uniformCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual {
   const child: Individual = {
     shapes: [],
     fitness: 0
   }
 
   for (let i = 0; i < shapesPerIndividual; i++) {
-    const shape1 = parent1.shapes[i] ?? new Shape()
-    const shape2 = parent2.shapes[i] ?? new Shape()
+    const shape1 = parent1.shapes[i] ?? new Shape({ mode: shapeMode })
+    const shape2 = parent2.shapes[i] ?? new Shape({ mode: shapeMode })
 
     if (Math.random() < 0.5) {
       child.shapes.push(shape1.clone())
@@ -117,13 +118,13 @@ function uniformCrossover(parent1: Individual, parent2: Individual, shapesPerInd
   return child
 }
 
-function singlePointCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number): Individual {
+function singlePointCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual {
   const crossoverPoint = Math.floor(Math.random() * shapesPerIndividual)
   const child: Individual = { shapes: [], fitness: 0 }
   
   for (let i = 0; i < shapesPerIndividual; i++) {
-    const shape1 = parent1.shapes[i] ?? new Shape()
-    const shape2 = parent2.shapes[i] ?? new Shape()
+    const shape1 = parent1.shapes[i] ?? new Shape({ mode: shapeMode })
+    const shape2 = parent2.shapes[i] ?? new Shape({ mode: shapeMode })
     
     if (i < crossoverPoint) {
       child.shapes.push(shape1.clone())
@@ -135,14 +136,14 @@ function singlePointCrossover(parent1: Individual, parent2: Individual, shapesPe
   return child
 }
 
-function twoPointCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number): Individual {
+function twoPointCrossover(parent1: Individual, parent2: Individual, shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual {
   const point1 = Math.floor(Math.random() * shapesPerIndividual)
   const point2 = Math.floor(Math.random() * (shapesPerIndividual - point1)) + point1
   const child: Individual = { shapes: [], fitness: 0 }
   
   for (let i = 0; i < shapesPerIndividual; i++) {
-    const shape1 = parent1.shapes[i] ?? new Shape()
-    const shape2 = parent2.shapes[i] ?? new Shape()
+    const shape1 = parent1.shapes[i] ?? new Shape({ mode: shapeMode })
+    const shape2 = parent2.shapes[i] ?? new Shape({ mode: shapeMode })
     
     if (i < point1 || i >= point2) {
       child.shapes.push(shape1.clone())

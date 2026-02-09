@@ -3,10 +3,10 @@ export interface Individual {
   fitness: number
 }
 
-export function createRandomIndividual(shapesPerIndividual: number): Individual {
+export function createRandomIndividual(shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual {
   const shapes: Shape[] = []
   for (let i = 0; i < shapesPerIndividual; i++) {
-    shapes.push(new Shape())
+    shapes.push(new Shape({ mode: shapeMode }))
   }
   return { shapes, fitness: 0 }
 }
@@ -18,10 +18,10 @@ export function cloneIndividual(ind: Individual): Individual {
   }
 }
 
-export function initializePopulation(populationSize: number, shapesPerIndividual: number): Individual[] {
+export function initializePopulation(populationSize: number, shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual[] {
   const population: Individual[] = []
   for (let i = 0; i < populationSize; i++) {
-    const individual = createRandomIndividual(shapesPerIndividual)
+    const individual = createRandomIndividual(shapesPerIndividual, shapeMode)
     population.push(individual)
   }
   return population

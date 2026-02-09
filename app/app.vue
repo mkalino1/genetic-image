@@ -66,6 +66,13 @@
               :items="crossoverStrategyOptions"
             />
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">Shape Type</label>
+            <USelect 
+              v-model="shapeMode"
+              :items="shapeTypOptions"
+            />
+          </div>
         </div>
       </div>
 
@@ -87,8 +94,14 @@ const crossoverStrategyOptions: {label: string, value: CrossoverStrategy}[] = [
   { label: 'Adaptive', value: 'adaptive'}
 ]
 
+const shapeTypOptions: {label: string, value: string}[] = [
+  { label: 'Fixed Shapes', value: 'fixed'},
+  { label: 'Random Polygons', value: 'polygon'}
+]
+
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const isEvolving = ref(false)
+const shapeMode = ref<'fixed' | 'polygon'>('fixed')
 
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
@@ -106,7 +119,8 @@ const evolutionParams = reactive<EvolutionParams>({
   populationSize: 500,
   mutationRate: 0.05,
   shapesPerIndividual: 150,
-  crossoverStrategy: 'uniform'
+  crossoverStrategy: 'uniform',
+  shapeMode: 'fixed'
 })
 
 let geneticAlgorithm: GeneticAlgorithm | null = null
@@ -120,6 +134,8 @@ const startEvolution = async () => {
   isEvolving.value = true
   // Reset fitness history when starting new evolution
   fitnessHistory.value = []
+  // Update evolution params with current shape mode
+  evolutionParams.shapeMode = shapeMode.value
   geneticAlgorithm = new GeneticAlgorithm(canvas.value as HTMLCanvasElement, targetImageData.value!, evolutionParams)
   evolve()
 }

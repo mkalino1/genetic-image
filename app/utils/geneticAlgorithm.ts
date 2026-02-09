@@ -3,6 +3,7 @@ export interface EvolutionParams {
   mutationRate: number
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
+  shapeMode?: 'fixed' | 'polygon'
 }
 
 export class GeneticAlgorithm {
@@ -22,6 +23,7 @@ export class GeneticAlgorithm {
   mutationRate: number
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
+  shapeMode: 'fixed' | 'polygon'
   eliteSize: number
   
   // State
@@ -48,10 +50,11 @@ export class GeneticAlgorithm {
     this.mutationRate = params.mutationRate
     this.shapesPerIndividual = params.shapesPerIndividual
     this.crossoverStrategy = params.crossoverStrategy
+    this.shapeMode = params.shapeMode ?? 'fixed'
     this.eliteSize = Math.max(1, Math.floor(this.populationSize * 0.1)) // Keep at least 1
 
     // State
-    this.population = initializePopulation(this.populationSize, this.shapesPerIndividual)
+    this.population = initializePopulation(this.populationSize, this.shapeMode)
     this.bestFitness = 0
     this.generation = 0
     this.variance = 0
@@ -95,7 +98,8 @@ export class GeneticAlgorithm {
       this.shapesPerIndividual,
       this.adaptiveMutationRate,
       this.crossoverStrategy,
-      this.bestFitness
+      this.bestFitness,
+      this.shapeMode
     )
     
     this.generation++
@@ -144,7 +148,7 @@ export class GeneticAlgorithm {
     const startIndex = this.eliteSize
     
     for (let i = 0; i < numToReplace && startIndex + i < this.population.length; i++) {
-      this.population[startIndex + i] = createRandomIndividual(this.shapesPerIndividual)
+      this.population[startIndex + i] = createRandomIndividual(this.shapesPerIndividual, this.shapeMode)
     }
   }
 } 
