@@ -21,7 +21,7 @@
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Evolved Image</h2>
           <div class="bg-gray-800 rounded-lg p-4">
-            <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg bg-white blur-[6px]" />
+            <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg blur-xs" :style="{ backgroundColor: canvasBackgroundColor }" />
             <div class="mt-4 space-y-3">
               <MetricsDisplay
                 :generation="generation"
@@ -105,6 +105,7 @@ const shapeMode = ref<'fixed' | 'polygon'>('fixed')
 
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
+const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
 
 // Metrics
 const generation = ref(0)
@@ -171,6 +172,7 @@ const evolve = async () => {
 }
 
 const setTargetImage = async (imageData: string) => {
+  if (imageData == '') canvasBackgroundColor.value = 'rgb(255, 255, 255)' // reset to white
   targetImage.value = imageData
   // Initialize offscreen target canvas
   const img = new window.Image()
@@ -183,8 +185,33 @@ const setTargetImage = async (imageData: string) => {
       const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true })!
       targetCtx.drawImage(img, 0, 0, 160, 160)
       targetImageData.value = targetCtx.getImageData(0, 0, 160, 160)
+      // Calculate average color and set background
+      canvasBackgroundColor.value = calculateAverageColor(targetImageData.value)
       resolve()
     }
   })
+}
+
+const calculateAverageColor = (imageData: ImageData): string => {
+  const data = imageData.data
+  let r = 0, g = 0, b = 0, count = 0
+  
+  for (let i = 0; i < data.length; i += 4) {
+    r += data[i]!
+    g += data[i + 1]!
+    b += data[i + 2]!
+    count++
+  }
+  
+  r = Math.round(r / count)
+  g = Math.round(g / count)
+  b = Math.round(b / count)
+  
+  // Lighten the color
+  r = Math.min(255, Math.round(r * 1.5))
+  g = Math.min(255, Math.round(g * 1.5))
+  b = Math.min(255, Math.round(b * 1.5))
+  
+  return `rgb(${r}, ${g}, ${b})`
 }
 </script>
