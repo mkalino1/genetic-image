@@ -22,8 +22,5 @@
     "vue": "^3.5.17",
     "vue-router": "^4.5.1",
     "vue3-apexcharts": "^1.8.0"
-  },
-  "devDependencies": {
-    "wrangler": "^4.28.1"
   }
 }
