@@ -5,8 +5,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@nuxt/test-utils',
-    '@nuxthub/core'
+    '@nuxt/test-utils'
   ],
   css: ['~/assets/main.css'],
   routeRules: {
