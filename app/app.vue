@@ -15,6 +15,10 @@
           <div class="bg-gray-800 rounded-lg p-4">
             <ImageUploader @image-uploaded="setTargetImage" />
           </div>
+          <div class="bg-gray-800 rounded-lg p-4">
+            <p>{{ text }}</p>
+            <UButton class="mt-4" @click="describeImage">Describe this image</UButton>
+          </div>
         </div>
 
         <!-- Evolved Image Section -->
@@ -61,17 +65,11 @@
           </div>
           <div>
             <label class="block text-sm font-medium mb-2">Crossover Strategy</label>
-            <USelect 
-              v-model="evolutionParams.crossoverStrategy"
-              :items="crossoverStrategyOptions"
-            />
+            <USelect v-model="evolutionParams.crossoverStrategy" :items="crossoverStrategyOptions" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-2">Shape Type</label>
-            <USelect 
-              v-model="shapeMode"
-              :items="shapeTypOptions"
-            />
+            <USelect v-model="shapeMode" :items="shapeTypOptions" />
           </div>
         </div>
       </div>
@@ -86,17 +84,17 @@
 
 <script setup lang="ts">
 // Define crossover strategy options for the template
-const crossoverStrategyOptions: {label: string, value: CrossoverStrategy}[] = [
-  { label: 'Uniform', value: 'uniform'},
-  { label: 'Single Point', value: 'single_point'},
-  { label: 'Two Point', value: 'two_point'},
-  { label: 'Randomized', value: 'randomized'},
-  { label: 'Adaptive', value: 'adaptive'}
+const crossoverStrategyOptions: { label: string, value: CrossoverStrategy }[] = [
+  { label: 'Uniform', value: 'uniform' },
+  { label: 'Single Point', value: 'single_point' },
+  { label: 'Two Point', value: 'two_point' },
+  { label: 'Randomized', value: 'randomized' },
+  { label: 'Adaptive', value: 'adaptive' }
 ]
 
-const shapeTypOptions: {label: string, value: string}[] = [
-  { label: 'Fixed Shapes', value: 'fixed'},
-  { label: 'Random Polygons', value: 'polygon'}
+const shapeTypOptions: { label: string, value: string }[] = [
+  { label: 'Fixed Shapes', value: 'fixed' },
+  { label: 'Random Polygons', value: 'polygon' }
 ]
 
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
@@ -106,6 +104,18 @@ const shapeMode = ref<'fixed' | 'polygon'>('fixed')
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
 const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
+
+const text = ref('');
+async function describeImage() {
+  const blob = await fetch(targetImage.value).then(res => res.blob())
+  // Create the form data
+  const form = new FormData()
+  form.append('drawing', new File([blob], `drawing.jpg`, { type: 'image/jpeg' }))
+
+  await $fetch('/api/describe', { method: 'POST', body: form })
+    .then((val) => text.value = val)
+    .catch((err) => text.value = err)
+}
 
 // Metrics
 const generation = ref(0)
@@ -161,7 +171,7 @@ const evolve = async () => {
     bestFitness.value = geneticAlgorithm.bestFitness
     variance.value = geneticAlgorithm.variance
     adaptiveMutationRate.value = geneticAlgorithm.adaptiveMutationRate
-    
+
     // Add fitness data to history for chart
     fitnessHistory.value.push({
       generation: geneticAlgorithm.generation,
@@ -195,23 +205,23 @@ const setTargetImage = async (imageData: string) => {
 const calculateAverageColor = (imageData: ImageData): string => {
   const data = imageData.data
   let r = 0, g = 0, b = 0, count = 0
-  
+
   for (let i = 0; i < data.length; i += 4) {
     r += data[i]!
     g += data[i + 1]!
     b += data[i + 2]!
     count++
   }
-  
+
   r = Math.round(r / count)
   g = Math.round(g / count)
   b = Math.round(b / count)
-  
+
   // Lighten the color
   r = Math.min(255, Math.round(r * 1.5))
   g = Math.min(255, Math.round(g * 1.5))
   b = Math.min(255, Math.round(b * 1.5))
-  
+
   return `rgb(${r}, ${g}, ${b})`
 }
 </script>
