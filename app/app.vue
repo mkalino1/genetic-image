@@ -16,7 +16,7 @@
             <ImageUploader @image-uploaded="setTargetImage" />
           </div>
           <div class="bg-gray-800 rounded-lg p-4">
-            <p>{{ text }}</p>
+            <p>{{ description }}</p>
             <UButton class="mt-4" @click="describeImage">Describe this image</UButton>
           </div>
         </div>
@@ -74,6 +74,12 @@
         </div>
       </div>
 
+      <div class="mt-8 bg-gray-800 rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Decompressed Image</h2>
+        <UButton @click="decompressImage">Decompress Evolved Image</UButton>
+        <img v-if="decompressedImage" :src="decompressedImage" alt="Decompressed Evolved Image" class="mt-4 rounded-lg">
+      </div>
+
       <!-- Fitness Chart -->
       <div class="mt-8">
         <FitnessChart :fitness-data="fitnessHistory" />
@@ -98,23 +104,44 @@ const shapeTypOptions: { label: string, value: string }[] = [
 ]
 
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
+const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
 const isEvolving = ref(false)
 const shapeMode = ref<'fixed' | 'polygon'>('fixed')
 
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
-const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
 
-const text = ref('');
+const description = ref('');
 async function describeImage() {
   const blob = await fetch(targetImage.value).then(res => res.blob())
-  // Create the form data
   const form = new FormData()
-  form.append('drawing', new File([blob], `drawing.jpg`, { type: 'image/jpeg' }))
+  form.append('image', blob, 'image.jpg')
 
   await $fetch('/api/describe', { method: 'POST', body: form })
-    .then((val) => text.value = val)
-    .catch((err) => text.value = err)
+    .then((val) => description.value = val)
+    .catch((err) => description.value = err)
+}
+
+const decompressedImage = ref('');
+async function decompressImage() {
+  if (description.value === '') {
+    console.warn('Image not described yet. Please describe the image before attempting to decompress.')
+    return
+  }
+  if (decompressedImage.value) {
+    URL.revokeObjectURL(decompressedImage.value);
+  }
+
+  const blob = await new Promise((resolve) => canvas.value?.toBlob(resolve, 'image/jpeg', 0.7));
+  const form = new FormData()
+  form.append('image', blob as Blob, 'evolved.jpg')
+  form.append('description', description.value)
+  await $fetch('/api/decompress', { method: 'POST', body: form, responseType: 'blob' })
+    .then((blob) => {
+      const imageUrl = URL.createObjectURL(blob as Blob);
+      decompressedImage.value = imageUrl;
+    })
+    .catch((err) => console.error('Decompression error:', err));
 }
 
 // Metrics

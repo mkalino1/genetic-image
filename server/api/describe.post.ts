@@ -3,25 +3,22 @@ import { generateText } from 'ai';
 export default defineEventHandler(async (event) => {
 
   const form = await readFormData(event)
-  const drawing = form.get('drawing') as File
-  const drawingArrayBuffer = await drawing.arrayBuffer()
+  const image = form.get('image') as File
+  const imageArrayBuffer = await image.arrayBuffer()
 
-  const { text, usage, finishReason } = await generateText({
+  const { text } = await generateText({
     model: 'openai/gpt-5-nano',
     prompt: [{
       role: 'user',
-      content: 'Describe this picture.',
+      content: 'Describe this picture accurately. It will be used to regenerate the image later, so try to be as detailed as possible.',
     }, {
       role: 'user',
       content: [{
         type: 'image',
-        image: drawingArrayBuffer,
+        image: imageArrayBuffer,
       }],
     }],
   })
-
-  // console.log(usage);
-  // console.log(finishReason);
 
   return text
 })
