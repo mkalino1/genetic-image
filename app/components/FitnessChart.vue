@@ -1,5 +1,5 @@
 <template>
-  <div class="chart-container bg-gray-800 rounded-lg p-4 min-h-[350px]">
+  <div class="chart-container bg-neutral-800 rounded-lg p-4 min-h-[350px]">
     <h3 class="text-lg font-semibold mb-4">Fitness Evolution</h3>
     <apexchart 
       type="line" 
