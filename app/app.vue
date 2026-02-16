@@ -1,10 +1,11 @@
 <template>
-  <div class="min-h-screen bg-neutral-900 t-white p-4">
+  <div class="min-h-screen bg-neutral-300 dark:bg-neutral-900 p-4">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <header class="text-center mb-8">
+      <header class="text-center mb-8 relative">
         <h1 class="text-4xl font-bold mb-2">Genetic Image Evolution</h1>
-        <p class="text-neutral-400">Evolve colorful shapes to match your image</p>
+        <p class="text-neutral-600 dark:text-neutral-400">Evolve colorful shapes to match your image</p>
+        <UColorModeButton class="absolute right-1 top-2"/>
       </header>
 
       <!-- Main Content -->
@@ -12,10 +13,10 @@
         <!-- Target Image Section -->
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Target Image</h2>
-          <div class="bg-neutral-800 rounded-lg p-4">
+          <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
             <ImageUploader @image-uploaded="setTargetImage" />
           </div>
-          <div class="bg-neutral-800 rounded-lg p-4">
+          <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
             <p>{{ description }}</p>
             <UButton class="mt-4" @click="describeImage">Describe this image</UButton>
           </div>
@@ -24,7 +25,7 @@
         <!-- Evolved Image Section -->
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Evolved Image</h2>
-          <div class="bg-neutral-800 rounded-lg p-4">
+          <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
             <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg blur-xs" :style="{ backgroundColor: canvasBackgroundColor }" />
             <div class="mt-4 space-y-3">
               <MetricsDisplay
@@ -48,7 +49,7 @@
       </div>
 
       <!-- Controls Section -->
-      <div class="mt-8 bg-neutral-800 rounded-lg p-6">
+      <div class="mt-8 bg-neutral-200 dark:bg-neutral-800 rounded-lg p-6">
         <h2 class="text-2xl font-semibold mb-4">Evolution Parameters</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
@@ -74,7 +75,7 @@
         </div>
       </div>
 
-      <div class="mt-8 bg-neutral-800 rounded-lg p-6">
+      <div class="mt-8 bg-neutral-200 dark:bg-neutral-800 rounded-lg p-6">
         <h2 class="text-xl font-semibold mb-4">Decompressed Image</h2>
         <UButton @click="decompressImage">Decompress Evolved Image</UButton>
         <img v-if="decompressedImage" :src="decompressedImage" alt="Decompressed Evolved Image" class="mt-4 rounded-lg">

@@ -3,7 +3,7 @@
     <!-- Upload Area -->
     <div
       v-if="!previewUrl"
-      class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors cursor-pointer"
+      class="border-2 border-dashed border-gray-400 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors cursor-pointer"
       @click="triggerFileInput"
       @dragover.prevent
       @drop.prevent="handleDrop"

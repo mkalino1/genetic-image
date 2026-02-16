@@ -1,18 +1,18 @@
 <template>
   <div class="grid grid-cols-2 gap-4 text-sm">
-    <div class="bg-neutral-700 rounded p-2">
+    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
       <div class="text-neutral-400">Generation</div>
       <div class="font-mono">{{ generation }}</div>
     </div>
-    <div class="bg-neutral-700 rounded p-2">
+    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
       <div class="text-neutral-400">Best Fitness</div>
       <div class="font-mono">{{ bestFitness.toFixed(6) }}</div>
     </div>
-    <div class="bg-neutral-700 rounded p-2">
+    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
       <div class="text-neutral-400">Variance</div>
       <div class="font-mono">{{ variance.toFixed(10) }}</div>
     </div>
-    <div class="bg-neutral-700 rounded p-2">
+    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
       <div class="text-neutral-400">Adaptive Mutation Rate</div>
       <div class="font-mono">{{ adaptiveMutationRate.toFixed(4) }}</div>
     </div>
