@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: '2026-03-01',
   devtools: { enabled: true },
   modules: [
     '@nuxt/eslint',
@@ -8,7 +8,9 @@ export default defineNuxtConfig({
     '@nuxt/test-utils'
   ],
   css: ['~/assets/main.css'],
-  routeRules: {
-    '/': { prerender: true }
+  nitro: {
+    prerender: {
+      routes: ['/']
+    }
   }
 })
