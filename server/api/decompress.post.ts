@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     ],
   }).then((result) => {
     const generatedImage = result.files[0]
-    imagaData = generatedImage.uint8Array
+    imagaData = generatedImage?.uint8Array || Uint8Array.from([])
   })
 
   setResponseHeader(event, 'Content-Type', 'image/jpeg')
