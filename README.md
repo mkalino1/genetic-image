@@ -1,21 +1,21 @@
 # Genetic Image Compression
 
-A web application that uses genetic algorithm to recreate target images using evolving geometric shapes, functioning as an ultra-light vector graphics approximation.
+A web application that uses genetic algorithm to recreate target images using evolving geometric shapes, functioning as an ultra-light vector graphics compression.
 
-Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation.
+Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation. After compression by the genetic algorithm and description by a ChatGPT-5-nano, the result can be recreated by a Gemini-2.5-flash-image.
 
-After compression by the genetic algorithm and description by a ChatGPT-5-nano, the result can be recreated by a Gemini-2.5-flash-image.
+This enables ultra-light image compression into vector polygons + description, which can then be decompressed into an image resembling the original.
 
-This enables ultra-light image compression into vector polygons and description, which can then be decompressed into an image resembling the original.
+[Try it here!](https://polyzip.vercel.app)
 
-[Try it here](https://polyzip.vercel.app)
+![App Flow](/public/flow.png)
 
 ## Features
 
 - **Real-time evolution** with live visual updates
+- Custom from scratch **genetic algorithm** implementation
 - **Configurable parameters** (population size, mutation rate, shapes per individual)
 - **Multiple shape types** (circles/rectangles/triangles or random polygons)
-- Custom from scratch **genetic algorithm** implementation
 - **Delta E** color distance for fitness function
 - **Web Workers** for parallel processing
 - HTML5 **Canvas** for rendering
@@ -41,3 +41,8 @@ Here's the step-by-step summary of my algorithm:
 - **Mutation** : A dash of randomness introduces new variations, keeping evolution fresh and innovative.
 - **Elitism** : The top performers are preserved across generations, ensuring the best traits stick around.
 
+## Why Delta E?
+
+Delta E measures perceptual color difference the way human eyes perceive it, rather than treating RGB values as simple 3D coordinates. Euclidean distance in RGB space doesn't account for the fact that our eyes are more sensitive to certain color changes than others. For example, we notice green shifts more readily than blue ones. By using Delta E, the fitness function produces more visually accurate results that better reflect how closely the evolved shapes match the target image from a human perspective.
+
+![Delta E vs Euclidean Distance](/public/delta_e.png)
