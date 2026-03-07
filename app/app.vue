@@ -62,6 +62,8 @@
 </template>
 
 <script setup lang="ts">
+const toast = useToast()
+
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
 const isEvolving = ref(false)
@@ -73,6 +75,14 @@ const description = ref('');
 const isDescribing = ref(false);
 
 async function describeImage() {
+  if (!targetImage.value) {
+    toast.add({
+      title: 'Missing target image',
+      icon: 'lucide:alert-triangle',
+      description: 'Please upload a target image before attempting to describe it.'
+    })
+    return
+  }
   isDescribing.value = true;
   try {
     const blob = await fetch(targetImage.value).then(res => res.blob())
@@ -93,7 +103,11 @@ const isDecompressing = ref(false)
 
 async function decompressImage() {
   if (description.value === '') {
-    console.warn('Image not described yet. Please describe the image before attempting to decompress.')
+    toast.add({
+      title: 'Missing description',
+      icon: 'lucide:alert-triangle',
+      description: 'Please describe the image before attempting to decompress.'
+    })
     return
   }
   if (decompressedImage.value) {
@@ -110,7 +124,11 @@ async function decompressImage() {
     const imageUrl = URL.createObjectURL(result as Blob)
     decompressedImage.value = imageUrl
   } catch (err) {
-    console.error('Decompression error:', err)
+    toast.add({
+      title: 'Decompression error',
+      icon: 'lucide:alert-triangle',
+      description: err instanceof Error ? err.message : String(err)
+    })
   } finally {
     isDecompressing.value = false
   }
@@ -135,7 +153,11 @@ let animationId: number | null = null
 
 const startEvolution = async () => {
   if (!targetImage.value) {
-    alert('Please upload a target image first!')
+    toast.add({
+      title: 'Missing target image',
+      icon: 'lucide:alert-triangle',
+      description: 'Please upload a target image before starting the evolution.'
+    })
     return
   }
   isEvolving.value = true
