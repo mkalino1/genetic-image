@@ -7,56 +7,55 @@
         <header class="text-center mb-8 relative">
           <h1 class="text-4xl font-bold mb-2">Genetic Image Evolution</h1>
           <p class="text-neutral-600 dark:text-neutral-400">Evolve colorful shapes to match your image</p>
-          <UColorModeButton class="absolute right-1 top-2"/>
+          <UColorModeButton class="absolute right-1 top-2" />
         </header>
-  
+
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <!-- Target Image Section -->
+
           <div class="space-y-4">
             <h2 class="text-2xl font-semibold">Target Image</h2>
             <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
               <ImageUploader @image-uploaded="setTargetImage" />
             </div>
-            <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
-              <p>{{ description }}</p>
-              <UButton class="mt-4 mr-4" @click="describeImage">Describe this image</UButton>
-              <EvolutionParameters v-model="evolutionParams"/>
-            </div>
           </div>
-  
-          <!-- Evolved Image Section -->
+
           <div class="space-y-4">
             <h2 class="text-2xl font-semibold">Evolved Image</h2>
             <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
               <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg blur-xs" :style="{ backgroundColor: canvasBackgroundColor }" />
               <div class="mt-4 space-y-3">
-                <MetricsDisplay
-                  :generation="generation"
-                  :best-fitness="bestFitness"
-                  :variance="variance"
-                  :adaptive-mutation-rate="adaptiveMutationRate"
-                />
-                
+                <MetricsDisplay :generation="generation" :best-fitness="bestFitness" :variance="variance" :adaptive-mutation-rate="adaptiveMutationRate" />
                 <div class="flex gap-2">
                   <UButton :disabled="isEvolving" @click="startEvolution">
                     {{ isEvolving ? 'Evolving...' : 'Start Evolution' }}
                   </UButton>
-                  <UButton :disabled="!isEvolving" color="secondary" @click="stopEvolution">
+                  <UButton :disabled="!isEvolving" color="secondary" @click="stopEvolution" >
                     Stop
                   </UButton>
+                  <EvolutionParameters v-model="evolutionParams" />
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="mt-8 bg-neutral-200 dark:bg-neutral-800 rounded-lg p-6">
-          <h2 class="text-xl font-semibold mb-4">Decompressed Image</h2>
-          <UButton @click="decompressImage">Decompress Evolved Image</UButton>
-          <img v-if="decompressedImage" :src="decompressedImage" alt="Decompressed Evolved Image" class="mt-4 rounded-lg">
+          <div class="space-y-4">
+            <h2 class="text-2xl font-semibold">Description</h2>
+            <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
+              <p v-if="description" class="mb-2">{{ description }}</p>
+              <UButton :loading="isDescribing" @click="describeImage">Describe original image</UButton>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <h2 class="text-2xl font-semibold">Recreated Image</h2>
+            <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
+              <UButton :loading="isDecompressing" @click="decompressImage">Decompress Evolved Image</UButton>
+              <img v-if="decompressedImage" :src="decompressedImage" alt="Decompressed Evolved Image" class="mt-4 rounded-lg">
+            </div>
+          </div>
+
         </div>
-  
       </div>
     </div>
   </UApp>
@@ -71,36 +70,50 @@ const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
 
 const description = ref('');
-async function describeImage() {
-  const blob = await fetch(targetImage.value).then(res => res.blob())
-  const form = new FormData()
-  form.append('image', blob, 'image.jpg')
+const isDescribing = ref(false);
 
-  await $fetch('/api/describe', { method: 'POST', body: form })
-    .then((val) => description.value = val)
-    .catch((err) => description.value = err)
+async function describeImage() {
+  isDescribing.value = true;
+  try {
+    const blob = await fetch(targetImage.value).then(res => res.blob())
+    const form = new FormData()
+    form.append('image', blob, 'image.jpg')
+
+    const result = await $fetch('/api/describe', { method: 'POST', body: form })
+    description.value = result
+  } catch (err) {
+    description.value = err instanceof Error ? err.message : String(err)
+  } finally {
+    isDescribing.value = false;
+  }
 }
 
-const decompressedImage = ref('');
+const decompressedImage = ref('')
+const isDecompressing = ref(false)
+
 async function decompressImage() {
   if (description.value === '') {
     console.warn('Image not described yet. Please describe the image before attempting to decompress.')
     return
   }
   if (decompressedImage.value) {
-    URL.revokeObjectURL(decompressedImage.value);
+    URL.revokeObjectURL(decompressedImage.value)
   }
 
-  const blob = await new Promise((resolve) => canvas.value?.toBlob(resolve, 'image/jpeg', 0.7));
-  const form = new FormData()
-  form.append('image', blob as Blob, 'evolved.jpg')
-  form.append('description', description.value)
-  await $fetch('/api/decompress', { method: 'POST', body: form, responseType: 'blob' })
-    .then((blob) => {
-      const imageUrl = URL.createObjectURL(blob as Blob);
-      decompressedImage.value = imageUrl;
-    })
-    .catch((err) => console.error('Decompression error:', err));
+  isDecompressing.value = true
+  try {
+    const blob = await new Promise((resolve) => canvas.value?.toBlob(resolve, 'image/jpeg', 0.7))
+    const form = new FormData()
+    form.append('image', blob as Blob, 'evolved.jpg')
+    form.append('description', description.value)
+    const result = await $fetch('/api/decompress', { method: 'POST', body: form, responseType: 'blob' })
+    const imageUrl = URL.createObjectURL(result as Blob)
+    decompressedImage.value = imageUrl
+  } catch (err) {
+    console.error('Decompression error:', err)
+  } finally {
+    isDecompressing.value = false
+  }
 }
 
 // Metrics

@@ -3,7 +3,7 @@
     <!-- Upload Area -->
     <div
       v-if="!previewUrl"
-      class="border-2 border-dashed border-gray-400 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors cursor-pointer"
+      class="border-2 aspect-square grid place-items-center border-dashed border-neutral-400 dark:border-neutral-600 rounded-lg p-6 text-center hover:border-neutral-500 transition-colors cursor-pointer"
       @click="triggerFileInput"
       @dragover.prevent
       @drop.prevent="handleDrop"
@@ -31,12 +31,6 @@
 
     <!-- Preview -->
     <div v-if="previewUrl" class="space-y-2">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium">Preview</h3>
-        <UButton size="sm" color="error" @click="clearImage">
-          Remove
-        </UButton>
-      </div>
       <div class="relative">
         <img 
           :src="previewUrl" 
@@ -46,6 +40,11 @@
         <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
           {{ imageInfo }}
         </div>
+      </div>
+      <div class="flex items-center justify-between">
+        <UButton size="sm" color="error" @click="clearImage">
+          Remove
+        </UButton>
       </div>
     </div>
 
