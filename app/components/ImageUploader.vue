@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Upload Area -->
     <div
       v-if="!previewUrl"
       class="border-2 aspect-square grid place-items-center border-dashed border-neutral-400 dark:border-neutral-600 rounded-lg p-6 text-center hover:border-neutral-500 transition-colors cursor-pointer"
@@ -20,7 +19,6 @@
       </div>
     </div>
 
-    <!-- Hidden file input -->
     <input
       ref="fileInput"
       type="file"
@@ -29,7 +27,6 @@
       @change="handleFileSelect"
     >
 
-    <!-- Preview -->
     <div v-if="previewUrl" class="space-y-2">
       <div class="relative">
         <img 
@@ -48,7 +45,6 @@
       </div>
     </div>
 
-    <!-- Error message -->
     <div v-if="error" class="text-red-400 text-sm bg-red-900 bg-opacity-20 p-3 rounded">
       {{ error }}
     </div>

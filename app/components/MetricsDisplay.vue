@@ -1,31 +1,29 @@
 <template>
-  <div class="grid grid-cols-4 gap-4 text-sm">
+  <div class="flex flex-wrap gap-2 text-sm">
     <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
       <div class="text-neutral-400">Generation</div>
       <div class="font-mono">{{ generation }}</div>
     </div>
     <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
-      <div class="text-neutral-400">Best Fitness</div>
-      <div class="font-mono">{{ bestFitness.toFixed(5) }}</div>
+      <div class="text-neutral-400">Fitness</div>
+      <div class="font-mono">{{ bestFitness.toFixed(4) }}</div>
     </div>
     <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
       <div class="text-neutral-400">Variance</div>
-      <div class="font-mono">{{ variance.toFixed(5) }}</div>
+      <div class="font-mono">{{ variance.toFixed(4) }}</div>
     </div>
     <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
-      <div class="text-neutral-400">Adaptive Rate</div>
-      <div class="font-mono">{{ adaptiveMutationRate.toFixed(5) }}</div>
+      <div class="text-neutral-400">Adaptive</div>
+      <div class="font-mono">{{ adaptiveMutationRate.toFixed(4) }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-interface Props {
+defineProps<{
   generation: number
   bestFitness: number
   variance: number
   adaptiveMutationRate: number
-}
-
-defineProps<Props>()
+}>()
 </script> 

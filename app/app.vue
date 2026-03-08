@@ -26,7 +26,7 @@
               <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg blur-xs" :style="{ backgroundColor: canvasBackgroundColor }" />
               <div class="mt-4 space-y-3">
                 <MetricsDisplay :generation="generation" :best-fitness="bestFitness" :variance="variance" :adaptive-mutation-rate="adaptiveMutationRate" />
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                   <UButton :disabled="isEvolving" @click="startEvolution">
                     {{ isEvolving ? 'Evolving...' : 'Start Evolution' }}
                   </UButton>
