@@ -1,20 +1,24 @@
 <template>
-  <div class="flex flex-wrap gap-2 text-sm">
-    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
-      <div class="text-neutral-400">Generation</div>
-      <div class="font-mono">{{ generation }}</div>
+  <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div class="rounded-lg bg-neutral-50 p-3 dark:bg-neutral-950">
+      <div class="text-xs text-neutral-500">Generation</div>
+      <div class="mt-1 font-mono text-lg font-semibold">{{ generation }}</div>
+      <p class="mt-1 text-xs text-neutral-500">One iteration of the algorithm.</p>
     </div>
-    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
-      <div class="text-neutral-400">Fitness</div>
-      <div class="font-mono">{{ bestFitness.toFixed(4) }}</div>
+    <div class="rounded-lg bg-neutral-50 p-3 dark:bg-neutral-950">
+      <div class="text-xs text-neutral-500">Fitness</div>
+      <div class="mt-1 font-mono text-lg font-semibold">{{ bestFitness.toFixed(4) }}</div>
+      <p class="mt-1 text-xs text-neutral-500">A higher score means a closer match.</p>
     </div>
-    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
-      <div class="text-neutral-400">Variance</div>
-      <div class="font-mono">{{ variance.toFixed(4) }}</div>
+    <div class="rounded-lg bg-neutral-50 p-3 dark:bg-neutral-950">
+      <div class="text-xs text-neutral-500">Diversity</div>
+      <div class="mt-1 font-mono text-lg font-semibold">{{ variance.toFixed(4) }}</div>
+      <p class="mt-1 text-xs text-neutral-500">How varied the population's scores are.</p>
     </div>
-    <div class="bg-neutral-100 dark:bg-neutral-700 rounded p-2">
-      <div class="text-neutral-400">Adaptive</div>
-      <div class="font-mono">{{ adaptiveMutationRate.toFixed(4) }}</div>
+    <div class="rounded-lg bg-neutral-50 p-3 dark:bg-neutral-950">
+      <div class="text-xs text-neutral-500">Mutation rate</div>
+      <div class="mt-1 font-mono text-lg font-semibold">{{ (adaptiveMutationRate * 100).toFixed(1) }}%</div>
+      <p class="mt-1 text-xs text-neutral-500">The algorithm adjusts this automatically.</p>
     </div>
   </div>
 </template>

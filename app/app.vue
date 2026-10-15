@@ -1,61 +1,139 @@
 <template>
   <UApp>
-
-    <div class="min-h-screen bg-neutral-300 dark:bg-neutral-900 p-4">
-      <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <header class="text-center mb-8 relative">
-          <h1 class="text-4xl font-bold mb-2">Genetic Image Evolution</h1>
-          <p class="text-neutral-600 dark:text-neutral-400">Evolve colorful shapes to match your image</p>
-          <UColorModeButton class="absolute right-1 top-2" />
+    <div class="min-h-screen bg-neutral-50 px-4 py-6 dark:bg-neutral-950 sm:px-6 lg:py-10">
+      <div class="mx-auto max-w-6xl space-y-8">
+        <header class="flex items-start justify-between gap-4">
+          <div>
+            <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">A genetic algorithm experiment</p>
+            <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Watch an image emerge from shapes</h1>
+            <p class="mt-3 max-w-3xl text-neutral-600 dark:text-neutral-400">
+              Starting with random shapes, the algorithm gradually evolves an image that looks more like your reference.
+              Upload an image and watch each generation bring it closer.
+            </p>
+          </div>
+          <UColorModeButton />
         </header>
 
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Steps">
+          <li
+            v-for="(step, index) in workflowSteps"
+            :key="step.title"
+            class="flex items-center gap-3 rounded-xl border p-4"
+            :class="step.done ? 'border-primary/40 bg-primary/5' : 'border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900'"
+          >
+            <span
+              class="grid size-8 shrink-0 place-items-center rounded-full text-sm font-semibold"
+              :class="step.done ? 'bg-primary text-white' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'"
+            >{{ index + 1 }}</span>
+            <span>
+              <span class="block text-sm font-semibold">{{ step.title }}</span>
+              <span class="block text-xs text-neutral-500">{{ step.description }}</span>
+            </span>
+          </li>
+        </ol>
 
-          <div class="space-y-4">
-            <h2 class="text-2xl font-semibold">Target Image</h2>
-            <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
+        <main class="space-y-8">
+          <section class="grid gap-6 lg:grid-cols-2" aria-label="Image evolution">
+            <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:p-6">
+              <div class="mb-4">
+                <p class="text-sm font-medium text-primary">Step 1</p>
+                <h2 class="mt-1 text-xl font-semibold">Choose an image</h2>
+                <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The algorithm will use this image as a reference for matching the shapes.</p>
+              </div>
               <ImageUploader @image-uploaded="setTargetImage" />
             </div>
-          </div>
 
-          <div class="space-y-4">
-            <h2 class="text-2xl font-semibold">Evolved Image</h2>
-            <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
-              <canvas ref="canvas" width="160" height="160" class="w-full rounded-lg blur-xs" :style="{ backgroundColor: canvasBackgroundColor }" />
-              <div class="mt-4 space-y-3">
-                <MetricsDisplay :generation="generation" :best-fitness="bestFitness" :variance="variance" :adaptive-mutation-rate="adaptiveMutationRate" />
-                <div class="flex flex-wrap gap-2">
-                  <UButton :disabled="isEvolving" @click="startEvolution">
-                    {{ isEvolving ? 'Evolving...' : 'Start Evolution' }}
+            <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:p-6">
+              <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-medium text-primary">Step 2</p>
+                  <h2 class="mt-1 text-xl font-semibold">Watch it evolve</h2>
+                  <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The best approximation from each generation.</p>
+                </div>
+                <span class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200" role="status">
+                  {{ evolutionStatus }}
+                </span>
+              </div>
+              <div class="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950">
+                <canvas
+                  ref="canvas"
+                  width="160"
+                  height="160"
+                  class="mx-auto aspect-square w-full max-w-md"
+                  :style="{ backgroundColor: canvasBackgroundColor }"
+                  aria-label="Current evolution result"
+                />
+                <div v-if="generation === 0" class="pointer-events-none absolute inset-0 grid place-items-center p-6 text-center text-sm text-neutral-600 dark:text-neutral-300">
+                  {{ hasTargetImage ? 'Start the evolution to see the image take shape here.' : 'Upload a reference image to get started.' }}
+                </div>
+              </div>
+              <div class="mt-5 space-y-4">
+                <MetricsDisplay
+                  :generation="generation"
+                  :best-fitness="bestFitness"
+                  :variance="variance"
+                  :adaptive-mutation-rate="adaptiveMutationRate"
+                />
+                <div class="flex flex-wrap items-center gap-2">
+                  <UButton :disabled="!hasTargetImage || isEvolving" icon="lucide:play" @click="startEvolution">
+                    {{ isEvolving ? 'Evolving…' : generation > 0 ? 'Restart evolution' : 'Start evolution' }}
                   </UButton>
-                  <UButton :disabled="!isEvolving" color="secondary" @click="stopEvolution" >
+                  <UButton :disabled="!isEvolving" color="neutral" variant="outline" icon="lucide:square" @click="stopEvolution">
                     Stop
                   </UButton>
                   <EvolutionParameters v-model="evolutionParams" />
                 </div>
+                <p v-if="!hasTargetImage" class="text-sm text-neutral-500">Upload an image to get started.</p>
+                <p v-else-if="isEvolving" class="text-sm text-neutral-500">You can stop the evolution at any time.</p>
+                <p v-else class="text-sm text-neutral-500">Keep the default settings if you are not sure what to change.</p>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="space-y-4">
-            <h2 class="text-2xl font-semibold">Description</h2>
-            <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
-              <p v-if="description" class="mb-2">{{ description }}</p>
-              <UButton :loading="isDescribing" @click="describeImage">Describe original image</UButton>
+          <section class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:p-6" aria-label="AI image recreation">
+            <div class="mb-5">
+              <p class="text-sm font-medium text-primary">Steps 3 and 4 · optional</p>
+              <h2 class="mt-1 text-xl font-semibold">Ask AI to recreate the image</h2>
+              <p class="mt-1 max-w-3xl text-sm text-neutral-600 dark:text-neutral-400">
+                First, AI will describe the original, then recreate the image from that description and the evolution result.
+              </p>
             </div>
-          </div>
-
-          <div class="space-y-4">
-            <h2 class="text-2xl font-semibold">Recreated Image</h2>
-            <div class="bg-neutral-200 dark:bg-neutral-800 rounded-lg p-4">
-              <UButton :loading="isDecompressing" @click="decompressImage">Decompress Evolved Image</UButton>
-              <img v-if="decompressedImage" :src="decompressedImage" alt="Decompressed Evolved Image" class="mt-4 rounded-lg">
+            <div class="grid gap-6 lg:grid-cols-2">
+              <div class="rounded-xl bg-neutral-50 p-4 dark:bg-neutral-950">
+                <h3 class="font-semibold">3. Describe the original</h3>
+                <p class="mt-1 min-h-10 text-sm text-neutral-600 dark:text-neutral-400">
+                  {{ description || 'AI will create a text description to use in the next step.' }}
+                </p>
+                <UButton class="mt-4" :disabled="!hasTargetImage || isDescribing" :loading="isDescribing" icon="lucide:sparkles" @click="describeImage">
+                  {{ isDescribing ? 'Creating description…' : 'Describe image' }}
+                </UButton>
+              </div>
+              <div class="rounded-xl bg-neutral-50 p-4 dark:bg-neutral-950">
+                <h3 class="font-semibold">4. Recreate the image</h3>
+                <p class="mt-1 min-h-10 text-sm text-neutral-600 dark:text-neutral-400">
+                  {{ decompressedImage ? 'Done — compare the result with your reference image.' : 'Requires a description and at least one evolution generation.' }}
+                </p>
+                <UButton
+                  class="mt-4"
+                  :disabled="!canDecompress"
+                  :loading="isDecompressing"
+                  color="neutral"
+                  variant="outline"
+                  icon="lucide:image"
+                  @click="decompressImage"
+                >
+                  {{ isDecompressing ? 'Generating image…' : 'Recreate image with AI' }}
+                </UButton>
+              </div>
             </div>
-          </div>
-
-        </div>
+            <img
+              v-if="decompressedImage"
+              :src="decompressedImage"
+              alt="Image generated by AI from the description and evolution result"
+              class="mt-6 max-h-[32rem] w-full rounded-xl object-contain"
+            >
+          </section>
+        </main>
       </div>
     </div>
   </UApp>
@@ -71,19 +149,19 @@ const isEvolving = ref(false)
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
 
-const description = ref('');
-const isDescribing = ref(false);
+const description = ref('')
+const isDescribing = ref(false)
 
 async function describeImage() {
-  if (!targetImage.value) {
+  if (!hasTargetImage.value || isDescribing.value) {
     toast.add({
-      title: 'Missing target image',
+      title: 'Choose an image first',
       icon: 'lucide:alert-triangle',
-      description: 'Please upload a target image before attempting to describe it.'
+      description: 'Upload the image you want to describe.'
     })
     return
   }
-  isDescribing.value = true;
+  isDescribing.value = true
   try {
     const blob = await fetch(targetImage.value).then(res => res.blob())
     const form = new FormData()
@@ -92,9 +170,13 @@ async function describeImage() {
     const result = await $fetch('/api/describe', { method: 'POST', body: form })
     description.value = result
   } catch (err) {
-    description.value = err instanceof Error ? err.message : String(err)
+    toast.add({
+      title: 'Could not describe image',
+      icon: 'lucide:alert-triangle',
+      description: err instanceof Error ? err.message : String(err)
+    })
   } finally {
-    isDescribing.value = false;
+    isDescribing.value = false
   }
 }
 
@@ -102,11 +184,11 @@ const decompressedImage = ref('')
 const isDecompressing = ref(false)
 
 async function decompressImage() {
-  if (description.value === '') {
+  if (!canDecompress.value) {
     toast.add({
-      title: 'Missing description',
+      title: 'Missing information',
       icon: 'lucide:alert-triangle',
-      description: 'Please describe the image before attempting to decompress.'
+      description: 'Upload an image, start the evolution, and create a description first.'
     })
     return
   }
@@ -116,16 +198,23 @@ async function decompressImage() {
 
   isDecompressing.value = true
   try {
-    const blob = await new Promise((resolve) => canvas.value?.toBlob(resolve, 'image/jpeg', 0.7))
+    const evolvedCanvas = canvas.value
+    if (!evolvedCanvas) {
+      throw new Error('Could not read the evolution result.')
+    }
+    const blob = await new Promise<Blob | null>((resolve) => evolvedCanvas.toBlob(resolve, 'image/jpeg', 0.7))
+    if (!blob) {
+      throw new Error('Could not prepare the image for recreation.')
+    }
     const form = new FormData()
-    form.append('image', blob as Blob, 'evolved.jpg')
+    form.append('image', blob, 'evolved.jpg')
     form.append('description', description.value)
     const result = await $fetch('/api/decompress', { method: 'POST', body: form, responseType: 'blob' })
     const imageUrl = URL.createObjectURL(result as Blob)
     decompressedImage.value = imageUrl
   } catch (err) {
     toast.add({
-      title: 'Decompression error',
+      title: 'Could not recreate image',
       icon: 'lucide:alert-triangle',
       description: err instanceof Error ? err.message : String(err)
     })
@@ -139,6 +228,26 @@ const generation = ref(0)
 const bestFitness = ref(0)
 const variance = ref(0)
 const adaptiveMutationRate = ref(0)
+const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
+const canDecompress = computed(() =>
+  hasTargetImage.value
+  && generation.value > 0
+  && description.value.trim() !== ''
+  && !isDescribing.value
+  && !isDecompressing.value
+)
+const evolutionStatus = computed(() => {
+  if (isEvolving.value) return 'Evolution in progress'
+  if (generation.value > 0) return 'Result available'
+  if (hasTargetImage.value) return 'Ready to start'
+  return 'Waiting for image'
+})
+const workflowSteps = computed(() => [
+  { title: 'Choose an image', description: 'Upload a picture', done: hasTargetImage.value },
+  { title: 'Start evolution', description: 'Match the shapes', done: generation.value > 0 },
+  { title: 'Create a description', description: 'Ask AI to describe it', done: description.value !== '' },
+  { title: 'Recreate the image', description: 'Create an AI-generated variation', done: decompressedImage.value !== '' }
+])
 
 const evolutionParams = reactive<EvolutionParams>({
   populationSize: 500,
@@ -152,18 +261,31 @@ let geneticAlgorithm: GeneticAlgorithm | null = null
 let animationId: number | null = null
 
 const startEvolution = async () => {
-  if (!targetImage.value) {
+  const imageData = targetImageData.value
+  const displayCanvas = canvas.value
+  if (!targetImage.value || !imageData || !displayCanvas || isEvolving.value) {
     toast.add({
-      title: 'Missing target image',
+      title: 'Could not start evolution',
       icon: 'lucide:alert-triangle',
-      description: 'Please upload a target image before starting the evolution.'
+      description: 'Upload an image and wait for it to finish processing.'
     })
     return
   }
-  isEvolving.value = true
-  // Update evolution params with current shape mode
-  geneticAlgorithm = new GeneticAlgorithm(canvas.value as HTMLCanvasElement, targetImageData.value!, evolutionParams)
-  evolve()
+  if (decompressedImage.value) {
+    URL.revokeObjectURL(decompressedImage.value)
+    decompressedImage.value = ''
+  }
+  try {
+    geneticAlgorithm = new GeneticAlgorithm(displayCanvas, imageData, evolutionParams)
+    isEvolving.value = true
+    evolve()
+  } catch (err) {
+    toast.add({
+      title: 'Could not start evolution',
+      icon: 'lucide:alert-triangle',
+      description: err instanceof Error ? err.message : String(err)
+    })
+  }
 }
 
 const stopEvolution = () => {
@@ -191,8 +313,27 @@ const evolve = async () => {
 }
 
 const setTargetImage = async (imageData: string) => {
-  if (imageData == '') canvasBackgroundColor.value = 'rgb(255, 255, 255)' // reset to white
+  stopEvolution()
+  targetImageData.value = null
+  generation.value = 0
+  bestFitness.value = 0
+  variance.value = 0
+  adaptiveMutationRate.value = 0
+  description.value = ''
+  if (decompressedImage.value) {
+    URL.revokeObjectURL(decompressedImage.value)
+    decompressedImage.value = ''
+  }
   targetImage.value = imageData
+  if (!imageData) {
+    canvasBackgroundColor.value = 'rgb(255, 255, 255)'
+    const displayCanvas = canvas.value
+    const context = displayCanvas?.getContext('2d')
+    if (displayCanvas && context) {
+      context.clearRect(0, 0, displayCanvas.width, displayCanvas.height)
+    }
+    return
+  }
   // Initialize offscreen target canvas
   const img = new window.Image()
   img.src = targetImage.value
