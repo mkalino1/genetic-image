@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   let imagaData = null;
 
   await generateText({
-    model: 'google/gemini-2.5-flash-image',
+    model: 'google/gemini-2.5-flash-image-preview',
     providerOptions: {
       google: { responseModalities: ['TEXT', 'IMAGE'] },
     },
@@ -32,6 +32,8 @@ export default defineEventHandler(async (event) => {
   }).then((result) => {
     const generatedImage = result.files[0]
     imagaData = generatedImage?.uint8Array || Uint8Array.from([])
+  }).catch((error) => {
+    console.error('Error generating image:', error)
   })
 
   setResponseHeader(event, 'Content-Type', 'image/jpeg')

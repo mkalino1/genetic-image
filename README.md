@@ -4,7 +4,7 @@ A web application that uses genetic algorithm to recreate target images using ev
 
 Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation. After compression by the genetic algorithm and description by a ChatGPT-5-nano, the result can be recreated by a Gemini-2.5-flash-image.
 
-This enables ultra-light image compression into vector polygons + description, which can then be decompressed into an image resembling the original.
+This enables ultra-light image compression into vector polygons + description, which can then be used to recreate an image resembling the original.
 
 [Try it here!](https://polyzip.vercel.app)
 
@@ -13,8 +13,8 @@ This enables ultra-light image compression into vector polygons + description, w
 ## Features
 
 - **Real-time evolution** with live visual updates
-- Custom from scratch **genetic algorithm** implementation
-- **Configurable parameters** (population size, mutation rate, shapes per individual)
+- Custom from scratch **genetic algorithm** implementation with **configurable parameters** (population size, mutation rate, shapes per individual)
+- **AI model integration** that describes the original image and uses that description and the evolved image to recreate it.
 - **Multiple shape types** (circles/rectangles/triangles or random polygons)
 - **Delta E** color distance for fitness function
 - **Web Workers** for parallel processing
@@ -22,11 +22,11 @@ This enables ultra-light image compression into vector polygons + description, w
 - Built with Vue.js 3 + Nuxt 4 + TypeScript
 
 ## How to use it
-1. **Upload Your Image** : Drag and drop or select any JPG, PNG, or GIF up to 5MB. This will be your target.
+1. **Upload Your Image** : Drag and drop or select a JPG, JPEG, PNG, GIF, WebP, HEIC, or HEIF image up to 5 MB. Non-square images are center-cropped to a square before evolution.
 2. **Tweak the Settings** : Customize evolution parameters like population size, mutation rate, and shapes per individual, or keep the smart defaults.
 3. **Start the Evolution** : Hit the start button and watch as colorful geometric shapes come alive, evolving in real-time to mimic your image.
 4. **Generate a Description** : Click "Describe" to let AI write a description of the original image.
-5. **Recreate** : Finally, click "Decompress" to have another AI recreate the original image from the evolved vector graphics and description.
+5. **Recreate** : Finally, click "Recreate" to have another AI recreate the original image from the evolved vector graphics and description.
 
 ## How the Magic Happens: The Genetic Algorithm
 
