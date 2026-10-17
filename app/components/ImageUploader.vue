@@ -16,6 +16,9 @@
           Click to choose a file, or drag and drop it here
         </div>
         <div class="text-xs text-neutral-500">
+          Non-square images are center-cropped to a square
+        </div>
+        <div class="text-xs text-neutral-500">
           Image files · max 5 MB
         </div>
       </div>
@@ -35,7 +38,7 @@
         <img
           :src="previewUrl"
           alt="Selected image preview"
-          class="block h-auto w-full rounded-xl"
+          class="block aspect-square w-full rounded-xl object-cover"
         >
         <div class="absolute right-2 top-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
           {{ imageInfo }}
@@ -100,14 +103,40 @@ const processFile = (file: File) => {
   // Create preview URL
   const reader = new FileReader()
   reader.onload = (e: ProgressEvent<FileReader>) => {
-    const result = e.target?.result as string
-    previewUrl.value = result
-    
-    // Get image dimensions
+    const result = e.target?.result
+    if (typeof result !== 'string') {
+      error.value = 'Could not read the file. Try selecting it again.'
+      return
+    }
+
     const img = new Image()
     img.onload = () => {
-      imageInfo.value = `${img.width} × ${img.height}`
-      emit('image-uploaded', result)
+      const cropSize = Math.min(img.naturalWidth, img.naturalHeight)
+      const cropX = (img.naturalWidth - cropSize) / 2
+      const cropY = (img.naturalHeight - cropSize) / 2
+      const canvas = document.createElement('canvas')
+      canvas.width = cropSize
+      canvas.height = cropSize
+
+      const context = canvas.getContext('2d')
+      if (!context) {
+        error.value = 'Could not process the image. Try selecting it again.'
+        return
+      }
+
+      context.drawImage(img, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize)
+
+      try {
+        const croppedImage = canvas.toDataURL(file.type)
+        previewUrl.value = croppedImage
+        imageInfo.value = `${cropSize} × ${cropSize} · center-cropped`
+        emit('image-uploaded', croppedImage)
+      } catch {
+        error.value = 'Could not process the image. Try selecting it again.'
+      }
+    }
+    img.onerror = () => {
+      error.value = 'Could not load the image. Try selecting a different file.'
     }
     img.src = result
   }
