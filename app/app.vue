@@ -7,8 +7,8 @@
             <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">A genetic algorithm experiment</p>
             <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Watch an image emerge from shapes</h1>
             <p class="mt-3 max-w-3xl text-neutral-600 dark:text-neutral-400">
-              Starting with random shapes, the algorithm gradually evolves an image that looks more like your reference.
-              Upload an image and watch each generation bring it closer.
+                Starting with random shapes, the algorithm gradually evolves an image to look more like your reference.
+                See the result take form, then recreate the original image with AI.
             </p>
           </div>
           <UColorModeButton />
@@ -48,7 +48,7 @@
                 <div>
                   <p class="text-sm font-medium text-primary">Step 2</p>
                   <h2 class="mt-1 text-xl font-semibold">Watch it evolve</h2>
-                  <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The best approximation from each generation.</p>
+                  <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The best approximation from each generation. It may take a few minutes of evolution before a good result emerges.</p>
                 </div>
                 <span class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200" role="status">
                   {{ evolutionStatus }}
@@ -209,8 +209,8 @@ async function decompressImage() {
     const form = new FormData()
     form.append('image', blob, 'evolved.jpg')
     form.append('description', description.value)
-    const result = await $fetch('/api/decompress', { method: 'POST', body: form, responseType: 'blob' })
-    const imageUrl = URL.createObjectURL(result as Blob)
+    const result = await $fetch('/api/decompress', { method: 'POST', body: form, responseType: 'blob' })  as Blob;
+    const imageUrl = URL.createObjectURL(result)
     decompressedImage.value = imageUrl
   } catch (err) {
     toast.add({
@@ -246,7 +246,7 @@ const workflowSteps = computed(() => [
   { title: 'Choose an image', description: 'Upload a picture', done: hasTargetImage.value },
   { title: 'Start evolution', description: 'Match the shapes', done: generation.value > 0 },
   { title: 'Create a description', description: 'Ask AI to describe it', done: description.value !== '' },
-  { title: 'Recreate the image', description: 'Create an AI-generated variation', done: decompressedImage.value !== '' }
+  { title: 'Recreate the image', description: 'Create an AI-generated version', done: decompressedImage.value !== '' }
 ])
 
 const evolutionParams = reactive<EvolutionParams>({

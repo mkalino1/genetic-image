@@ -19,7 +19,7 @@
           Non-square images are center-cropped to a square
         </div>
         <div class="text-xs text-neutral-500">
-          Image files · max 5 MB
+          Supported extensions: .jpg, .jpeg, .png, .gif, .webp, .heic, .heif · max 5 MB
         </div>
       </div>
     </button>
@@ -27,7 +27,7 @@
     <input
       ref="fileInput"
       type="file"
-      accept="image/*"
+      accept="image/*,.heic,.heif,image/heic,image/heif"
       class="hidden"
       aria-label="Choose an image file"
       @change="handleFileSelect"
@@ -85,7 +85,11 @@ const handleDrop = (event: DragEvent) => {
   }
 }
 
-const processFile = (file: File) => {
+const isHeicFile = (file: File) => {
+  return /^image\/hei[cf]/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)
+}
+
+const processFile = async (file: File) => {
   error.value = ''
   
   // Validate file size (5MB limit)
@@ -95,9 +99,33 @@ const processFile = (file: File) => {
   }
 
   // Validate file type
-  if (!file.type.startsWith('image/')) {
+  const isHeic = isHeicFile(file)
+  if (!file.type.startsWith('image/') && !isHeic) {
     error.value = 'This file is not an image. Choose an image file.'
     return
+  }
+
+  let imageBlob: Blob | undefined = file
+  let imageType = file.type || 'image/png'
+
+  if (isHeic) {
+    try {
+      const { default: heic2any } = await import('heic2any')
+      const converted = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.9
+      })
+      imageBlob = Array.isArray(converted) ? converted[0] : converted
+      if (!imageBlob) {
+        error.value = 'Could not convert the HEIC image. Try selecting a different file.'
+        return
+      }
+      imageType = 'image/jpeg'
+    } catch {
+      error.value = 'Could not convert the HEIC image. Try selecting a different file.'
+      return
+    }
   }
 
   // Create preview URL
@@ -127,7 +155,7 @@ const processFile = (file: File) => {
       context.drawImage(img, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize)
 
       try {
-        const croppedImage = canvas.toDataURL(file.type)
+        const croppedImage = canvas.toDataURL(imageType)
         previewUrl.value = croppedImage
         imageInfo.value = `${cropSize} × ${cropSize} · center-cropped`
         emit('image-uploaded', croppedImage)
@@ -145,7 +173,7 @@ const processFile = (file: File) => {
     error.value = 'Could not read the file. Try selecting it again.'
   }
   
-  reader.readAsDataURL(file)
+  reader.readAsDataURL(imageBlob)
 }
 
 const clearImage = () => {
