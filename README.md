@@ -2,7 +2,7 @@
 
 A web application that uses genetic algorithm to recreate target images using evolving geometric shapes, functioning as an ultra-light vector graphics compression.
 
-Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation. After compression by the genetic algorithm and description by a ChatGPT-5-nano, the result can be recreated by a Gemini-2.5-flash-image.
+Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation. After compression by the genetic algorithm and description by a gpt-5-nano, the result can be recreated by a gemini-3.1-flash-image.
 
 This enables ultra-light image compression into vector polygons + description, which can then be used to recreate an image resembling the original.
 

@@ -10,10 +10,11 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.99",
     "@nuxt/eslint": "^1.7.1",
     "@nuxt/test-utils": "^3.19.2",
     "@nuxt/ui": "^4.5.1",
-    "ai": "^6.0.84",
+    "ai": "^7.0.143",
     "eslint": "^9.32.0",
     "heic2any": "^0.0.4",
     "nuxt": "^4.3.1",

@@ -1,18 +1,18 @@
-import { generateText } from 'ai';
+import { google } from '@ai-sdk/google'
+import { generateText } from 'ai'
 
 export default defineEventHandler(async (event) => {
-
   const form = await readFormData(event)
   const image = form.get('image') as File
-  const imageArrayBuffer = await image.arrayBuffer()
   const description = form.get('description') as string
 
-  let imagaData = null;
-
-  await generateText({
-    model: 'google/gemini-2.5-flash-image-preview',
+  const { files } = await generateText({
+    model: google('gemini-3.1-flash-image'),
     providerOptions: {
-      google: { responseModalities: ['TEXT', 'IMAGE'] },
+      google: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        imageConfig: { imageSize: '512' },
+      },
     },
     messages: [
       {
@@ -23,20 +23,21 @@ export default defineEventHandler(async (event) => {
             text: `The image represents colors and shapes of the original image. Try to recreate the original image based on shapes and description: ${description}.`,
           },
           {
-            type: 'image',
-            image: imageArrayBuffer,
+            type: 'file',
+            mediaType: image.type,
+            data: await image.arrayBuffer(),
           },
         ],
       },
     ],
-  }).then((result) => {
-    const generatedImage = result.files[0]
-    imagaData = generatedImage?.uint8Array || Uint8Array.from([])
-  }).catch((error) => {
-    console.error('Error generating image:', error)
-  })
+  });
 
-  setResponseHeader(event, 'Content-Type', 'image/jpeg')
+  const generatedImage = files.find(file => file.mediaType.startsWith('image/'))
+  if (!generatedImage) {
+    throw createError({ statusCode: 502, statusMessage: 'Gemini did not return an image.' })
+  }
 
-  return imagaData
-})
+  setResponseHeader(event, 'Content-Type', generatedImage.mediaType)
+
+  return generatedImage.uint8Array
+});
