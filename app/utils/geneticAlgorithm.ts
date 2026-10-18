@@ -7,6 +7,10 @@ export interface EvolutionParams {
 }
 
 export class GeneticAlgorithm {
+  private static readonly STAGNATION_PATIENCE = 10
+  private static readonly MINIMUM_FITNESS_IMPROVEMENT = 0.005
+  private static readonly RANDOM_IMMIGRANT_PERCENTAGE = 0.4
+
   // Onscreen and offscreen canvas for rendering
   displayCanvas: HTMLCanvasElement
   displayCtx: CanvasRenderingContext2D
@@ -32,6 +36,8 @@ export class GeneticAlgorithm {
   generation: number
   variance: number
   adaptiveMutationRate: number
+  stagnationGenerations: number
+  bestFitnessAtLastProgress: number
 
   constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: EvolutionParams) {
     this.displayCanvas = displayCanvas
@@ -54,11 +60,13 @@ export class GeneticAlgorithm {
     this.eliteSize = Math.max(1, Math.floor(this.populationSize * 0.1)) // Keep at least 1
 
     // State
-    this.population = initializePopulation(this.populationSize, this.shapeMode)
+    this.population = initializePopulation(this.populationSize, this.shapesPerIndividual, this.shapeMode)
     this.bestFitness = 0
     this.generation = 0
     this.variance = 0
     this.adaptiveMutationRate = this.mutationRate
+    this.stagnationGenerations = 0
+    this.bestFitnessAtLastProgress = 0
 
     // Initialize worker pool for parallel fitness calculations
     this.workerPool = new WorkerPool(this.populationSize)
@@ -72,11 +80,20 @@ export class GeneticAlgorithm {
 
     // Sort by fitness (best first)
     this.population.sort((a, b) => b.fitness - a.fitness)
+    this.population = this.population.slice(0, this.populationSize)
 
     // Update best fitness and render best individual
     const best = this.population[0]
-    if (best && best.fitness > this.bestFitness) {
-      this.bestFitness = best.fitness
+    if (best) {
+      if (best.fitness > this.bestFitness) {
+        this.bestFitness = best.fitness
+      }
+      if (best.fitness > this.bestFitnessAtLastProgress + GeneticAlgorithm.MINIMUM_FITNESS_IMPROVEMENT) {
+        this.bestFitnessAtLastProgress = best.fitness
+        this.stagnationGenerations = 0
+      } else {
+        this.stagnationGenerations++
+      }
     }
     if (best) {
       renderIndividual(best, this.displayCtx)
@@ -84,14 +101,11 @@ export class GeneticAlgorithm {
     
     this.variance = this.calculateVariance()
     
-    // Inject random individuals if stagnation (low variance) detected
-    this.ensureDiversity()
-
-    // Calculate adaptive mutation rate based on population variance
-    this.adaptiveMutationRate = this.calculateAdaptiveMutationRate()
+    // Increase exploration when the best fitness has stopped improving.
+    this.adaptiveMutationRate = this.calculateAdaptiveMutationRate(this.stagnationGenerations)
 
     // Create new population through crossover and mutation
-    this.population = createNewGeneration(
+    const nextPopulation = createNewGeneration(
       this.population,
       this.populationSize,
       this.eliteSize,
@@ -101,6 +115,15 @@ export class GeneticAlgorithm {
       this.bestFitness,
       this.shapeMode
     )
+
+    if (this.shouldInjectForLowVariance()) {
+      const immigrantCount = Math.floor(this.populationSize * GeneticAlgorithm.RANDOM_IMMIGRANT_PERCENTAGE)
+      for (let i = 0; i < immigrantCount; i++) {
+        nextPopulation.push(createRandomIndividual(this.shapesPerIndividual, this.shapeMode))
+      }
+      console.log(`Added ${immigrantCount} random individuals at generation ${this.generation}`)
+    }
+    this.population = nextPopulation
     
     this.generation++
   }
@@ -111,13 +134,10 @@ export class GeneticAlgorithm {
     }
   }
 
-  private ensureDiversity(): void {
-    if (this.generation > 50 && this.generation % 20 === 0) {
-      if (this.variance < 0.001) { // Low variance indicates low diversity
-        console.log('Low diversity detected, injecting random individuals...')
-        this.injectRandomIndividuals(0.4)
-      }
-    }
+  private shouldInjectForLowVariance(): boolean {
+    return this.generation > 20 &&
+      this.generation % 20 === 0 &&
+      this.variance < 0.001
   }
 
   private calculateVariance(): number {
@@ -130,25 +150,20 @@ export class GeneticAlgorithm {
     return variance
   }
 
-  private calculateAdaptiveMutationRate(): number {
+  private calculateAdaptiveMutationRate(stagnationGenerations: number): number {
     // High variance = lower mutation rate (exploitation). Low variance = higher mutation rate (exploration)
     const baseRate = this.mutationRate
     const diversityFactor = Math.max(0.5, Math.min(1.5, 0.005 / (this.variance + 0.001)))
     const adaptiveRate = baseRate * diversityFactor
     
-    // Add some randomness to prevent getting stuck
+    const stagnationFactor = Math.min(
+      1.5,
+      1 + stagnationGenerations / GeneticAlgorithm.STAGNATION_PATIENCE
+    )
     const jitter = 0.05 * Math.random()
-    const finalRate = Math.max(0.01, Math.min(0.3, adaptiveRate + jitter))
+    const finalRate = Math.max(0.01, Math.min(0.5, adaptiveRate * stagnationFactor + jitter))
     
     return finalRate
   }
 
-  private injectRandomIndividuals(percentage: number): void {
-    const numToReplace = Math.floor(this.population.length * percentage)
-    const startIndex = this.eliteSize
-    
-    for (let i = 0; i < numToReplace && startIndex + i < this.population.length; i++) {
-      this.population[startIndex + i] = createRandomIndividual(this.shapesPerIndividual, this.shapeMode)
-    }
-  }
-} 
+}

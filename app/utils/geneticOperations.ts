@@ -11,6 +11,11 @@ export function createNewGeneration(
   shapeMode: 'fixed' | 'polygon' = 'fixed'
 ): Individual[] {
   const newPopulation: Individual[] = []
+  const stronglyMutatedStart = Math.max(
+    eliteSize,
+    populationSize - Math.ceil(populationSize * 0.1)
+  )
+  const strongMutationRate = Math.min(0.8, Math.max(mutationRate + 0.15, mutationRate * 1.5))
 
   // Elitism: keep best individuals
   for (let i = 0; i < eliteSize && i < population.length; i++) {
@@ -25,7 +30,10 @@ export function createNewGeneration(
     const parent1 = selectParent(population, shapesPerIndividual, shapeMode)
     const parent2 = selectParent(population, shapesPerIndividual, shapeMode)
     const child = crossover(parent1, parent2, shapesPerIndividual, crossoverStrategy, bestFitness, shapeMode)
-    mutate(child, mutationRate)
+    const childMutationRate = newPopulation.length >= stronglyMutatedStart
+      ? strongMutationRate
+      : mutationRate
+    mutate(child, childMutationRate)
     newPopulation.push(child)
   }
 

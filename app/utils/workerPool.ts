@@ -55,11 +55,15 @@ export class WorkerPool {
 
   async calculateFitnessBatches(individuals: FitnessTask[], targetImageData: ImageData): Promise<Map<number, number>> {
     const results = new Map<number, number>()
+    const batchSize = Math.max(
+      this.batchSize,
+      Math.ceil(individuals.length / this.workers.length)
+    )
     
     // Create batches - handle any population size
     const batches: FitnessTask[][] = []
-    for (let i = 0; i < individuals.length; i += this.batchSize) {
-      const batch = individuals.slice(i, i + this.batchSize)
+    for (let i = 0; i < individuals.length; i += batchSize) {
+      const batch = individuals.slice(i, i + batchSize)
       if (batch.length > 0) batches.push(batch)
     }
 
