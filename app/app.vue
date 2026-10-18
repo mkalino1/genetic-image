@@ -59,7 +59,7 @@
                   ref="canvas"
                   width="160"
                   height="160"
-                  class="mx-auto aspect-square w-full max-w-md"
+                  class="block aspect-square w-full"
                   :style="{ backgroundColor: canvasBackgroundColor }"
                   aria-label="Current evolution result"
                 />
