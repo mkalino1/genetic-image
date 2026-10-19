@@ -1,13 +1,13 @@
-import type { FitnessTask, FitnessResult } from '../workers/workerTypes'
+import type { FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../workers/workerTypes'
 
 export class WorkerPool {
   private workers: Worker[] = []
   private batchSize: number
+  private initializedTarget: ImageData | null = null
+  private targetInitialization: Promise<void> | null = null
 
   constructor(populationSize: number) {
-    // Use optimal worker count based on CPU cores
     const optimalWorkerCount = Math.min(navigator.hardwareConcurrency || 8, 16)
-    // Calculate batch size to ensure even distribution
     this.batchSize = Math.max(1, Math.ceil(populationSize / optimalWorkerCount))
     this.initializeWorkers(optimalWorkerCount)
   }
@@ -23,80 +23,103 @@ export class WorkerPool {
     }
   }
 
-  private sendMessageToWorker(worker: Worker, message: {type: string, batch: FitnessTask[], targetImageData: ImageData}): Promise<FitnessResult[]> {
+  private sendMessageToWorker(worker: Worker, message: FitnessWorkerRequest): Promise<FitnessWorkerResponse> {
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Worker timeout')), 30000)
-      
       const cleanup = () => {
         clearTimeout(timeout)
         worker.removeEventListener('message', handleMessage)
         worker.removeEventListener('error', handleError)
       }
-      
-      const handleMessage = (e: MessageEvent) => {
+
+      const timeout = setTimeout(() => {
         cleanup()
-        if (e.data.success) {
-          resolve(e.data.results)
+        reject(new Error('Worker timeout'))
+      }, 30000)
+
+      const handleMessage = (event: MessageEvent<FitnessWorkerResponse>) => {
+        cleanup()
+        if (event.data.success) {
+          resolve(event.data)
         } else {
-          reject(new Error(e.data.error))
+          reject(new Error(event.data.error))
         }
       }
-      
+
       const handleError = (error: ErrorEvent) => {
         cleanup()
         reject(new Error(error.message))
       }
-      
+
       worker.addEventListener('message', handleMessage)
       worker.addEventListener('error', handleError)
-      worker.postMessage(message)
+
+      try {
+        worker.postMessage(message)
+      } catch (error) {
+        cleanup()
+        reject(error)
+      }
     })
   }
 
+  private async initializeTarget(targetImageData: ImageData): Promise<void> {
+    if (this.initializedTarget === targetImageData && this.targetInitialization) {
+      return this.targetInitialization
+    }
+
+    this.targetInitialization = Promise.all(this.workers.map(async (worker) => {
+      const response = await this.sendMessageToWorker(worker, {
+        type: 'initialize_target',
+        targetImageData
+      })
+      if (response.type !== 'target_initialized') {
+        throw new Error('Worker did not acknowledge target image initialization')
+      }
+    })).then(() => {
+      this.initializedTarget = targetImageData
+    }).catch((error: unknown) => {
+      this.targetInitialization = null
+      throw error
+    })
+
+    return this.targetInitialization
+  }
+
   async calculateFitnessBatches(individuals: FitnessTask[], targetImageData: ImageData): Promise<Map<number, number>> {
+    if (this.workers.length === 0) {
+      throw new Error('No fitness workers could be initialized')
+    }
+
+    await this.initializeTarget(targetImageData)
+
     const results = new Map<number, number>()
     const batchSize = Math.max(
       this.batchSize,
       Math.ceil(individuals.length / this.workers.length)
     )
-    
-    // Create batches - handle any population size
     const batches: FitnessTask[][] = []
     for (let i = 0; i < individuals.length; i += batchSize) {
-      const batch = individuals.slice(i, i + batchSize)
-      if (batch.length > 0) batches.push(batch)
+      batches.push(individuals.slice(i, i + batchSize))
     }
 
-    // Process batches with available workers
-    const promises: Promise<FitnessResult[]>[] = []
-    
-    for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i]
-      const worker = this.workers[i % this.workers.length]
-      
-      if (!worker || !batch) continue
-      const message = { type: 'batch_fitness_calculation', batch, targetImageData }
-      
-      promises.push(this.sendMessageToWorker(worker, message))
-    }
-
-    // Wait for all batches to complete
-    try {
-      const batchResults = await Promise.all(promises)
-      
-      // Combine all results
-      for (const batchResult of batchResults) {
-        for (const result of batchResult) {
-          results.set(result.individualId, result.fitness)
-        }
+    const batchResponses = await Promise.all(batches.map(async (batch, index) => {
+      const worker = this.workers[index % this.workers.length]
+      if (!worker) {
+        throw new Error(`No worker available for fitness batch ${index}`)
       }
-    } catch (error) {
-      console.error('Worker batch processing failed:', error)
-      // Set default fitness for failed individuals
-      for (const individual of individuals) {
-        if (!results.has(individual.individualId)) {
-          results.set(individual.individualId, 0)
-        }
+      const response = await this.sendMessageToWorker(worker, {
+        type: 'batch_fitness_calculation',
+        batch
+      })
+      if (response.type !== 'batch_fitness_result') {
+        throw new Error('Worker returned an unexpected response for fitness calculation')
+      }
+      return response.results
+    }))
+
+    for (const batchResult of batchResponses) {
+      for (const result of batchResult) {
+        results.set(result.individualId, result.fitness)
       }
     }
 
@@ -104,10 +127,9 @@ export class WorkerPool {
   }
 
   terminate(): void {
-    // Terminate all workers
     for (const worker of this.workers) {
       worker.terminate()
     }
     this.workers = []
   }
-} 
+}

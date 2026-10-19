@@ -2,11 +2,11 @@
 
 Watch an image emerge from geometric shapes. This web app uses a genetic algorithm to evolve a visual approximation of an image in real time. Then AI can describe the reference image and use that description together with the evolved result to recreate the original image.
 
-[Try it here](https://polyzip.vercel.app).
+[Try it here](https://polyzip.vercel.app)
 
 ![App workflow](/public/flow.png)
 
-Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation. After compression by the genetic algorithm and description by a gpt-5-nano, the result can be recreated by a gemini-3.1-flash-image.
+The genetic algorithm evolve a population of shapes to approximate the image through selection, crossover, and mutation. Then, gpt-5-nano describes the original image, and gemini-3.1-flash-lite-image uses that description and the evolved result to recreate it.
 
 This can serve as an ultra-space-efficient lossy image compression method.
 

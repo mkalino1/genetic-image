@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     providerOptions: {
       google: {
         responseModalities: ['TEXT', 'IMAGE'],
-        imageConfig: { imageSize: '512' },
+        imageConfig: { aspectRatio: '1:1' },
       },
     },
     messages: [
