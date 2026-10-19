@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const description = form.get('description') as string
 
   const { files } = await generateText({
-    model: google('gemini-3.1-flash-image'),
+    model: google('gemini-3.1-flash-lite-image'),
     providerOptions: {
       google: {
         responseModalities: ['TEXT', 'IMAGE'],

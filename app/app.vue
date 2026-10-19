@@ -111,7 +111,7 @@
               <div class="rounded-xl bg-neutral-50 p-4 dark:bg-neutral-950">
                 <h3 class="font-semibold">4. Recreate the image</h3>
                 <p class="mt-1 min-h-10 text-sm text-neutral-600 dark:text-neutral-400">
-                  {{ recreatedImage ? 'Done — compare the result with your reference image.' : 'Requires a description and at least one evolution generation.' }}
+                  {{ recreatedImage ? 'Done - compare the result with your reference image.' : `Requires a description and at least ${MINIMUM_EVOLUTION_GENERATIONS} completed evolution iterations.` }}
                 </p>
                 <UButton
                   class="mt-4"

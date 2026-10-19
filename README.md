@@ -1,25 +1,25 @@
-# Genetic Image Compression
+# Genetic Image Evolution
 
-A web application that uses genetic algorithm to recreate target images using evolving geometric shapes, functioning as an ultra-light vector graphics compression.
+Watch an image emerge from geometric shapes. This web app uses a genetic algorithm to evolve a visual approximation of an image in real time. Then AI can describe the reference image and use that description together with the evolved result to recreate the original image.
+
+[Try it here](https://polyzip.vercel.app).
+
+![App workflow](/public/flow.png)
 
 Upload any image and watch as the algorithm evolves a population of shapes to match it through iterative selection, crossover, and mutation. After compression by the genetic algorithm and description by a gpt-5-nano, the result can be recreated by a gemini-3.1-flash-image.
 
-This enables ultra-light image compression into vector polygons + description, which can then be used to recreate an image resembling the original.
-
-[Try it here!](https://polyzip.vercel.app)
-
-![App Flow](/public/flow.png)
+This can serve as an ultra-space-efficient lossy image compression method.
 
 ## Features
 
-- **Real-time evolution** with live visual updates
-- Custom from scratch **genetic algorithm** implementation with **configurable parameters** (population size, mutation rate, shapes per individual)
-- **AI model integration** that describes the original image and uses that description and the evolved image to recreate it.
-- **Multiple shape types** (circles/rectangles/triangles or random polygons)
-- **Delta E** color distance for fitness function
-- **Web Workers** for parallel processing
-- HTML5 **Canvas** for rendering
-- Built with Vue.js 3 + Nuxt 4 + TypeScript
+- **Live evolution:** watch the best approximation improve from one generation to the next.
+- **Configurable genetic algorithm:** adjust population size, mutation rate, shapes per individual, and other parameters.
+- **Multiple shape types:** evolve circles, rectangles, triangles, or random polygons.
+- **Perceptual color scoring:** compare colors using Delta E as part of the fitness function.
+- **Parallel processing:** evaluate candidates with Web Workers.
+- **LLM integration:** generate a text description of the original, then use it and the evolved image as input for AI image recreation.
+- **Canvas rendering:** draw and update results using HTML5 Canvas.
+- **Tech stack:** Vue 3, Nuxt 4, and TypeScript.
 
 ## How to use it
 1. **Upload Your Image** : Drag and drop or select a JPG, JPEG, PNG, GIF, WebP, HEIC, or HEIF image up to 5 MB. Non-square images are center-cropped to a square before evolution.
@@ -45,4 +45,4 @@ Here's the step-by-step summary of my algorithm:
 
 Delta E measures perceptual color difference the way human eyes perceive it, rather than treating RGB values as simple 3D coordinates. Euclidean distance in RGB space doesn't account for the fact that our eyes are more sensitive to certain color changes than others. For example, we notice green shifts more readily than blue ones. By using Delta E, the fitness function produces more visually accurate results that better reflect how closely the evolved shapes match the target image from a human perspective.
 
-![Delta E vs Euclidean Distance](/public/delta_e.png)
+![Delta E compared with Euclidean distance](/public/delta_e.png)

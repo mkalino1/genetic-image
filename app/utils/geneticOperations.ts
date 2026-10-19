@@ -15,7 +15,7 @@ export function createNewGeneration(
     eliteSize,
     populationSize - Math.ceil(populationSize * 0.1)
   )
-  const strongMutationRate = Math.min(0.8, Math.max(mutationRate + 0.15, mutationRate * 1.5))
+  const strongMutationRate = Math.min(0.7, Math.max(mutationRate + 0.1, mutationRate * 2))
 
   // Elitism: keep best individuals
   for (let i = 0; i < eliteSize && i < population.length; i++) {

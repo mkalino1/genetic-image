@@ -10,6 +10,7 @@ export class GeneticAlgorithm {
   private static readonly STAGNATION_PATIENCE = 10
   private static readonly MINIMUM_FITNESS_IMPROVEMENT = 0.005
   private static readonly RANDOM_IMMIGRANT_PERCENTAGE = 0.4
+  private static readonly ELITE_PERCENTAGE = 0.05
 
   // Onscreen and offscreen canvas for rendering
   displayCanvas: HTMLCanvasElement
@@ -57,7 +58,7 @@ export class GeneticAlgorithm {
     this.shapesPerIndividual = params.shapesPerIndividual
     this.crossoverStrategy = params.crossoverStrategy
     this.shapeMode = params.shapeMode ?? 'fixed'
-    this.eliteSize = Math.max(1, Math.floor(this.populationSize * 0.1)) // Keep at least 1
+    this.eliteSize = Math.max(1, Math.floor(this.populationSize * GeneticAlgorithm.ELITE_PERCENTAGE))
 
     // State
     this.population = initializePopulation(this.populationSize, this.shapesPerIndividual, this.shapeMode)
@@ -158,10 +159,10 @@ export class GeneticAlgorithm {
     
     const stagnationFactor = Math.min(
       1.5,
-      1 + stagnationGenerations / GeneticAlgorithm.STAGNATION_PATIENCE
+      1 + stagnationGenerations / (2 * GeneticAlgorithm.STAGNATION_PATIENCE)
     )
-    const jitter = 0.05 * Math.random()
-    const finalRate = Math.max(0.01, Math.min(0.5, adaptiveRate * stagnationFactor + jitter))
+    const jitter = adaptiveRate * 0.1 * Math.random()
+    const finalRate = Math.max(0.01, Math.min(0.3, adaptiveRate * stagnationFactor + jitter))
     
     return finalRate
   }
