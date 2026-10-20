@@ -188,7 +188,7 @@ async function recreateImage() {
     toast.add({
       title: 'Missing information',
       icon: 'lucide:alert-triangle',
-      description: 'Upload an image, start the evolution, and create a description first.'
+      description: `Upload an image, complete at least ${MINIMUM_EVOLUTION_GENERATIONS} evolution iterations.`
     })
     return
   }
@@ -224,6 +224,7 @@ async function recreateImage() {
 }
 
 // Metrics
+const MINIMUM_EVOLUTION_GENERATIONS = 50
 const generation = ref(0)
 const bestFitness = ref(0)
 const variance = ref(0)
@@ -231,7 +232,7 @@ const adaptiveMutationRate = ref(0)
 const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
 const canRecreate = computed(() =>
   hasTargetImage.value
-  && generation.value > 0
+  && generation.value >= MINIMUM_EVOLUTION_GENERATIONS
   && description.value.trim() !== ''
   && !isDescribing.value
   && !isRecreating.value
