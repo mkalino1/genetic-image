@@ -1,3 +1,5 @@
+import { renderShape } from './rendering'
+
 export interface RGBColor {
   r: number
   g: number
@@ -7,7 +9,23 @@ export interface RGBColor {
 export type ShapeType = 'circle' | 'rectangle' | 'triangle'
 export type ShapeMode = 'fixed' | 'polygon'
 
-export class Shape {
+export interface ShapeRenderData {
+  type: ShapeType
+  numSides: number
+  mode: ShapeMode
+  vertexAngleOffsets?: number[]
+  vertexRadiusMults?: number[]
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  color: RGBColor
+  alpha: number
+  z: number
+}
+
+export class Shape implements ShapeRenderData {
   type: ShapeType
   numSides: number
   mode: ShapeMode
@@ -22,7 +40,7 @@ export class Shape {
   alpha: number
   z: number
 
-  constructor(params: Partial<Shape> = {}) {
+  constructor(params: Partial<ShapeRenderData> = {}) {
     this.mode = params.mode ?? 'fixed'
     if (this.mode === 'polygon') {
       this.type = 'triangle'
@@ -64,67 +82,7 @@ export class Shape {
   }
 
   render(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
-    ctx.save()
-    ctx.globalAlpha = this.alpha
-    ctx.fillStyle = this.colorString()
-    ctx.translate(this.x, this.y)
-    ctx.rotate(this.rotation)
-
-    if (this.mode === 'polygon') {
-      this.renderPolygon(ctx)
-    } else {
-      switch (this.type) {
-        case 'circle':
-          this.renderCircle(ctx)
-          break
-        case 'rectangle':
-          this.renderRectangle(ctx)
-          break
-        case 'triangle':
-          this.renderTriangle(ctx)
-          break
-      }
-    }
-    ctx.restore()
-  }
-
-  renderCircle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
-    const radius = Math.min(this.width, this.height) / 2
-    ctx.beginPath()
-    ctx.arc(0, 0, radius, 0, Math.PI * 2)
-    ctx.fill()
-  }
-
-  renderRectangle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
-    ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height)
-  }
-
-  renderTriangle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
-    ctx.beginPath()
-    ctx.moveTo(0, -this.height / 2)
-    ctx.lineTo(-this.width / 2, this.height / 2)
-    ctx.lineTo(this.width / 2, this.height / 2)
-    ctx.closePath()
-    ctx.fill()
-  }
-
-  renderPolygon(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
-    const sides = this.numSides
-    const baseRadius = Math.min(this.width, this.height) / 2
-    ctx.beginPath()
-    for (let i = 0; i < sides; i++) {
-      const baseAngle = (i / sides) * Math.PI * 2 - Math.PI / 2
-      const angleOffset = (this.vertexAngleOffsets && this.vertexAngleOffsets[i]) || 0
-      const radiusMult = (this.vertexRadiusMults && this.vertexRadiusMults[i]) || 1
-      const angle = baseAngle + angleOffset
-      const r = baseRadius * radiusMult
-      const vx = r * Math.cos(angle)
-      const vy = r * Math.sin(angle)
-      if (i === 0) ctx.moveTo(vx, vy)
-      else ctx.lineTo(vx, vy)
-    }
-    ctx.closePath()
-    ctx.fill()
+    renderShape(this, ctx)
   }
 
   mutate(): void {
@@ -195,4 +153,4 @@ export class Shape {
       vertexRadiusMults: this.vertexRadiusMults
     })
   }
-} 
+}

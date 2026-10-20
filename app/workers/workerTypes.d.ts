@@ -1,8 +1,8 @@
-import type { Shape } from '../utils/shape'
+import type { ShapeRenderData } from '../utils/shape'
 
 export interface FitnessTask {
   individualId: number
-  shapes: Shape[]
+  shapes: ShapeRenderData[]
 }
 
 export interface FitnessResult {

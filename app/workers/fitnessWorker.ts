@@ -1,5 +1,5 @@
 import type { FitnessResult, FitnessWorkerRequest } from './workerTypes'
-import { Shape } from '../utils/shape'
+import { renderShape } from '../utils/rendering'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
@@ -32,10 +32,10 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
     const workerContext = fitnessCanvasContext
     const results: FitnessResult[] = []
     for (const { shapes, individualId } of e.data.batch) {
-      const sortedShapes = shapes.map(shape => new Shape(shape)).sort((a, b) => a.z - b.z)
+      const sortedShapes = [...shapes].sort((a, b) => a.z - b.z)
       workerContext.clearRect(0, 0, workerContext.canvas.width, workerContext.canvas.height)
       for (const shape of sortedShapes) {
-        shape.render(workerContext)
+        renderShape(shape, workerContext)
       }
       const imageData = workerContext.getImageData(0, 0, workerContext.canvas.width, workerContext.canvas.height)
       results.push({
