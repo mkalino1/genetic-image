@@ -15,7 +15,7 @@ export class WorkerPool {
   private initializeWorkers(count: number): void {
     for (let i = 0; i < count; i++) {
       try {
-        const worker = new Worker(new URL('../workers/fitnessWorker.ts', import.meta.url))
+        const worker = new Worker(new URL('../workers/fitnessWorker.ts', import.meta.url), { type: 'module' })
         this.workers.push(worker)
       } catch (error) {
         console.error(`Failed to initialize worker ${i}:`, error)
@@ -79,13 +79,17 @@ export class WorkerPool {
       this.initializedTarget = targetImageData
     }).catch((error: unknown) => {
       this.targetInitialization = null
+      this.initializedTarget = null
       throw error
     })
 
     return this.targetInitialization
   }
 
-  async calculateFitnessBatches(individuals: FitnessTask[], targetImageData: ImageData): Promise<Map<number, number>> {
+  async calculateFitnessBatches(
+    individuals: FitnessTask[],
+    targetImageData: ImageData
+  ): Promise<Map<number, number>> {
     if (this.workers.length === 0) {
       throw new Error('No fitness workers could be initialized')
     }

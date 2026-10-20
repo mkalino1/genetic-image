@@ -1,39 +1,29 @@
-import type { FitnessTask } from '../workers/workerTypes'
-
 /**
- * Evaluates the fitness of all individuals in a population using Web Workers for parallel processing.
- * 
- * @param population - Array of individuals to evaluate
- * @param canvas - The HTML canvas element used for rendering
- * @param ctx - The 2D canvas rendering context
- * @param targetImageData - The target image data to compare against
- * @param workerPool - The worker pool instance to use for fitness calculations
+ * Evaluates, renders, and scores the population in parallel using Web Workers.
  */
-export async function evaluatePopulation(population: Individual[], canvas: HTMLCanvasElement, ctx: OffscreenCanvasRenderingContext2D, targetImageData: ImageData, workerPool: WorkerPool): Promise<void> {
-  // Prepare individuals for batch processing
-  const individualsToProcess: FitnessTask[] = []
-  
-  for (let i = 0; i < population.length; i++) {
-    const individual = population[i]
-    if (!individual) continue
-    // Renders the individual's shapes to the canvas
-    renderIndividual(individual, ctx)
-    // Captures the rendered image data
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    individualsToProcess.push({
-      imageData,
-      individualId: i
-    })
-  }
+export async function evaluatePopulation(
+  population: Individual[],
+  targetImageData: ImageData,
+  workerPool: WorkerPool
+): Promise<void> {
+  const individualsToProcess = population.map((individual, individualId) => ({
+    individualId,
+    shapes: individual.shapes
+  }))
 
-  // Calculate fitness for all individuals in parallel using workers
-  const fitnessResults = await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData)
+  const fitnessResults = await workerPool.calculateFitnessBatches(
+    individualsToProcess,
+    targetImageData
+  )
   
-  // Assign fitness results back to individuals
   for (let i = 0; i < population.length; i++) {
     const individual = population[i]
     if (individual) {
-      individual.fitness = fitnessResults.get(i) || 0
+      const fitness = fitnessResults.get(i)
+      if (fitness === undefined) {
+        throw new Error(`Fitness result missing for individual ${i}`)
+      }
+      individual.fitness = fitness
     }
   }
 }

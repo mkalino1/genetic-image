@@ -1,4 +1,5 @@
 import type { FitnessResult, FitnessWorkerRequest } from './workerTypes'
+import { Shape } from '../utils/shape'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
@@ -6,25 +7,42 @@ const LAB_LINEAR_SCALE = 3 * LAB_DELTA * LAB_DELTA
 
 let targetLab: Float64Array | null = null
 let targetPixelCount = 0
+let canvas: OffscreenCanvas | null = null
+let fitnessCanvasContext: OffscreenCanvasRenderingContext2D | null = null
 
 self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
   try {
     if (e.data.type === 'initialize_target') {
+      canvas = new OffscreenCanvas(e.data.targetImageData.width, e.data.targetImageData.height)
+      fitnessCanvasContext = canvas.getContext('2d', { willReadFrequently: true })
+      if (!fitnessCanvasContext) {
+        throw new Error('Could not initialize fitness worker canvas')
+      }
       targetPixelCount = e.data.targetImageData.data.length / 4
       targetLab = convertImageToLab(e.data.targetImageData)
       self.postMessage({ type: 'target_initialized', success: true })
       return
     }
 
-    if (!targetLab) {
-      throw new Error('Fitness worker target image has not been initialized')
+    if (!targetLab || !fitnessCanvasContext) {
+      throw new Error('Fitness worker has not been initialized')
     }
 
     const initializedTargetLab = targetLab
-    const results: FitnessResult[] = e.data.batch.map(({ imageData, individualId }) => ({
-      individualId,
-      fitness: calculateFitness(imageData, initializedTargetLab, targetPixelCount)
-    }))
+    const workerContext = fitnessCanvasContext
+    const results: FitnessResult[] = []
+    for (const { shapes, individualId } of e.data.batch) {
+      const sortedShapes = shapes.map(shape => new Shape(shape)).sort((a, b) => a.z - b.z)
+      workerContext.clearRect(0, 0, workerContext.canvas.width, workerContext.canvas.height)
+      for (const shape of sortedShapes) {
+        shape.render(workerContext)
+      }
+      const imageData = workerContext.getImageData(0, 0, workerContext.canvas.width, workerContext.canvas.height)
+      results.push({
+        individualId,
+        fitness: calculateFitness(imageData, initializedTargetLab, targetPixelCount)
+      })
+    }
     self.postMessage({ type: 'batch_fitness_result', results, success: true })
   } catch (error) {
     console.error('Worker fitness calculation failed:', error)

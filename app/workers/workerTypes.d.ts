@@ -1,6 +1,8 @@
+import type { Shape } from '../utils/shape'
+
 export interface FitnessTask {
   individualId: number
-  imageData: ImageData
+  shapes: Shape[]
 }
 
 export interface FitnessResult {

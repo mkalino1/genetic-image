@@ -7,22 +7,6 @@ export interface RGBColor {
 export type ShapeType = 'circle' | 'rectangle' | 'triangle'
 export type ShapeMode = 'fixed' | 'polygon'
 
-export interface ShapeParams {
-  type?: ShapeType
-  numSides?: number
-  vertexAngleOffsets?: number[]
-  vertexRadiusMults?: number[]
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  rotation?: number
-  color?: RGBColor
-  alpha?: number
-  z?: number
-  mode?: ShapeMode
-}
-
 export class Shape {
   type: ShapeType
   numSides: number
@@ -38,7 +22,7 @@ export class Shape {
   alpha: number
   z: number
 
-  constructor(params: ShapeParams = {}) {
+  constructor(params: Partial<Shape> = {}) {
     this.mode = params.mode ?? 'fixed'
     if (this.mode === 'polygon') {
       this.type = 'triangle'

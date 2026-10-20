@@ -12,10 +12,9 @@ export class GeneticAlgorithm {
   private static readonly RANDOM_IMMIGRANT_PERCENTAGE = 0.4
   private static readonly ELITE_PERCENTAGE = 0.05
 
-  // Onscreen and offscreen canvas for rendering
+  // Onscreen canvas for rendering the current best individual
   displayCanvas: HTMLCanvasElement
   displayCtx: CanvasRenderingContext2D
-  offscreenCtx: OffscreenCanvasRenderingContext2D
 
   // Target image data
   targetImageData: ImageData
@@ -47,11 +46,6 @@ export class GeneticAlgorithm {
     this.displayCtx = displayCtx
     this.targetImageData = targetImageData
 
-    // Initialize offscreen canvas
-    const offscreenCanvas = new OffscreenCanvas(displayCanvas.width, displayCanvas.height)
-    this.offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true })!
-    if (!this.offscreenCtx) throw new Error('Could not get offscreen 2D context')
-
     // Parameters
     this.populationSize = params.populationSize
     this.mutationRate = params.mutationRate
@@ -77,7 +71,11 @@ export class GeneticAlgorithm {
     if (this.population.length === 0) return
 
     // Evaluate fitness for all individuals using Web Workers
-    await evaluatePopulation(this.population, this.displayCanvas, this.offscreenCtx, this.targetImageData, this.workerPool)
+    await evaluatePopulation(
+      this.population,
+      this.targetImageData,
+      this.workerPool
+    )
 
     // Sort by fitness (best first)
     this.population.sort((a, b) => b.fitness - a.fitness)
