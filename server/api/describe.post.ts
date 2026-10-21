@@ -1,10 +1,10 @@
-import { generateText } from 'ai';
+import { createTextStreamResponse, streamText } from 'ai'
 
 export default defineEventHandler(async (event) => {
   const form = await readFormData(event)
   const image = form.get('image') as File
 
-  const { text } = await generateText({
+  const result = streamText({
     model: 'openai/gpt-5-nano',
     messages: [
       {
@@ -24,5 +24,5 @@ export default defineEventHandler(async (event) => {
     ],
   })
 
-  return text
+  return createTextStreamResponse({ stream: result.textStream })
 })
