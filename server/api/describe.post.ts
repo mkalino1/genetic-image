@@ -1,8 +1,27 @@
 import { createTextStreamResponse, streamText } from 'ai'
+import { z } from 'zod'
+
+const payloadSchema = z.object({
+  image: z.instanceof(File)
+    .refine(file => file.size > 0, 'Image must not be empty.')
+    .refine(file => file.type.startsWith('image/'), 'Image must be an image.'),
+})
 
 export default defineEventHandler(async (event) => {
   const form = await readFormData(event)
-  const image = form.get('image') as File
+  const payload = payloadSchema.safeParse({
+    image: form.get('image'),
+  })
+
+  if (!payload.success) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid request payload.',
+      data: payload.error.issues.map(({ path, message }) => ({ path, message })),
+    })
+  }
+
+  const { image } = payload.data
 
   const result = streamText({
     model: 'openai/gpt-5-nano',
