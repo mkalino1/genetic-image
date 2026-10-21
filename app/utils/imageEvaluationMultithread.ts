@@ -4,7 +4,7 @@
 export async function evaluatePopulation(
   population: Individual[],
   targetImageData: ImageData,
-  workerPool: WorkerPool
+  workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>
 ): Promise<void> {
   const individualsToProcess = population.map((individual, individualId) => ({
     individualId,

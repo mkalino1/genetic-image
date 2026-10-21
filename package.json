@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.99",
@@ -22,6 +23,8 @@
     "vue": "^3.5.29"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.95"
+    "@iconify-json/lucide": "^1.2.95",
+    "happy-dom": "^18.0.1",
+    "vitest": "^3.2.4"
   }
 }
