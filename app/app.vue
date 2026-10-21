@@ -81,6 +81,9 @@
                   <UButton :disabled="!isEvolving" color="neutral" variant="outline" icon="lucide:square" @click="stopEvolution">
                     Stop
                   </UButton>
+                  <UButton :disabled="!currentBestIndividual" color="neutral" variant="outline" icon="lucide:download" @click="downloadEvolutionImage">
+                    Download image
+                  </UButton>
                   <EvolutionParameters v-model="evolutionParams" />
                 </div>
                 <p v-if="!hasTargetImage" class="text-sm text-neutral-500">Upload an image to get started.</p>
@@ -140,14 +143,37 @@
 </template>
 
 <script setup lang="ts">
+
 const toast = useToast()
 
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
 const isEvolving = ref(false)
+const currentBestIndividual = shallowRef<Individual | null>(null)
 
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
+
+async function downloadEvolutionImage() {
+  const individual = currentBestIndividual.value
+  if (!individual) return
+
+  try {
+    const blob = await renderIndividualToPngBlob(individual, canvasBackgroundColor.value)
+    const imageUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = imageUrl
+    link.download = `evolved-image-generation-${generation.value}.png`
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(imageUrl), 0)
+  } catch (err) {
+    toast.add({
+      title: 'Could not download image',
+      icon: 'lucide:alert-triangle',
+      description: err instanceof Error ? err.message : String(err)
+    })
+  }
+}
 
 const description = ref('')
 const isDescribing = ref(false)
@@ -295,6 +321,7 @@ const startEvolution = async () => {
     URL.revokeObjectURL(recreatedImage.value)
     recreatedImage.value = ''
   }
+  currentBestIndividual.value = null
   try {
     geneticAlgorithm = new GeneticAlgorithm(displayCanvas, imageData, evolutionParams)
     isEvolving.value = true
@@ -324,6 +351,7 @@ const evolve = async () => {
   if (geneticAlgorithm) {
     await geneticAlgorithm.evolve()
     // Update UI with current values
+    currentBestIndividual.value = geneticAlgorithm.bestIndividual
     generation.value = geneticAlgorithm.generation
     bestFitness.value = geneticAlgorithm.bestFitness
     variance.value = geneticAlgorithm.variance
@@ -334,6 +362,7 @@ const evolve = async () => {
 
 const setTargetImage = async (imageData: string) => {
   stopEvolution()
+  currentBestIndividual.value = null
   targetImageData.value = null
   generation.value = 0
   bestFitness.value = 0

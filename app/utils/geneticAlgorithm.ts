@@ -32,6 +32,7 @@ export class GeneticAlgorithm {
   
   // State
   population: Individual[]
+  bestIndividual: Individual | null
   bestFitness: number
   generation: number
   variance: number
@@ -56,6 +57,7 @@ export class GeneticAlgorithm {
 
     // State
     this.population = initializePopulation(this.populationSize, this.shapesPerIndividual, this.shapeMode)
+    this.bestIndividual = null
     this.bestFitness = 0
     this.generation = 0
     this.variance = 0
@@ -84,6 +86,7 @@ export class GeneticAlgorithm {
     // Update best fitness and render best individual
     const best = this.population[0]
     if (best) {
+      this.bestIndividual = best
       if (best.fitness > this.bestFitness) {
         this.bestFitness = best.fitness
       }
