@@ -1,6 +1,8 @@
 /// <reference types="vitest/globals" />
 
 import type { Individual } from '../../app/utils/populationCreation'
+import { WORLD_SIZE } from '../../app/utils/canvasDimensions'
+import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/utils/shape'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -92,8 +94,8 @@ describe('shape mutation', () => {
 
     shape.mutate()
 
-    expect(shape.width).toBeGreaterThanOrEqual(5)
-    expect(shape.height).toBeGreaterThanOrEqual(5)
+    expect(shape.width).toBeGreaterThanOrEqual(MIN_SHAPE_SIZE)
+    expect(shape.height).toBeGreaterThanOrEqual(MIN_SHAPE_SIZE)
     expect(shape.alpha).toBeGreaterThanOrEqual(0.3)
     expect(shape.color.r).toBeGreaterThanOrEqual(0)
     expect(shape.color.g).toBeGreaterThanOrEqual(0)
@@ -136,6 +138,32 @@ describe('shape mutation', () => {
       expect(radius).toBeGreaterThanOrEqual(0.2)
       expect(radius).toBeLessThanOrEqual(2)
     }
+  })
+
+  it('keeps positions and dimensions within the world bounds', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999)
+    const shape = new Shape()
+
+    expect(shape.x).toBeLessThanOrEqual(WORLD_SIZE)
+    expect(shape.y).toBeLessThanOrEqual(WORLD_SIZE)
+    expect(shape.width).toBeLessThanOrEqual(MAX_SHAPE_SIZE)
+    expect(shape.height).toBeLessThanOrEqual(MAX_SHAPE_SIZE)
+
+    shape.mutate()
+
+    expect(shape.x).toBeLessThanOrEqual(WORLD_SIZE)
+    expect(shape.y).toBeLessThanOrEqual(WORLD_SIZE)
+    expect(shape.width).toBeLessThanOrEqual(MAX_SHAPE_SIZE)
+    expect(shape.height).toBeLessThanOrEqual(MAX_SHAPE_SIZE)
+  })
+
+  it('clamps explicitly provided geometry to the world bounds', () => {
+    const shape = new Shape({ x: 200, y: -10, width: 200, height: 0 })
+
+    expect(shape.x).toBe(WORLD_SIZE)
+    expect(shape.y).toBe(0)
+    expect(shape.width).toBe(MAX_SHAPE_SIZE)
+    expect(shape.height).toBe(MIN_SHAPE_SIZE)
   })
 })
 

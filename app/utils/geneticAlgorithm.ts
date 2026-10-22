@@ -1,3 +1,5 @@
+import { DISPLAY_CANVAS_SIZE, WORLD_SIZE } from './canvasDimensions'
+
 export interface EvolutionParams {
   populationSize: number
   mutationRate: number
@@ -45,6 +47,7 @@ export class GeneticAlgorithm {
     const displayCtx = displayCanvas.getContext('2d', { willReadFrequently: true })
     if (!displayCtx) throw new Error('Could not get 2D context')
     this.displayCtx = displayCtx
+    this.displayCtx.setTransform(DISPLAY_CANVAS_SIZE / WORLD_SIZE, 0, 0, DISPLAY_CANVAS_SIZE / WORLD_SIZE, 0, 0)
     this.targetImageData = targetImageData
 
     // Parameters

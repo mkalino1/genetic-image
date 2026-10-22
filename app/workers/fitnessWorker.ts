@@ -1,10 +1,10 @@
 import type { FitnessResult, FitnessWorkerRequest } from './workerTypes'
 import { renderShape } from '../utils/rendering'
+import { WORLD_SIZE } from '../utils/canvasDimensions'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
 const LAB_LINEAR_SCALE = 3 * LAB_DELTA * LAB_DELTA
-
 let targetLab: Float64Array | null = null
 let targetPixelCount = 0
 let canvas: OffscreenCanvas | null = null
@@ -13,7 +13,7 @@ let fitnessCanvasContext: OffscreenCanvasRenderingContext2D | null = null
 self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
   try {
     if (e.data.type === 'initialize_target') {
-      canvas = new OffscreenCanvas(e.data.targetImageData.width, e.data.targetImageData.height)
+      canvas = new OffscreenCanvas(WORLD_SIZE, WORLD_SIZE)
       fitnessCanvasContext = canvas.getContext('2d', { willReadFrequently: true })
       if (!fitnessCanvasContext) {
         throw new Error('Could not initialize fitness worker canvas')

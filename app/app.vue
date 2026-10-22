@@ -57,8 +57,8 @@
               <div class="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950">
                 <canvas
                   ref="canvas"
-                  width="160"
-                  height="160"
+                  :width="DISPLAY_CANVAS_SIZE"
+                  :height="DISPLAY_CANVAS_SIZE"
                   class="block aspect-square w-full"
                   :style="{ backgroundColor: canvasBackgroundColor }"
                   aria-label="Current evolution result"
@@ -143,7 +143,6 @@
 </template>
 
 <script setup lang="ts">
-
 const toast = useToast()
 
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
@@ -383,17 +382,17 @@ const setTargetImage = async (imageData: string) => {
     }
     return
   }
-  // Initialize offscreen target canvas
+  // Create a detached canvas to resize the target image
   const img = new window.Image()
   img.src = targetImage.value
   await new Promise<void>((resolve) => {
     img.onload = () => {
       const targetCanvas = document.createElement('canvas')
-      targetCanvas.width = 160
-      targetCanvas.height = 160
+      targetCanvas.width = WORLD_SIZE
+      targetCanvas.height = WORLD_SIZE
       const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true })!
-      targetCtx.drawImage(img, 0, 0, 160, 160)
-      targetImageData.value = targetCtx.getImageData(0, 0, 160, 160)
+      targetCtx.drawImage(img, 0, 0, WORLD_SIZE, WORLD_SIZE)
+      targetImageData.value = targetCtx.getImageData(0, 0, WORLD_SIZE, WORLD_SIZE)
       // Calculate average color and set background
       canvasBackgroundColor.value = calculateAverageColor(targetImageData.value)
       resolve()

@@ -1,6 +1,3 @@
-import type { Individual } from './populationCreation'
-import { renderIndividual } from './rendering'
-
 const EVOLVED_IMAGE_EXPORT_SIZE = 1024
 
 export function renderIndividualToPngBlob(individual: Individual, backgroundColor: string): Promise<Blob> {
@@ -13,7 +10,7 @@ export function renderIndividualToPngBlob(individual: Individual, backgroundColo
     throw new Error('Could not prepare the evolution result for download.')
   }
 
-  context.scale(EVOLVED_IMAGE_EXPORT_SIZE / 160, EVOLVED_IMAGE_EXPORT_SIZE / 160)
+  context.scale(EVOLVED_IMAGE_EXPORT_SIZE / WORLD_SIZE, EVOLVED_IMAGE_EXPORT_SIZE / WORLD_SIZE)
   renderIndividual(individual, context)
   context.setTransform(1, 0, 0, 1, 0, 0)
   context.globalCompositeOperation = 'destination-over'

@@ -1,4 +1,9 @@
 import { renderShape } from './rendering'
+import { WORLD_SIZE } from './canvasDimensions'
+
+export const MIN_SHAPE_SIZE = WORLD_SIZE / 40
+export const MAX_SHAPE_SIZE = WORLD_SIZE * 12 / 40
+const SHAPE_MUTATION_STEP = WORLD_SIZE / 40
 
 export interface RGBColor {
   r: number
@@ -59,10 +64,10 @@ export class Shape implements ShapeRenderData {
       this.type = params.type ?? ['circle', 'rectangle', 'triangle'][Math.floor(Math.random() * 3)] as ShapeType
       this.numSides = 0
     }
-    this.x = params.x ?? Math.random() * 160
-    this.y = params.y ?? Math.random() * 160
-    this.width = params.width ?? Math.random() * 60 + 5
-    this.height = params.height ?? Math.random() * 60 + 5
+    this.x = clamp(params.x ?? Math.random() * WORLD_SIZE, 0, WORLD_SIZE)
+    this.y = clamp(params.y ?? Math.random() * WORLD_SIZE, 0, WORLD_SIZE)
+    this.width = clamp(params.width ?? Math.random() * (MAX_SHAPE_SIZE - MIN_SHAPE_SIZE) + MIN_SHAPE_SIZE, MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
+    this.height = clamp(params.height ?? Math.random() * (MAX_SHAPE_SIZE - MIN_SHAPE_SIZE) + MIN_SHAPE_SIZE, MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
     this.rotation = params.rotation ?? Math.random() * Math.PI * 2
     this.color = params.color ?? Shape.randomColor()
     this.alpha = params.alpha ?? Math.random() * 0.7 + 0.3
@@ -86,13 +91,11 @@ export class Shape implements ShapeRenderData {
   }
 
   mutate(): void {
-    this.x += (Math.random() - 0.5) * 4
-    this.y += (Math.random() - 0.5) * 4
+    this.x = clamp(this.x + (Math.random() - 0.5) * SHAPE_MUTATION_STEP, 0, WORLD_SIZE)
+    this.y = clamp(this.y + (Math.random() - 0.5) * SHAPE_MUTATION_STEP, 0, WORLD_SIZE)
 
-    this.width += (Math.random() - 0.5) * 4
-    this.width = Math.max(5, this.width)
-    this.height += (Math.random() - 0.5) * 4
-    this.height = Math.max(5, this.height)
+    this.width = clamp(this.width + (Math.random() - 0.5) * SHAPE_MUTATION_STEP, MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
+    this.height = clamp(this.height + (Math.random() - 0.5) * SHAPE_MUTATION_STEP, MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
 
     this.rotation += (Math.random() - 0.5) * Math.PI * 0.2
 
@@ -153,4 +156,8 @@ export class Shape implements ShapeRenderData {
       vertexRadiusMults: this.vertexRadiusMults
     })
   }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value))
 }
