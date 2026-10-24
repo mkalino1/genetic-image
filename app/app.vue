@@ -48,7 +48,7 @@
                 <div>
                   <p class="text-sm font-medium text-primary">Step 2</p>
                   <h2 class="mt-1 text-xl font-semibold">Watch it evolve</h2>
-                  <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The best approximation from each generation. It may take a few minutes of evolution before a good result emerges.</p>
+                  <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The best approximation from each generation. It may take a minute before a good result emerges.</p>
                 </div>
                 <span class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200" role="status">
                   {{ evolutionStatus }}

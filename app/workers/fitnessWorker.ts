@@ -5,6 +5,12 @@ import { WORLD_SIZE } from '../utils/canvasDimensions'
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
 const LAB_LINEAR_SCALE = 3 * LAB_DELTA * LAB_DELTA
+const LINEAR_RGB_LUT = Float64Array.from({ length: 256 }, (_, value) => {
+  const normalized = value / 255
+  return normalized > 0.04045
+    ? Math.pow((normalized + 0.055) / 1.055, 2.4)
+    : normalized / 12.92
+})
 let targetLab: Float64Array | null = null
 let targetPixelCount = 0
 let canvas: OffscreenCanvas | null = null
@@ -155,8 +161,5 @@ function convertImageToLab(imageData: ImageData): Float64Array {
 }
 
 function toLinearRgb(value: number): number {
-  const normalized = value / 255
-  return normalized > 0.04045
-    ? Math.pow((normalized + 0.055) / 1.055, 2.4)
-    : normalized / 12.92
+  return LINEAR_RGB_LUT[value]!
 }
