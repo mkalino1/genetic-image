@@ -118,11 +118,10 @@ function calculateFitness(imageData: ImageData, targetLab: Float64Array, pixelCo
     const evolvedLabA = 500 * (fx - fy)
     const evolvedLabB = 200 * (fy - fz)
 
-    totalDeltaE += Math.hypot(
-      targetL - evolvedL,
-      targetA - evolvedLabA,
-      targetB - evolvedLabB
-    )
+    const deltaL = targetL - evolvedL
+    const deltaA = targetA - evolvedLabA
+    const deltaB = targetB - evolvedLabB
+    totalDeltaE += Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB)
   }
 
   const averageDeltaE = totalDeltaE / pixelCount
