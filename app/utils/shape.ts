@@ -2,7 +2,7 @@ import { renderShape } from './rendering'
 import { WORLD_SIZE } from './canvasDimensions'
 
 export const MIN_SHAPE_SIZE = WORLD_SIZE / 40
-export const MAX_SHAPE_SIZE = WORLD_SIZE * 12 / 40
+export const MAX_SHAPE_SIZE = WORLD_SIZE * 20 / 40
 const SHAPE_MUTATION_STEP = WORLD_SIZE / 40
 
 export interface RGBColor {

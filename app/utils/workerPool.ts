@@ -1,4 +1,6 @@
-import type { FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../workers/workerTypes'
+import type { FitnessProfilingMetrics, FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../workers/workerTypes'
+
+type FitnessProfileCallback = (profile: FitnessProfilingMetrics) => void
 
 export class WorkerPool {
   private workers: Worker[] = []
@@ -88,7 +90,8 @@ export class WorkerPool {
 
   async calculateFitnessBatches(
     individuals: FitnessTask[],
-    targetImageData: ImageData
+    targetImageData: ImageData,
+    onProfile?: FitnessProfileCallback
   ): Promise<Map<number, number>> {
     if (this.workers.length === 0) {
       throw new Error('No fitness workers could be initialized')
@@ -106,6 +109,7 @@ export class WorkerPool {
       batches.push(individuals.slice(i, i + batchSize))
     }
 
+    const evaluationStartedAt = onProfile ? performance.now() : 0
     const batchResponses = await Promise.all(batches.map(async (batch, index) => {
       const worker = this.workers[index % this.workers.length]
       if (!worker) {
@@ -113,18 +117,43 @@ export class WorkerPool {
       }
       const response = await this.sendMessageToWorker(worker, {
         type: 'batch_fitness_calculation',
-        batch
+        batch,
+        profile: Boolean(onProfile)
       })
       if (response.type !== 'batch_fitness_result') {
         throw new Error('Worker returned an unexpected response for fitness calculation')
       }
-      return response.results
+      return response
     }))
 
-    for (const batchResult of batchResponses) {
-      for (const result of batchResult) {
+    for (const response of batchResponses) {
+      for (const result of response.results) {
         results.set(result.individualId, result.fitness)
       }
+    }
+
+    if (onProfile) {
+      const profile = batchResponses.reduce<FitnessProfilingMetrics>((total, response) => {
+        const workerProfile = response.profile
+        if (!workerProfile) {
+          throw new Error('Worker did not return requested profiling metrics')
+        }
+        total.evaluatedIndividuals += workerProfile.evaluatedIndividuals
+        total.sortingMs += workerProfile.sortingMs
+        total.renderingMs += workerProfile.renderingMs
+        total.getImageDataMs += workerProfile.getImageDataMs
+        total.fitnessMs += workerProfile.fitnessMs
+        return total
+      }, {
+        evaluatedIndividuals: 0,
+        sortingMs: 0,
+        renderingMs: 0,
+        getImageDataMs: 0,
+        fitnessMs: 0,
+        workerEvaluationWallMs: 0
+      })
+      profile.workerEvaluationWallMs = performance.now() - evaluationStartedAt
+      onProfile(profile)
     }
 
     return results

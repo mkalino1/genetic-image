@@ -1,20 +1,22 @@
+import type { FitnessProfilingMetrics } from '../workers/workerTypes'
+
 /**
  * Evaluates, renders, and scores the population in parallel using Web Workers.
  */
 export async function evaluatePopulation(
   population: Individual[],
   targetImageData: ImageData,
-  workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>
+  workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>,
+  onProfile?: (profile: FitnessProfilingMetrics) => void
 ): Promise<void> {
   const individualsToProcess = population.map((individual, individualId) => ({
     individualId,
     shapes: individual.shapes
   }))
 
-  const fitnessResults = await workerPool.calculateFitnessBatches(
-    individualsToProcess,
-    targetImageData
-  )
+  const fitnessResults = onProfile
+    ? await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData, onProfile)
+    : await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData)
   
   for (let i = 0; i < population.length; i++) {
     const individual = population[i]

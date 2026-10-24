@@ -74,6 +74,10 @@
                   :variance="variance"
                   :adaptive-mutation-rate="adaptiveMutationRate"
                 />
+                <DevProfilingPanel
+                  v-if="isDevelopment && profilingSummary"
+                  :summary="profilingSummary"
+                />
                 <div class="flex flex-wrap items-center gap-2">
                   <UButton :disabled="!hasTargetImage || isEvolving" icon="lucide:play" @click="startEvolution">
                     {{ isEvolving ? 'Evolving…' : generation > 0 ? 'Restart evolution' : 'Start evolution' }}
@@ -143,8 +147,11 @@
 </template>
 
 <script setup lang="ts">
+import type { GenerationProfilingSummary } from './workers/workerTypes'
+
 const toast = useToast()
 
+const isDevelopment = import.meta.dev
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
 const isEvolving = ref(false)
@@ -273,6 +280,7 @@ const generation = ref(0)
 const bestFitness = ref(0)
 const variance = ref(0)
 const adaptiveMutationRate = ref(0)
+const profilingSummary = ref<GenerationProfilingSummary | null>(null)
 const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
 const canRecreate = computed(() =>
   hasTargetImage.value
@@ -321,6 +329,7 @@ const startEvolution = async () => {
     recreatedImage.value = ''
   }
   currentBestIndividual.value = null
+  profilingSummary.value = null
   try {
     geneticAlgorithm = new GeneticAlgorithm(displayCanvas, imageData, evolutionParams)
     isEvolving.value = true
@@ -355,6 +364,9 @@ const evolve = async () => {
     bestFitness.value = geneticAlgorithm.bestFitness
     variance.value = geneticAlgorithm.variance
     adaptiveMutationRate.value = geneticAlgorithm.adaptiveMutationRate
+    if (isDevelopment) {
+      profilingSummary.value = geneticAlgorithm.getAverageProfilingMetrics()
+    }
   }
   animationId = requestAnimationFrame(evolve)
 }
@@ -367,6 +379,7 @@ const setTargetImage = async (imageData: string) => {
   bestFitness.value = 0
   variance.value = 0
   adaptiveMutationRate.value = 0
+  profilingSummary.value = null
   description.value = ''
   if (recreatedImage.value) {
     URL.revokeObjectURL(recreatedImage.value)

@@ -1,4 +1,4 @@
-import type { FitnessResult, FitnessWorkerRequest } from './workerTypes'
+import type { FitnessWorkerProfilingMetrics, FitnessResult, FitnessWorkerRequest } from './workerTypes'
 import { renderShape } from '../utils/rendering'
 import { WORLD_SIZE } from '../utils/canvasDimensions'
 
@@ -31,19 +31,43 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
     const initializedTargetLab = targetLab
     const workerContext = fitnessCanvasContext
     const results: FitnessResult[] = []
+    const profiling = e.data.profile
+      ? {
+          evaluatedIndividuals: 0,
+          sortingMs: 0,
+          renderingMs: 0,
+          getImageDataMs: 0,
+          fitnessMs: 0
+        } satisfies FitnessWorkerProfilingMetrics
+      : undefined
+
     for (const { shapes, individualId } of e.data.batch) {
+      const sortingStartedAt = profiling ? performance.now() : 0
       const sortedShapes = [...shapes].sort((a, b) => a.z - b.z)
+      if (profiling) profiling.sortingMs += performance.now() - sortingStartedAt
+
+      const renderingStartedAt = profiling ? performance.now() : 0
       workerContext.clearRect(0, 0, workerContext.canvas.width, workerContext.canvas.height)
       for (const shape of sortedShapes) {
         renderShape(shape, workerContext)
       }
+      if (profiling) profiling.renderingMs += performance.now() - renderingStartedAt
+
+      const imageReadStartedAt = profiling ? performance.now() : 0
       const imageData = workerContext.getImageData(0, 0, workerContext.canvas.width, workerContext.canvas.height)
+      if (profiling) profiling.getImageDataMs += performance.now() - imageReadStartedAt
+
+      const fitnessStartedAt = profiling ? performance.now() : 0
       results.push({
         individualId,
         fitness: calculateFitness(imageData, initializedTargetLab, targetPixelCount)
       })
+      if (profiling) {
+        profiling.fitnessMs += performance.now() - fitnessStartedAt
+        profiling.evaluatedIndividuals++
+      }
     }
-    self.postMessage({ type: 'batch_fitness_result', results, success: true })
+    self.postMessage({ type: 'batch_fitness_result', results, profile: profiling, success: true })
   } catch (error) {
     console.error('Worker fitness calculation failed:', error)
     self.postMessage({

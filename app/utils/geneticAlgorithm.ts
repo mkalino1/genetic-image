@@ -1,4 +1,9 @@
 import { DISPLAY_CANVAS_SIZE, WORLD_SIZE } from './canvasDimensions'
+import type {
+  FitnessProfilingMetrics,
+  GenerationProfilingMetrics,
+  GenerationProfilingSummary
+} from '../workers/workerTypes'
 
 export interface EvolutionParams {
   populationSize: number
@@ -9,6 +14,7 @@ export interface EvolutionParams {
 }
 
 export class GeneticAlgorithm {
+  private static readonly PROFILING_WINDOW_SIZE = 20
   private static readonly STAGNATION_PATIENCE = 10
   private static readonly MINIMUM_FITNESS_IMPROVEMENT = 0.005
   private static readonly RANDOM_IMMIGRANT_PERCENTAGE = 0.4
@@ -41,6 +47,7 @@ export class GeneticAlgorithm {
   adaptiveMutationRate: number
   stagnationGenerations: number
   bestFitnessAtLastProgress: number
+  profilingHistory: GenerationProfilingMetrics[] = []
 
   constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: EvolutionParams) {
     this.displayCanvas = displayCanvas
@@ -75,11 +82,19 @@ export class GeneticAlgorithm {
   async evolve(): Promise<void> {
     if (this.population.length === 0) return
 
+    const profilingEnabled = import.meta.dev &&
+      this.profilingHistory.length < GeneticAlgorithm.PROFILING_WINDOW_SIZE
+    const generationStartedAt = profilingEnabled ? performance.now() : 0
+    let workerProfile: FitnessProfilingMetrics | undefined
+
     // Evaluate fitness for all individuals using Web Workers
     await evaluatePopulation(
       this.population,
       this.targetImageData,
-      this.workerPool
+      this.workerPool,
+      profilingEnabled ? (profile) => {
+        workerProfile = profile
+      } : undefined
     )
 
     // Sort by fitness (best first)
@@ -129,8 +144,58 @@ export class GeneticAlgorithm {
       console.log(`Added ${immigrantCount} random individuals at generation ${this.generation}`)
     }
     this.population = nextPopulation
-    
+
+    if (profilingEnabled && workerProfile) {
+      const profile: GenerationProfilingMetrics = {
+        generationMs: performance.now() - generationStartedAt,
+        workerEvaluationWallMs: workerProfile.workerEvaluationWallMs,
+        evaluatedIndividuals: workerProfile.evaluatedIndividuals,
+        sortingMs: workerProfile.sortingMs,
+        renderingMs: workerProfile.renderingMs,
+        getImageDataMs: workerProfile.getImageDataMs,
+        fitnessMs: workerProfile.fitnessMs
+      }
+      this.profilingHistory.push(profile)
+    }
+
     this.generation++
+  }
+
+  getAverageProfilingMetrics(): GenerationProfilingSummary | null {
+    if (this.profilingHistory.length === 0) return null
+
+    const totals = this.profilingHistory.reduce<GenerationProfilingMetrics>((sum, profile) => ({
+      generationMs: sum.generationMs + profile.generationMs,
+      workerEvaluationWallMs: sum.workerEvaluationWallMs + profile.workerEvaluationWallMs,
+      evaluatedIndividuals: sum.evaluatedIndividuals + profile.evaluatedIndividuals,
+      sortingMs: sum.sortingMs + profile.sortingMs,
+      renderingMs: sum.renderingMs + profile.renderingMs,
+      getImageDataMs: sum.getImageDataMs + profile.getImageDataMs,
+      fitnessMs: sum.fitnessMs + profile.fitnessMs
+    }), {
+      generationMs: 0,
+      workerEvaluationWallMs: 0,
+      evaluatedIndividuals: 0,
+      sortingMs: 0,
+      renderingMs: 0,
+      getImageDataMs: 0,
+      fitnessMs: 0
+    })
+
+    const sampleCount = this.profilingHistory.length
+    return {
+      metrics: {
+        generationMs: totals.generationMs / sampleCount,
+        workerEvaluationWallMs: totals.workerEvaluationWallMs / sampleCount,
+        evaluatedIndividuals: totals.evaluatedIndividuals / sampleCount,
+        sortingMs: totals.sortingMs / sampleCount,
+        renderingMs: totals.renderingMs / sampleCount,
+        getImageDataMs: totals.getImageDataMs / sampleCount,
+        fitnessMs: totals.fitnessMs / sampleCount
+      },
+      sampleCount,
+      totalGenerationMs: totals.generationMs
+    }
   }
 
   cleanup(): void {
