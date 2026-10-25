@@ -11,6 +11,11 @@ const LINEAR_RGB_LUT = Float64Array.from({ length: 256 }, (_, value) => {
     ? Math.pow((normalized + 0.055) / 1.055, 2.4)
     : normalized / 12.92
 })
+const LAB_CACHE_SIZE = 1 << 14
+const labCacheKeys = new Uint32Array(LAB_CACHE_SIZE)
+const labCacheL = new Float64Array(LAB_CACHE_SIZE)
+const labCacheA = new Float64Array(LAB_CACHE_SIZE)
+const labCacheB = new Float64Array(LAB_CACHE_SIZE)
 let targetLab: Float64Array | null = null
 let targetPixelCount = 0
 let canvas: OffscreenCanvas | null = null
@@ -102,21 +107,38 @@ function calculateFitness(imageData: ImageData, targetLab: Float64Array, pixelCo
       targetL === undefined || targetA === undefined || targetB === undefined
     ) continue
 
-    const rLinear = toLinearRgb(evolvedR)
-    const gLinear = toLinearRgb(evolvedG)
-    const bLinear = toLinearRgb(evolvedB)
-    const x = rLinear * 0.4124 + gLinear * 0.3576 + bLinear * 0.1805
-    const y = rLinear * 0.2126 + gLinear * 0.7152 + bLinear * 0.0722
-    const z = rLinear * 0.0193 + gLinear * 0.1192 + bLinear * 0.9505
-    const xNorm = x / 0.95047
-    const yNorm = y
-    const zNorm = z / 1.08883
-    const fx = xNorm > LAB_DELTA_CUBE ? Math.pow(xNorm, 1 / 3) : xNorm / LAB_LINEAR_SCALE + 4 / 29
-    const fy = yNorm > LAB_DELTA_CUBE ? Math.pow(yNorm, 1 / 3) : yNorm / LAB_LINEAR_SCALE + 4 / 29
-    const fz = zNorm > LAB_DELTA_CUBE ? Math.pow(zNorm, 1 / 3) : zNorm / LAB_LINEAR_SCALE + 4 / 29
-    const evolvedL = 116 * fy - 16
-    const evolvedLabA = 500 * (fx - fy)
-    const evolvedLabB = 200 * (fy - fz)
+    const rgbKey = (evolvedR << 16) | (evolvedG << 8) | evolvedB
+    const cacheIndex = Math.imul(rgbKey, 0x9e3779b1) >>> 18
+    const cacheKey = rgbKey + 1
+    let evolvedL: number
+    let evolvedLabA: number
+    let evolvedLabB: number
+
+    if (labCacheKeys[cacheIndex] === cacheKey) {
+      evolvedL = labCacheL[cacheIndex]!
+      evolvedLabA = labCacheA[cacheIndex]!
+      evolvedLabB = labCacheB[cacheIndex]!
+    } else {
+      const rLinear = toLinearRgb(evolvedR)
+      const gLinear = toLinearRgb(evolvedG)
+      const bLinear = toLinearRgb(evolvedB)
+      const x = rLinear * 0.4124 + gLinear * 0.3576 + bLinear * 0.1805
+      const y = rLinear * 0.2126 + gLinear * 0.7152 + bLinear * 0.0722
+      const z = rLinear * 0.0193 + gLinear * 0.1192 + bLinear * 0.9505
+      const xNorm = x / 0.95047
+      const yNorm = y
+      const zNorm = z / 1.08883
+      const fx = xNorm > LAB_DELTA_CUBE ? Math.pow(xNorm, 1 / 3) : xNorm / LAB_LINEAR_SCALE + 4 / 29
+      const fy = yNorm > LAB_DELTA_CUBE ? Math.pow(yNorm, 1 / 3) : yNorm / LAB_LINEAR_SCALE + 4 / 29
+      const fz = zNorm > LAB_DELTA_CUBE ? Math.pow(zNorm, 1 / 3) : zNorm / LAB_LINEAR_SCALE + 4 / 29
+      evolvedL = 116 * fy - 16
+      evolvedLabA = 500 * (fx - fy)
+      evolvedLabB = 200 * (fy - fz)
+      labCacheKeys[cacheIndex] = cacheKey
+      labCacheL[cacheIndex] = evolvedL
+      labCacheA[cacheIndex] = evolvedLabA
+      labCacheB[cacheIndex] = evolvedLabB
+    }
 
     const deltaL = targetL - evolvedL
     const deltaA = targetA - evolvedLabA
