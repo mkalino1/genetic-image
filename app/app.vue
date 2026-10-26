@@ -275,7 +275,7 @@ async function recreateImage() {
 }
 
 // Metrics
-const MINIMUM_EVOLUTION_GENERATIONS = 50
+const MINIMUM_EVOLUTION_GENERATIONS = 100
 const generation = ref(0)
 const bestFitness = ref(0)
 const variance = ref(0)
@@ -305,9 +305,9 @@ const workflowSteps = computed(() => [
 const evolutionParams = reactive<EvolutionParams>({
   populationSize: 500,
   mutationRate: 0.05,
-  shapesPerIndividual: 150,
+  shapesPerIndividual: 80,
   crossoverStrategy: 'uniform',
-  shapeMode: 'fixed'
+  shapeMode: 'polygon'
 })
 
 let geneticAlgorithm: GeneticAlgorithm | null = null

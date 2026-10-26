@@ -45,7 +45,7 @@
               <label for="shape-mode" class="text-sm font-medium">Shape type</label>
             </div>
             <USelect id="shape-mode" v-model="model.shapeMode" :items="shapeTypOptions" />
-            <p class="mt-1 text-xs text-neutral-500">{{ shapeModeDescriptions[model.shapeMode ?? 'fixed'] }}</p>
+            <p class="mt-1 text-xs text-neutral-500">{{ shapeModeDescriptions[model.shapeMode ?? 'polygon'] }}</p>
           </div>
         </div>
       </div>
@@ -74,13 +74,13 @@ const crossoverStrategyDescriptions: Record<CrossoverStrategy, string> = {
 }
 
 const shapeTypOptions: { label: string, value: 'fixed' | 'polygon' }[] = [
-  { label: 'Fixed shapes', value: 'fixed' },
-  { label: 'Random polygons', value: 'polygon' }
+  { label: 'Random polygons', value: 'polygon' },
+  { label: 'Fixed shapes', value: 'fixed' }
 ]
 
 const shapeModeDescriptions: Record<'fixed' | 'polygon', string> = {
-  fixed: 'Use circles, rectangles and triangles.',
-  polygon: 'Use irregular polygons with mutable vertices.'
+  polygon: 'Use irregular polygons with mutable vertices.',
+  fixed: 'Use circles, rectangles and triangles.'
 }
 
 </script>
