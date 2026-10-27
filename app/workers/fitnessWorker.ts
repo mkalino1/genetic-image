@@ -1,6 +1,7 @@
 import type { FitnessWorkerProfilingMetrics, FitnessResult, FitnessWorkerRequest } from './workerTypes'
 import { renderShape } from '../utils/rendering'
 import { WORLD_SIZE } from '../utils/canvasDimensions'
+import { calculatePixelWeights } from '../utils/pixelWeights'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
@@ -17,6 +18,7 @@ const labCacheL = new Float64Array(LAB_CACHE_SIZE)
 const labCacheA = new Float64Array(LAB_CACHE_SIZE)
 const labCacheB = new Float64Array(LAB_CACHE_SIZE)
 let targetLab: Float64Array | null = null
+let targetPixelWeights: Float32Array | null = null
 let targetPixelCount = 0
 let canvas: OffscreenCanvas | null = null
 let fitnessCanvasContext: OffscreenCanvasRenderingContext2D | null = null
@@ -31,15 +33,21 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
       }
       targetPixelCount = e.data.targetImageData.data.length / 4
       targetLab = convertImageToLab(e.data.targetImageData)
+      targetPixelWeights = calculatePixelWeights(
+        targetLab,
+        e.data.targetImageData.width,
+        e.data.targetImageData.height
+      )
       self.postMessage({ type: 'target_initialized', success: true })
       return
     }
 
-    if (!targetLab || !fitnessCanvasContext) {
+    if (!targetLab || !targetPixelWeights || !fitnessCanvasContext) {
       throw new Error('Fitness worker has not been initialized')
     }
 
     const initializedTargetLab = targetLab
+    const initializedTargetPixelWeights = targetPixelWeights
     const workerContext = fitnessCanvasContext
     const results: FitnessResult[] = []
     const profiling = e.data.profile
@@ -71,7 +79,12 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
       const fitnessStartedAt = profiling ? performance.now() : 0
       results.push({
         individualId,
-        fitness: calculateFitness(imageData, initializedTargetLab, targetPixelCount)
+        fitness: calculateFitness(
+          imageData,
+          initializedTargetLab,
+          initializedTargetPixelWeights,
+          targetPixelCount
+        )
       })
       if (profiling) {
         profiling.fitnessMs += performance.now() - fitnessStartedAt
@@ -89,9 +102,15 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
   }
 }
 
-function calculateFitness(imageData: ImageData, targetLab: Float64Array, pixelCount: number): number {
+function calculateFitness(
+  imageData: ImageData,
+  targetLab: Float64Array,
+  pixelWeights: Float32Array,
+  pixelCount: number
+): number {
   const evolvedData = imageData.data
-  let totalDeltaE = 0
+  let totalWeightedDeltaE = 0
+  let totalWeight = 0
 
   for (let pixel = 0, rgbaOffset = 0; pixel < pixelCount; pixel++, rgbaOffset += 4) {
     const evolvedR = evolvedData[rgbaOffset]
@@ -143,10 +162,13 @@ function calculateFitness(imageData: ImageData, targetLab: Float64Array, pixelCo
     const deltaL = targetL - evolvedL
     const deltaA = targetA - evolvedLabA
     const deltaB = targetB - evolvedLabB
-    totalDeltaE += Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB)
+    const pixelWeight = pixelWeights[pixel]
+    if (pixelWeight === undefined) continue
+    totalWeightedDeltaE += Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB) * pixelWeight
+    totalWeight += pixelWeight
   }
 
-  const averageDeltaE = totalDeltaE / pixelCount
+  const averageDeltaE = totalWeight > 0 ? totalWeightedDeltaE / totalWeight : 0
   return Math.max(0, 1 - (averageDeltaE / 100))
 }
 
