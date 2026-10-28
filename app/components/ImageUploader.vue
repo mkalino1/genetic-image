@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <button
-      v-if="!previewUrl"
+      v-if="!previewUrl && !isLoading"
       type="button"
       class="grid aspect-square w-full place-items-center rounded-xl border-2 border-dashed border-neutral-300 p-6 text-center transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-neutral-700"
       aria-label="Choose an image from your device"
@@ -23,6 +23,19 @@
         </div>
       </div>
     </button>
+
+    <div
+      v-if="isLoading"
+      class="grid aspect-square w-full place-items-center rounded-xl border-2 border-dashed border-neutral-300 p-6 text-center dark:border-neutral-700"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div class="space-y-3">
+        <UIcon name="lucide:loader-circle" class="size-9 animate-spin text-primary" />
+        <div class="text-sm text-neutral-500">Loading HEIC/HEIF image…</div>
+      </div>
+    </div>
 
     <input
       ref="fileInput"
@@ -65,6 +78,7 @@ const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const previewUrl = ref('')
 const error = ref('')
 const imageInfo = ref('')
+const isLoading = ref(false)
 
 const triggerFileInput = () => {
   fileInput.value?.click()
@@ -90,6 +104,10 @@ const isHeicFile = (file: File) => {
 }
 
 const processFile = async (file: File) => {
+  if (isLoading.value) {
+    return
+  }
+
   error.value = ''
   
   // Validate file size (5MB limit)
@@ -109,6 +127,7 @@ const processFile = async (file: File) => {
   let imageType = file.type || 'image/png'
 
   if (isHeic) {
+    isLoading.value = true
     try {
       const { default: heic2any } = await import('heic2any')
       const converted = await heic2any({
@@ -125,6 +144,8 @@ const processFile = async (file: File) => {
     } catch {
       error.value = 'Could not convert the HEIC image. Try selecting a different file.'
       return
+    } finally {
+      isLoading.value = false
     }
   }
 
