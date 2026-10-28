@@ -158,6 +158,12 @@ export class WorkerPool {
         fitnessMs: 0,
         workerEvaluationWallMs: 0
       })
+      if (batchResponses.length > 0) {
+        profile.sortingMs /= batchResponses.length
+        profile.renderingMs /= batchResponses.length
+        profile.getImageDataMs /= batchResponses.length
+        profile.fitnessMs /= batchResponses.length
+      }
       profile.workerEvaluationWallMs = performance.now() - evaluationStartedAt
       onProfile(profile)
     }

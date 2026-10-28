@@ -11,11 +11,11 @@
     </div>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
       <div>
-        <dt class="text-xs text-neutral-500">Total generation time ({{ summary.sampleCount }} iterations)</dt>
+        <dt class="text-xs text-neutral-500">Generation (sum, {{ summary.sampleCount }} iterations)</dt>
         <dd class="font-mono text-sm">{{ formatSeconds(summary.totalGenerationMs) }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-neutral-500">Generation</dt>
+        <dt class="text-xs text-neutral-500">Generation (average)</dt>
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.generationMs) }}</dd>
       </div>
       <div>
@@ -23,28 +23,30 @@
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.workerEvaluationWallMs) }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-neutral-500">Fitness (worker sum)</dt>
+        <dt class="text-xs text-neutral-500">Fitness (worker average)</dt>
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.fitnessMs) }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-neutral-500">getImageData (worker sum)</dt>
+        <dt class="text-xs text-neutral-500">getImageData (worker average)</dt>
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.getImageDataMs) }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-neutral-500">Rendering (worker sum)</dt>
+        <dt class="text-xs text-neutral-500">Rendering (worker average)</dt>
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.renderingMs) }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-neutral-500">Sorting (worker sum)</dt>
+        <dt class="text-xs text-neutral-500">Sorting (worker average)</dt>
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.sortingMs) }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-neutral-500">Individuals</dt>
-        <dd class="font-mono text-sm">{{ summary.metrics.evaluatedIndividuals.toFixed(0) }}</dd>
+        <dt class="text-xs text-neutral-500">Other generation work</dt>
+        <dd class="font-mono text-sm">
+          {{ formatMilliseconds(summary.metrics.generationMs - summary.metrics.workerEvaluationWallMs) }}
+        </dd>
       </div>
     </dl>
     <p class="mt-2 text-xs text-neutral-500">
-      Worker stage times are summed across workers; worker evaluation is elapsed wall time.
+      Worker stage times are averaged across workers; worker evaluation is elapsed wall time.
     </p>
   </section>
 </template>
