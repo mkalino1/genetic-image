@@ -2,6 +2,7 @@ import type { FitnessWorkerProfilingMetrics, FitnessResult, FitnessWorkerRequest
 import { renderShape } from '../utils/rendering'
 import { WORLD_SIZE } from '../utils/canvasDimensions'
 import { calculatePixelWeights } from '../utils/pixelWeights'
+import { unpackFitnessTasks } from '../utils/fitnessTaskSerialization'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
@@ -60,7 +61,9 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
         } satisfies FitnessWorkerProfilingMetrics
       : undefined
 
-    for (const { shapes, individualId } of e.data.batch) {
+    const tasks = unpackFitnessTasks(e.data.batch)
+
+    for (const { shapes, individualId } of tasks) {
       const sortingStartedAt = profiling ? performance.now() : 0
       const sortedShapes = [...shapes].sort((a, b) => a.z - b.z)
       if (profiling) profiling.sortingMs += performance.now() - sortingStartedAt

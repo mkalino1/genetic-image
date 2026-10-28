@@ -1,4 +1,5 @@
 import type { FitnessProfilingMetrics, FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../workers/workerTypes'
+import { packFitnessTasks } from './fitnessTaskSerialization'
 
 type FitnessProfileCallback = (profile: FitnessProfilingMetrics) => void
 
@@ -25,7 +26,11 @@ export class WorkerPool {
     }
   }
 
-  private sendMessageToWorker(worker: Worker, message: FitnessWorkerRequest): Promise<FitnessWorkerResponse> {
+  private sendMessageToWorker(
+    worker: Worker,
+    message: FitnessWorkerRequest,
+    transferList: Transferable[] = []
+  ): Promise<FitnessWorkerResponse> {
     return new Promise((resolve, reject) => {
       const cleanup = () => {
         clearTimeout(timeout)
@@ -56,7 +61,7 @@ export class WorkerPool {
       worker.addEventListener('error', handleError)
 
       try {
-        worker.postMessage(message)
+        worker.postMessage(message, transferList)
       } catch (error) {
         cleanup()
         reject(error)
@@ -109,8 +114,9 @@ export class WorkerPool {
       batches.push(individuals.slice(i, i + batchSize))
     }
 
+    const packedBatches = batches.map(batch => packFitnessTasks(batch))
     const evaluationStartedAt = onProfile ? performance.now() : 0
-    const batchResponses = await Promise.all(batches.map(async (batch, index) => {
+    const batchResponses = await Promise.all(packedBatches.map(async (batch, index) => {
       const worker = this.workers[index % this.workers.length]
       if (!worker) {
         throw new Error(`No worker available for fitness batch ${index}`)
@@ -119,7 +125,7 @@ export class WorkerPool {
         type: 'batch_fitness_calculation',
         batch,
         profile: Boolean(onProfile)
-      })
+      }, [batch.shapes])
       if (response.type !== 'batch_fitness_result') {
         throw new Error('Worker returned an unexpected response for fitness calculation')
       }

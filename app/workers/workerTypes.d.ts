@@ -5,6 +5,17 @@ export interface FitnessTask {
   shapes: ShapeRenderData[]
 }
 
+export interface PackedFitnessTask {
+  individualId: number
+  shapeOffset: number
+  shapeCount: number
+}
+
+export interface PackedFitnessBatch {
+  individuals: PackedFitnessTask[]
+  shapes: ArrayBuffer
+}
+
 export interface FitnessResult {
   individualId: number
   fitness: number
@@ -34,7 +45,7 @@ export interface GenerationProfilingSummary {
 
 export type FitnessWorkerRequest =
   | { type: 'initialize_target'; targetImageData: ImageData }
-  | { type: 'batch_fitness_calculation'; batch: FitnessTask[]; profile?: boolean }
+  | { type: 'batch_fitness_calculation'; batch: PackedFitnessBatch; profile?: boolean }
 
 export type FitnessWorkerResponse =
   | { type: 'target_initialized'; success: true }
