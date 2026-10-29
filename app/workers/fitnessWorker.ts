@@ -3,7 +3,11 @@ import { renderShape } from '../utils/rendering'
 import { CANVAS_CONFIG } from '../utils/imageEvolutionConfig'
 import { calculatePixelWeights } from '../utils/pixelWeights'
 import { unpackFitnessTasks } from '../utils/fitnessTaskSerialization'
-import { fitnessFromAverageDeltaE } from '../utils/fitnessConversion'
+import {
+  FITNESS_DELTA_E_POWER,
+  fitnessFromWeightedDeltaE,
+  weightedPowerMeanDeltaE
+} from '../utils/fitnessConversion'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
@@ -116,7 +120,7 @@ function calculateFitness(
   pixelCount: number
 ): number {
   const evolvedData = imageData.data
-  let totalWeightedDeltaE = 0
+  let totalWeightedPoweredDeltaE = 0
   let totalWeight = 0
 
   for (let pixel = 0, rgbaOffset = 0; pixel < pixelCount; pixel++, rgbaOffset += 4) {
@@ -171,12 +175,16 @@ function calculateFitness(
     const deltaB = targetB - evolvedLabB
     const pixelWeight = pixelWeights[pixel]
     if (pixelWeight === undefined) continue
-    totalWeightedDeltaE += Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB) * pixelWeight
+    const deltaESquared = deltaL * deltaL + deltaA * deltaA + deltaB * deltaB
+    totalWeightedPoweredDeltaE += Math.pow(deltaESquared, FITNESS_DELTA_E_POWER / 2) * pixelWeight
     totalWeight += pixelWeight
   }
 
-  const averageDeltaE = totalWeight > 0 ? totalWeightedDeltaE / totalWeight : 0
-  return fitnessFromAverageDeltaE(averageDeltaE)
+  const weightedDeltaE = weightedPowerMeanDeltaE(
+    totalWeightedPoweredDeltaE,
+    totalWeight
+  )
+  return fitnessFromWeightedDeltaE(weightedDeltaE)
 }
 
 function convertImageToLab(imageData: ImageData): Float64Array {

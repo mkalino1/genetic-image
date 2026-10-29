@@ -1,6 +1,6 @@
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './imageEvolutionConfig'
 import type { CrossoverStrategy, EvolutionParams, ShapeMode } from './imageEvolutionConfig'
-import { averageDeltaEFromFitness } from './fitnessConversion'
+import { weightedDeltaEFromFitness } from './fitnessConversion'
 import type {
   FitnessProfilingMetrics,
   GenerationProfilingMetrics,
@@ -106,8 +106,8 @@ export class GeneticAlgorithm {
       if (best.fitness > this.bestFitness) {
         this.bestFitness = best.fitness
       }
-      const previousBestDeltaE = averageDeltaEFromFitness(this.bestFitnessAtLastProgress)
-      const currentBestDeltaE = averageDeltaEFromFitness(best.fitness)
+      const previousBestDeltaE = weightedDeltaEFromFitness(this.bestFitnessAtLastProgress)
+      const currentBestDeltaE = weightedDeltaEFromFitness(best.fitness)
       if (
         previousBestDeltaE - currentBestDeltaE >=
         EVOLUTION_CONFIG.stagnation.minimumDeltaEImprovement
