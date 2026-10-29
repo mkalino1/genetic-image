@@ -78,9 +78,6 @@ export const SHAPE_CONFIG = {
   maximumAlpha: 1,
   maximumInitialDepth: 100,
   maximumInitialRotation: Math.PI * 2,
-  mutationDeltaRandomRange: 2,
-  mutationDeltaActivationThreshold: 1,
-  mutationDeltaCenter: 1.5,
   types: ['circle', 'rectangle', 'triangle'] as const,
   polygon: {
     initialMinimumSides: 3,
@@ -92,7 +89,6 @@ export const SHAPE_CONFIG = {
     initialRadiusMultiplierMinimum: 0.6,
     initialRadiusMultiplierRange: 0.8,
     sideCountMutationProbability: 0.02,
-    vertexMutationProbability: 0.3,
     angleMutationStep: 0.12,
     radiusMutationStep: 0.08,
     minimumRadiusMultiplier: 0.2,

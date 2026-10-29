@@ -83,34 +83,17 @@ describe('population creation and cloning', () => {
 })
 
 describe('shape mutation', () => {
-  it('uses the original mutation step when the ReLU gate is active', () => {
+  it('makes one bounded local change, including in the negative direction', () => {
     const shape = createShape(20)
     const originalShape = shape.clone()
-    vi.spyOn(Math, 'random').mockReturnValue(0.999)
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.999)
+      .mockReturnValueOnce(0)
+      .mockReturnValue(0)
 
     shape.mutate()
 
-    expect(shape.x).toBeGreaterThan(originalShape.x)
-    expect(shape.x - originalShape.x).toBeLessThanOrEqual(WORLD_SIZE / 80)
-    expect(shape.y).toBeGreaterThan(originalShape.y)
-    expect(shape.width).toBeGreaterThan(originalShape.width)
-    expect(shape.height).toBeGreaterThan(originalShape.height)
-    expect(shape.rotation - originalShape.rotation).toBeLessThanOrEqual(Math.PI * 0.1)
-    expect(shape.alpha - originalShape.alpha).toBeLessThanOrEqual(0.02)
-    expect(shape.z - originalShape.z).toBeLessThanOrEqual(2.5)
-    expect(shape.color.r - originalShape.color.r).toBeLessThanOrEqual(9)
-    expect(shape.color.g - originalShape.color.g).toBeLessThanOrEqual(9)
-    expect(shape.color.b - originalShape.color.b).toBeLessThanOrEqual(9)
-  })
-
-  it('skips attribute changes when the ReLU gate falls', () => {
-    const shape = createShape(20)
-    const originalShape = shape.clone()
-    vi.spyOn(Math, 'random').mockReturnValue(0.25)
-
-    shape.mutate()
-
-    expect(shape.x).toBe(originalShape.x)
+    expect(shape.x).toBeLessThan(originalShape.x)
+    expect(originalShape.x - shape.x).toBeLessThanOrEqual(WORLD_SIZE / 80)
     expect(shape.y).toBe(originalShape.y)
     expect(shape.width).toBe(originalShape.width)
     expect(shape.height).toBe(originalShape.height)
@@ -118,6 +101,24 @@ describe('shape mutation', () => {
     expect(shape.alpha).toBe(originalShape.alpha)
     expect(shape.z).toBe(originalShape.z)
     expect(shape.color).toEqual(originalShape.color)
+  })
+
+  it('mutates only one polygon vertex parameter at a time', () => {
+    const shape = new Shape({
+      mode: 'polygon',
+      numSides: 3,
+      vertexAngleOffsets: [0, 0, 0],
+      vertexRadiusMults: [1, 1, 1]
+    })
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.999)
+      .mockReturnValueOnce(0.999)
+      .mockReturnValueOnce(0)
+      .mockReturnValue(0.999)
+
+    shape.mutate()
+
+    expect(shape.vertexRadiusMults).toEqual([expect.closeTo(1.04, 2), 1, 1])
+    expect(shape.vertexAngleOffsets).toEqual([0, 0, 0])
   })
 
   it('keeps dimensions, alpha, and colors within their lower bounds', () => {

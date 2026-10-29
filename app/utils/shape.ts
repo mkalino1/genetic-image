@@ -101,33 +101,11 @@ export class Shape implements ShapeRenderData {
   }
 
   mutate(): void {
-    this.x = clamp(this.x + randomMutationDelta(SHAPE_MUTATION_STEP), 0, WORLD_SIZE)
-    this.y = clamp(this.y + randomMutationDelta(SHAPE_MUTATION_STEP), 0, WORLD_SIZE)
-
-    this.width = clamp(this.width + randomMutationDelta(SHAPE_MUTATION_STEP), MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
-    this.height = clamp(this.height + randomMutationDelta(SHAPE_MUTATION_STEP), MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
-
-    this.rotation += randomMutationDelta(SHAPE_CONFIG.mutationSteps.rotation)
-
-    this.alpha += randomMutationDelta(SHAPE_CONFIG.mutationSteps.alpha)
-    this.alpha = Math.max(
-      SHAPE_CONFIG.minimumAlpha,
-      Math.min(SHAPE_CONFIG.maximumAlpha, this.alpha)
-    )
-
-    this.z += randomMutationDelta(SHAPE_CONFIG.mutationSteps.depth)
-
-    this.color.r = clamp(this.color.r + Math.floor(randomMutationDelta(SHAPE_CONFIG.mutationSteps.color)), 0, 255)
-    this.color.g = clamp(this.color.g + Math.floor(randomMutationDelta(SHAPE_CONFIG.mutationSteps.color)), 0, 255)
-    this.color.b = clamp(this.color.b + Math.floor(randomMutationDelta(SHAPE_CONFIG.mutationSteps.color)), 0, 255)
-
     if (this.mode === 'polygon') {
       const polygon = SHAPE_CONFIG.polygon
       if (Math.random() < polygon.sideCountMutationProbability) {
-        // Mutate number of sides occasionally
         this.numSides += Math.random() < polygon.sideIncrementProbability ? 1 : -1
-        this.numSides = Math.max(polygon.minimumSides, Math.min(polygon.maximumSides, this.numSides))
-        // adjust arrays if numSides changed
+        this.numSides = clamp(this.numSides, polygon.minimumSides, polygon.maximumSides)
         if (this.vertexAngleOffsets && this.vertexRadiusMults && this.vertexAngleOffsets.length !== this.numSides) {
           const newAngles = new Array(this.numSides).fill(0).map((_, idx) =>
             this.vertexAngleOffsets?.[idx] ?? (Math.random() - 0.5) * polygon.initialAngleOffsetRange
@@ -139,25 +117,72 @@ export class Shape implements ShapeRenderData {
           this.vertexAngleOffsets = newAngles
           this.vertexRadiusMults = newRads
         }
-      }
-
-      if (this.vertexAngleOffsets && this.vertexRadiusMults) {
-        for (let i = 0; i < this.vertexAngleOffsets.length; i++) {
-          if (Math.random() < polygon.vertexMutationProbability) {
-            this.vertexAngleOffsets[i]! += randomMutationDelta(polygon.angleMutationStep)
-          }
-          if (Math.random() < polygon.vertexMutationProbability) {
-            this.vertexRadiusMults[i]! += randomMutationDelta(polygon.radiusMutationStep)
-          }
-          this.vertexRadiusMults[i] = Math.max(
-            polygon.minimumRadiusMultiplier,
-            Math.min(polygon.maximumRadiusMultiplier, this.vertexRadiusMults[i]!)
-          )
-        }
+        return
       }
     } else if (Math.random() < SHAPE_CONFIG.fixedShapeTypeMutationProbability) {
-      // Mutate shape type for fixed shapes
       this.type = SHAPE_TYPES[Math.floor(Math.random() * SHAPE_TYPES.length)] as ShapeType
+      return
+    }
+
+    const mutationTargetCount = this.mode === 'polygon' ? 12 : 10
+    const mutationTarget = Math.floor(Math.random() * mutationTargetCount)
+    switch (mutationTarget) {
+      case 0:
+        this.x = clamp(this.x + randomMutationDelta(SHAPE_MUTATION_STEP), 0, WORLD_SIZE)
+        break
+      case 1:
+        this.y = clamp(this.y + randomMutationDelta(SHAPE_MUTATION_STEP), 0, WORLD_SIZE)
+        break
+      case 2:
+        this.width = clamp(this.width + randomMutationDelta(SHAPE_MUTATION_STEP), MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
+        break
+      case 3:
+        this.height = clamp(this.height + randomMutationDelta(SHAPE_MUTATION_STEP), MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
+        break
+      case 4:
+        this.rotation += randomMutationDelta(SHAPE_CONFIG.mutationSteps.rotation)
+        break
+      case 5:
+        this.alpha = clamp(
+          this.alpha + randomMutationDelta(SHAPE_CONFIG.mutationSteps.alpha),
+          SHAPE_CONFIG.minimumAlpha,
+          SHAPE_CONFIG.maximumAlpha
+        )
+        break
+      case 6:
+        this.z += randomMutationDelta(SHAPE_CONFIG.mutationSteps.depth)
+        break
+      case 7:
+      case 8:
+      case 9: {
+        const colorChannel = ['r', 'g', 'b'][mutationTarget - 7] as keyof RGBColor
+        this.color[colorChannel] = clamp(
+          this.color[colorChannel] + Math.floor(
+            randomMutationDelta(SHAPE_CONFIG.mutationSteps.color)
+          ),
+          0,
+          255
+        )
+        break
+      }
+      case 10:
+      case 11: {
+        const vertexIndex = Math.floor(Math.random() * this.numSides)
+        if (mutationTarget === 10 && this.vertexAngleOffsets) {
+          this.vertexAngleOffsets[vertexIndex]! += randomMutationDelta(
+            SHAPE_CONFIG.polygon.angleMutationStep
+          )
+        } else if (mutationTarget === 11 && this.vertexRadiusMults) {
+          this.vertexRadiusMults[vertexIndex] = clamp(
+            this.vertexRadiusMults[vertexIndex]! + randomMutationDelta(
+              SHAPE_CONFIG.polygon.radiusMutationStep
+            ),
+            SHAPE_CONFIG.polygon.minimumRadiusMultiplier,
+            SHAPE_CONFIG.polygon.maximumRadiusMultiplier
+          )
+        }
+        break
+      }
     }
   }
 
@@ -185,8 +210,5 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function randomMutationDelta(step: number): number {
-  const random = Math.random() * SHAPE_CONFIG.mutationDeltaRandomRange
-  return random < SHAPE_CONFIG.mutationDeltaActivationThreshold
-    ? 0
-    : (random - SHAPE_CONFIG.mutationDeltaCenter) * step
+  return (Math.random() - 0.5) * step
 }
