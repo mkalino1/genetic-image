@@ -1,8 +1,10 @@
 /// <reference types="vitest/globals" />
 
 import type { Individual } from '../../app/utils/populationCreation'
-import { WORLD_SIZE } from '../../app/utils/canvasDimensions'
+import { CANVAS_CONFIG } from '../../app/utils/imageEvolutionConfig'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/utils/shape'
+
+const WORLD_SIZE = CANVAS_CONFIG.worldSize
 
 afterEach(() => {
   vi.restoreAllMocks()

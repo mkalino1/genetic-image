@@ -1,4 +1,5 @@
-import { DISPLAY_CANVAS_SIZE, WORLD_SIZE } from './canvasDimensions'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './imageEvolutionConfig'
+import type { CrossoverStrategy, EvolutionParams, ShapeMode } from './imageEvolutionConfig'
 import { averageDeltaEFromFitness } from './fitnessConversion'
 import type {
   FitnessProfilingMetrics,
@@ -6,21 +7,7 @@ import type {
   GenerationProfilingSummary
 } from '../workers/workerTypes'
 
-export interface EvolutionParams {
-  populationSize: number
-  mutationRate: number
-  shapesPerIndividual: number
-  crossoverStrategy: CrossoverStrategy
-  shapeMode?: 'fixed' | 'polygon'
-}
-
 export class GeneticAlgorithm {
-  private static readonly PROFILING_WINDOW_SIZE = 20
-  private static readonly STAGNATION_PATIENCE = 10
-  private static readonly MINIMUM_DELTA_E_IMPROVEMENT = 0.5
-  private static readonly RANDOM_IMMIGRANT_PERCENTAGE = 0.4
-  private static readonly ELITE_PERCENTAGE = 0.05
-
   // Onscreen canvas for rendering the current best individual
   displayCanvas: HTMLCanvasElement
   displayCtx: CanvasRenderingContext2D
@@ -36,7 +23,7 @@ export class GeneticAlgorithm {
   mutationRate: number
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
-  shapeMode: 'fixed' | 'polygon'
+  shapeMode: ShapeMode
   eliteSize: number
   
   // State
@@ -55,7 +42,14 @@ export class GeneticAlgorithm {
     const displayCtx = displayCanvas.getContext('2d', { willReadFrequently: true })
     if (!displayCtx) throw new Error('Could not get 2D context')
     this.displayCtx = displayCtx
-    this.displayCtx.setTransform(DISPLAY_CANVAS_SIZE / WORLD_SIZE, 0, 0, DISPLAY_CANVAS_SIZE / WORLD_SIZE, 0, 0)
+    this.displayCtx.setTransform(
+      CANVAS_CONFIG.displaySize / CANVAS_CONFIG.worldSize,
+      0,
+      0,
+      CANVAS_CONFIG.displaySize / CANVAS_CONFIG.worldSize,
+      0,
+      0
+    )
     this.targetImageData = targetImageData
 
     // Parameters
@@ -63,8 +57,11 @@ export class GeneticAlgorithm {
     this.mutationRate = params.mutationRate
     this.shapesPerIndividual = params.shapesPerIndividual
     this.crossoverStrategy = params.crossoverStrategy
-    this.shapeMode = params.shapeMode ?? 'fixed'
-    this.eliteSize = Math.max(1, Math.floor(this.populationSize * GeneticAlgorithm.ELITE_PERCENTAGE))
+    this.shapeMode = params.shapeMode ?? EVOLUTION_CONFIG.defaults.shapeMode
+    this.eliteSize = Math.max(
+      1,
+      Math.floor(this.populationSize * EVOLUTION_CONFIG.elitismPercentage)
+    )
 
     // State
     this.population = initializePopulation(this.populationSize, this.shapesPerIndividual, this.shapeMode)
@@ -84,7 +81,7 @@ export class GeneticAlgorithm {
     if (this.population.length === 0) return
 
     const profilingEnabled = import.meta.dev &&
-      this.profilingHistory.length < GeneticAlgorithm.PROFILING_WINDOW_SIZE
+      this.profilingHistory.length < EVOLUTION_CONFIG.profilingWindowSize
     const generationStartedAt = profilingEnabled ? performance.now() : 0
     let workerProfile: FitnessProfilingMetrics | undefined
 
@@ -111,7 +108,10 @@ export class GeneticAlgorithm {
       }
       const previousBestDeltaE = averageDeltaEFromFitness(this.bestFitnessAtLastProgress)
       const currentBestDeltaE = averageDeltaEFromFitness(best.fitness)
-      if (previousBestDeltaE - currentBestDeltaE >= GeneticAlgorithm.MINIMUM_DELTA_E_IMPROVEMENT) {
+      if (
+        previousBestDeltaE - currentBestDeltaE >=
+        EVOLUTION_CONFIG.stagnation.minimumDeltaEImprovement
+      ) {
         this.bestFitnessAtLastProgress = best.fitness
         this.stagnationGenerations = 0
       } else {
@@ -140,7 +140,9 @@ export class GeneticAlgorithm {
     )
 
     if (this.shouldInjectForLowFitnessVariance()) {
-      const immigrantCount = Math.floor(this.populationSize * GeneticAlgorithm.RANDOM_IMMIGRANT_PERCENTAGE)
+      const immigrantCount = Math.floor(
+        this.populationSize * EVOLUTION_CONFIG.diversityRecovery.randomImmigrantFraction
+      )
       for (let i = 0; i < immigrantCount; i++) {
         nextPopulation.push(createRandomIndividual(this.shapesPerIndividual, this.shapeMode))
       }
@@ -208,9 +210,10 @@ export class GeneticAlgorithm {
   }
 
   private shouldInjectForLowFitnessVariance(): boolean {
-    return this.generation > 20 &&
-      this.generation % 20 === 0 &&
-      this.fitnessVariance < 0.001
+    const recovery = EVOLUTION_CONFIG.diversityRecovery
+    return this.generation >= recovery.firstGeneration &&
+      this.generation % recovery.generationInterval === 0 &&
+      this.fitnessVariance < recovery.minimumFitnessVariance
   }
 
   private calculateFitnessVariance(): number {
@@ -225,15 +228,27 @@ export class GeneticAlgorithm {
   private calculateAdaptiveMutationRate(stagnationGenerations: number): number {
     // Higher fitness variance favors exploitation; lower variance favors exploration.
     const baseRate = this.mutationRate
-    const varianceFactor = Math.max(0.5, Math.min(1.5, 0.005 / (this.fitnessVariance + 0.001)))
+    const mutation = EVOLUTION_CONFIG.mutation
+    const varianceFactor = Math.max(
+      mutation.minimumVarianceFactor,
+      Math.min(
+        mutation.maximumVarianceFactor,
+        mutation.varianceTarget / (this.fitnessVariance + mutation.varianceOffset)
+      )
+    )
     const adaptiveRate = baseRate * varianceFactor
     
     const stagnationFactor = Math.min(
-      1.5,
-      1 + stagnationGenerations / (2 * GeneticAlgorithm.STAGNATION_PATIENCE)
+      mutation.maximumStagnationFactor,
+      1 + stagnationGenerations / (
+        mutation.stagnationFactorDivisor * EVOLUTION_CONFIG.stagnation.patience
+      )
     )
-    const jitter = adaptiveRate * 0.1 * Math.random()
-    const finalRate = Math.max(0.01, Math.min(0.3, adaptiveRate * stagnationFactor + jitter))
+    const jitter = adaptiveRate * mutation.randomJitterFraction * Math.random()
+    const finalRate = Math.max(
+      mutation.minimumRate,
+      Math.min(mutation.maximumRate, adaptiveRate * stagnationFactor + jitter)
+    )
     
     return finalRate
   }

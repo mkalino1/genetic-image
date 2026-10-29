@@ -1,6 +1,6 @@
 import type { FitnessWorkerProfilingMetrics, FitnessResult, FitnessWorkerRequest } from './workerTypes'
 import { renderShape } from '../utils/rendering'
-import { WORLD_SIZE } from '../utils/canvasDimensions'
+import { CANVAS_CONFIG } from '../utils/imageEvolutionConfig'
 import { calculatePixelWeights } from '../utils/pixelWeights'
 import { unpackFitnessTasks } from '../utils/fitnessTaskSerialization'
 import { fitnessFromAverageDeltaE } from '../utils/fitnessConversion'
@@ -28,7 +28,10 @@ let fitnessCanvasContext: OffscreenCanvasRenderingContext2D | null = null
 self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
   try {
     if (e.data.type === 'initialize_target') {
-      canvas = new OffscreenCanvas(WORLD_SIZE, WORLD_SIZE)
+      canvas = new OffscreenCanvas(
+        CANVAS_CONFIG.worldSize,
+        CANVAS_CONFIG.worldSize
+      )
       fitnessCanvasContext = canvas.getContext('2d', { willReadFrequently: true })
       if (!fitnessCanvasContext) {
         throw new Error('Could not initialize fitness worker canvas')

@@ -11,26 +11,45 @@
             <div class="mb-1">
               <label for="population-size" class="text-sm font-medium">Population size</label>
             </div>
-            <UInput id="population-size" v-model="model.populationSize" type="number" min="10" max="1000" />
+            <UInput
+              id="population-size"
+              v-model="model.populationSize"
+              type="number"
+              :min="parameterBounds.populationSize.min"
+              :max="parameterBounds.populationSize.max"
+            />
             <p class="mt-1 text-xs text-neutral-500">
               Candidates kept each generation; larger populations explore more but take longer.
-              Low fitness variance adds 40% random candidates before selecting the best.
+              Low fitness variance adds {{ Math.round(EVOLUTION_CONFIG.diversityRecovery.randomImmigrantFraction * 100) }}% random candidates before selecting the best.
             </p>
           </div>
           <div>
             <div class="mb-1">
               <label for="mutation-rate" class="text-sm font-medium">Mutation rate</label>
             </div>
-            <UInput id="mutation-rate" v-model="model.mutationRate" type="number" min="0.01" max="0.3" step="0.01" />
+            <UInput
+              id="mutation-rate"
+              v-model="model.mutationRate"
+              type="number"
+              :min="parameterBounds.mutationRate.min"
+              :max="parameterBounds.mutationRate.max"
+              :step="parameterBounds.mutationRate.step"
+            />
             <p class="mt-1 text-xs text-neutral-500">
-              Chance to mutate each shape in an individual. This rate adapts automatically. The last 10% of children mutate twice as often.
+              Chance to mutate each shape in an individual. This rate adapts automatically. The last {{ Math.round(EVOLUTION_CONFIG.mutation.stronglyMutatedTailFraction * 100) }}% of children mutate up to {{ EVOLUTION_CONFIG.mutation.strongMutationMultiplier }} times as often.
             </p>
           </div>
           <div>
             <div class="mb-1">
               <label for="shapes-per-individual" class="text-sm font-medium">Shapes per image</label>
             </div>
-            <UInput id="shapes-per-individual" v-model="model.shapesPerIndividual" type="number" min="1" max="300" />
+            <UInput
+              id="shapes-per-individual"
+              v-model="model.shapesPerIndividual"
+              type="number"
+              :min="parameterBounds.shapesPerIndividual.min"
+              :max="parameterBounds.shapesPerIndividual.max"
+            />
             <p class="mt-1 text-xs text-neutral-500">More shapes capture finer detail, but slow down each generation.</p>
           </div>
           <div>
@@ -54,16 +73,25 @@
 </template>
 
 <script lang="ts" setup>
+import { EVOLUTION_CONFIG, SHAPE_CONFIG } from '../utils/imageEvolutionConfig'
+import type { CrossoverStrategy, ShapeMode } from '../utils/imageEvolutionConfig'
+
 const model = defineModel<EvolutionParams>({ required: true })
+const parameterBounds = EVOLUTION_CONFIG.parameterBounds
 
 // Define crossover strategy options for the template
-const crossoverStrategyOptions: { label: string, value: CrossoverStrategy }[] = [
-  { label: 'Uniform', value: 'uniform' },
-  { label: 'Single point', value: 'single_point' },
-  { label: 'Two point', value: 'two_point' },
-  { label: 'Randomized', value: 'randomized' },
-  { label: 'Adaptive', value: 'adaptive' }
-]
+const crossoverStrategyLabels: Record<CrossoverStrategy, string> = {
+  uniform: 'Uniform',
+  single_point: 'Single point',
+  two_point: 'Two point',
+  randomized: 'Randomized',
+  adaptive: 'Adaptive'
+}
+
+const crossoverStrategyOptions = EVOLUTION_CONFIG.crossover.availableStrategies.map(value => ({
+  label: crossoverStrategyLabels[value],
+  value
+}))
 
 const crossoverStrategyDescriptions: Record<CrossoverStrategy, string> = {
   uniform: 'Randomly take each shape from either parent.',
@@ -73,12 +101,16 @@ const crossoverStrategyDescriptions: Record<CrossoverStrategy, string> = {
   adaptive: 'Choose crossover based on the best fitness so far.'
 }
 
-const shapeTypOptions: { label: string, value: 'fixed' | 'polygon' }[] = [
-  { label: 'Random polygons', value: 'polygon' },
-  { label: 'Fixed shapes', value: 'fixed' }
-]
+const shapeModeLabels: Record<ShapeMode, string> = {
+  polygon: 'Random polygons',
+  fixed: 'Fixed shapes'
+}
+const shapeTypOptions = SHAPE_CONFIG.modes.map(value => ({
+  label: shapeModeLabels[value],
+  value
+}))
 
-const shapeModeDescriptions: Record<'fixed' | 'polygon', string> = {
+const shapeModeDescriptions: Record<ShapeMode, string> = {
   polygon: 'Use irregular polygons with mutable vertices.',
   fixed: 'Use circles, rectangles and triangles.'
 }

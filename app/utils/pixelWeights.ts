@@ -1,6 +1,4 @@
-const MIN_PIXEL_WEIGHT = 1
-const MAX_PIXEL_WEIGHT = 2
-const EDGE_STRENGTH_FOR_MAX_WEIGHT = 50
+import { FITNESS_CONFIG } from './imageEvolutionConfig'
 
 export function calculatePixelWeights(targetLab: Float64Array, width: number, height: number): Float32Array {
   if (width <= 0 || height <= 0 || targetLab.length !== width * height * 3) {
@@ -32,11 +30,12 @@ export function calculatePixelWeights(targetLab: Float64Array, width: number, he
       }
 
       const edgeStrength = Math.sqrt(gradientMagnitudeSquared)
+      const weightConfig = FITNESS_CONFIG.pixelWeights
       const edgeWeight = Math.min(
-        MAX_PIXEL_WEIGHT - MIN_PIXEL_WEIGHT,
-        edgeStrength / EDGE_STRENGTH_FOR_MAX_WEIGHT
+        weightConfig.maximum - weightConfig.minimum,
+        edgeStrength / weightConfig.edgeStrengthForMaximumWeight
       )
-      weights[y * width + x] = MIN_PIXEL_WEIGHT + edgeWeight
+      weights[y * width + x] = weightConfig.minimum + edgeWeight
     }
   }
 

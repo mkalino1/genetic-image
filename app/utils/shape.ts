@@ -1,9 +1,11 @@
 import { renderShape } from './rendering'
-import { WORLD_SIZE } from './canvasDimensions'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG, SHAPE_CONFIG } from './imageEvolutionConfig'
+import type { ShapeMode } from './imageEvolutionConfig'
 
-export const MIN_SHAPE_SIZE = WORLD_SIZE / 40
-export const MAX_SHAPE_SIZE = WORLD_SIZE * 20 / 40
-const SHAPE_MUTATION_STEP = WORLD_SIZE / 40
+const WORLD_SIZE = CANVAS_CONFIG.worldSize
+export const MIN_SHAPE_SIZE = WORLD_SIZE * SHAPE_CONFIG.minimumSizeFraction
+export const MAX_SHAPE_SIZE = WORLD_SIZE * SHAPE_CONFIG.maximumSizeFraction
+const SHAPE_MUTATION_STEP = WORLD_SIZE * SHAPE_CONFIG.mutationStepFraction
 
 export interface RGBColor {
   r: number
@@ -12,9 +14,7 @@ export interface RGBColor {
 }
 
 export type ShapeType = 'circle' | 'rectangle' | 'triangle'
-export type ShapeMode = 'fixed' | 'polygon'
-
-const SHAPE_TYPES: ShapeType[] = ['circle', 'rectangle', 'triangle']
+const SHAPE_TYPES: ShapeType[] = [...SHAPE_CONFIG.types]
 
 export interface ShapeRenderData {
   type: ShapeType
@@ -48,10 +48,13 @@ export class Shape implements ShapeRenderData {
   z: number
 
   constructor(params: Partial<ShapeRenderData> = {}) {
-    this.mode = params.mode ?? 'fixed'
+    this.mode = params.mode ?? EVOLUTION_CONFIG.defaults.shapeMode
     if (this.mode === 'polygon') {
       this.type = 'triangle'
-      this.numSides = params.numSides ?? Math.floor(Math.random() * 4) + 3 // 3-6 sides
+      const polygon = SHAPE_CONFIG.polygon
+      this.numSides = params.numSides ?? Math.floor(
+        Math.random() * (polygon.initialMaximumSides - polygon.initialMinimumSides + 1)
+      ) + polygon.initialMinimumSides
       // initialize per-vertex irregularity (angle offsets and radius multipliers)
       const pa = params.vertexAngleOffsets
       const pr = params.vertexRadiusMults
@@ -59,8 +62,12 @@ export class Shape implements ShapeRenderData {
         this.vertexAngleOffsets = pa.slice()
         this.vertexRadiusMults = pr.slice()
       } else {
-        this.vertexAngleOffsets = new Array(this.numSides).fill(0).map(() => (Math.random() - 0.5) * 0.6) // up to ±0.3 radians
-        this.vertexRadiusMults = new Array(this.numSides).fill(0).map(() => 0.6 + Math.random() * 0.8) // 0.6-1.4 multiplier
+        this.vertexAngleOffsets = new Array(this.numSides).fill(0).map(() =>
+          (Math.random() - 0.5) * polygon.initialAngleOffsetRange
+        )
+        this.vertexRadiusMults = new Array(this.numSides).fill(0).map(() =>
+          polygon.initialRadiusMultiplierMinimum + Math.random() * polygon.initialRadiusMultiplierRange
+        )
       }
     } else {
       this.type = params.type ?? SHAPE_TYPES[Math.floor(Math.random() * SHAPE_TYPES.length)] as ShapeType
@@ -70,10 +77,11 @@ export class Shape implements ShapeRenderData {
     this.y = clamp(params.y ?? Math.random() * WORLD_SIZE, 0, WORLD_SIZE)
     this.width = clamp(params.width ?? Math.random() * (MAX_SHAPE_SIZE - MIN_SHAPE_SIZE) + MIN_SHAPE_SIZE, MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
     this.height = clamp(params.height ?? Math.random() * (MAX_SHAPE_SIZE - MIN_SHAPE_SIZE) + MIN_SHAPE_SIZE, MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
-    this.rotation = params.rotation ?? Math.random() * Math.PI * 2
+    this.rotation = params.rotation ?? Math.random() * SHAPE_CONFIG.maximumInitialRotation
     this.color = params.color ?? Shape.randomColor()
-    this.alpha = params.alpha ?? Math.random() * 0.7 + 0.3
-    this.z = params.z ?? Math.random() * 100
+    this.alpha = params.alpha ?? Math.random() *
+      SHAPE_CONFIG.initialAlphaRange + SHAPE_CONFIG.initialAlphaMinimum
+    this.z = params.z ?? Math.random() * SHAPE_CONFIG.maximumInitialDepth
   }
 
   static randomColor(): RGBColor {
@@ -99,26 +107,35 @@ export class Shape implements ShapeRenderData {
     this.width = clamp(this.width + randomMutationDelta(SHAPE_MUTATION_STEP), MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
     this.height = clamp(this.height + randomMutationDelta(SHAPE_MUTATION_STEP), MIN_SHAPE_SIZE, MAX_SHAPE_SIZE)
 
-    this.rotation += randomMutationDelta(Math.PI * 0.2)
+    this.rotation += randomMutationDelta(SHAPE_CONFIG.mutationSteps.rotation)
 
-    this.alpha += randomMutationDelta(0.04)
-    this.alpha = Math.max(0.3, Math.min(1.0, this.alpha))
+    this.alpha += randomMutationDelta(SHAPE_CONFIG.mutationSteps.alpha)
+    this.alpha = Math.max(
+      SHAPE_CONFIG.minimumAlpha,
+      Math.min(SHAPE_CONFIG.maximumAlpha, this.alpha)
+    )
 
-    this.z += randomMutationDelta(5)
+    this.z += randomMutationDelta(SHAPE_CONFIG.mutationSteps.depth)
 
-    this.color.r = clamp(this.color.r + Math.floor(randomMutationDelta(20)), 0, 255)
-    this.color.g = clamp(this.color.g + Math.floor(randomMutationDelta(20)), 0, 255)
-    this.color.b = clamp(this.color.b + Math.floor(randomMutationDelta(20)), 0, 255)
+    this.color.r = clamp(this.color.r + Math.floor(randomMutationDelta(SHAPE_CONFIG.mutationSteps.color)), 0, 255)
+    this.color.g = clamp(this.color.g + Math.floor(randomMutationDelta(SHAPE_CONFIG.mutationSteps.color)), 0, 255)
+    this.color.b = clamp(this.color.b + Math.floor(randomMutationDelta(SHAPE_CONFIG.mutationSteps.color)), 0, 255)
 
     if (this.mode === 'polygon') {
-      if (Math.random() < 0.02) {
+      const polygon = SHAPE_CONFIG.polygon
+      if (Math.random() < polygon.sideCountMutationProbability) {
         // Mutate number of sides occasionally
-        this.numSides += Math.random() < 0.5 ? 1 : -1
-        this.numSides = Math.max(3, Math.min(10, this.numSides))
+        this.numSides += Math.random() < polygon.sideIncrementProbability ? 1 : -1
+        this.numSides = Math.max(polygon.minimumSides, Math.min(polygon.maximumSides, this.numSides))
         // adjust arrays if numSides changed
         if (this.vertexAngleOffsets && this.vertexRadiusMults && this.vertexAngleOffsets.length !== this.numSides) {
-          const newAngles = new Array(this.numSides).fill(0).map((_, idx) => this.vertexAngleOffsets?.[idx] ?? (Math.random() - 0.5) * 0.6)
-          const newRads = new Array(this.numSides).fill(0).map((_, idx) => this.vertexRadiusMults?.[idx] ?? 0.6 + Math.random() * 0.8)
+          const newAngles = new Array(this.numSides).fill(0).map((_, idx) =>
+            this.vertexAngleOffsets?.[idx] ?? (Math.random() - 0.5) * polygon.initialAngleOffsetRange
+          )
+          const newRads = new Array(this.numSides).fill(0).map((_, idx) =>
+            this.vertexRadiusMults?.[idx] ??
+              polygon.initialRadiusMultiplierMinimum + Math.random() * polygon.initialRadiusMultiplierRange
+          )
           this.vertexAngleOffsets = newAngles
           this.vertexRadiusMults = newRads
         }
@@ -126,12 +143,19 @@ export class Shape implements ShapeRenderData {
 
       if (this.vertexAngleOffsets && this.vertexRadiusMults) {
         for (let i = 0; i < this.vertexAngleOffsets.length; i++) {
-          if (Math.random() < 0.3) this.vertexAngleOffsets[i]! += randomMutationDelta(0.12)
-          if (Math.random() < 0.3) this.vertexRadiusMults[i]! += randomMutationDelta(0.08)
-          this.vertexRadiusMults[i] = Math.max(0.2, Math.min(2.0, this.vertexRadiusMults[i]!))
+          if (Math.random() < polygon.vertexMutationProbability) {
+            this.vertexAngleOffsets[i]! += randomMutationDelta(polygon.angleMutationStep)
+          }
+          if (Math.random() < polygon.vertexMutationProbability) {
+            this.vertexRadiusMults[i]! += randomMutationDelta(polygon.radiusMutationStep)
+          }
+          this.vertexRadiusMults[i] = Math.max(
+            polygon.minimumRadiusMultiplier,
+            Math.min(polygon.maximumRadiusMultiplier, this.vertexRadiusMults[i]!)
+          )
         }
       }
-    } else if (Math.random() < 0.02) {
+    } else if (Math.random() < SHAPE_CONFIG.fixedShapeTypeMutationProbability) {
       // Mutate shape type for fixed shapes
       this.type = SHAPE_TYPES[Math.floor(Math.random() * SHAPE_TYPES.length)] as ShapeType
     }
@@ -161,6 +185,8 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function randomMutationDelta(step: number): number {
-  const random = Math.random() * 2
-  return random < 1 ? 0 : (random - 1.5) * step
+  const random = Math.random() * SHAPE_CONFIG.mutationDeltaRandomRange
+  return random < SHAPE_CONFIG.mutationDeltaActivationThreshold
+    ? 0
+    : (random - SHAPE_CONFIG.mutationDeltaCenter) * step
 }

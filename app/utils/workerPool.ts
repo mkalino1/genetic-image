@@ -1,5 +1,6 @@
 import type { FitnessProfilingMetrics, FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../workers/workerTypes'
 import { packFitnessTasks } from './fitnessTaskSerialization'
+import { WORKER_CONFIG } from './imageEvolutionConfig'
 
 type FitnessProfileCallback = (profile: FitnessProfilingMetrics) => void
 
@@ -10,7 +11,10 @@ export class WorkerPool {
   private targetInitialization: Promise<void> | null = null
 
   constructor(populationSize: number) {
-    const optimalWorkerCount = Math.min(navigator.hardwareConcurrency || 8, 16)
+    const optimalWorkerCount = Math.min(
+      navigator.hardwareConcurrency || WORKER_CONFIG.fallbackCount,
+      WORKER_CONFIG.maximumCount
+    )
     this.batchSize = Math.max(1, Math.ceil(populationSize / optimalWorkerCount))
     this.initializeWorkers(optimalWorkerCount)
   }
@@ -41,7 +45,7 @@ export class WorkerPool {
       const timeout = setTimeout(() => {
         cleanup()
         reject(new Error('Worker timeout'))
-      }, 30000)
+      }, WORKER_CONFIG.requestTimeoutMs)
 
       const handleMessage = (event: MessageEvent<FitnessWorkerResponse>) => {
         cleanup()

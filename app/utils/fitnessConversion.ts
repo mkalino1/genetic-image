@@ -1,4 +1,6 @@
-export const FITNESS_DELTA_E_SCALE = 100
+import { FITNESS_CONFIG } from './imageEvolutionConfig'
+
+export const FITNESS_DELTA_E_SCALE = FITNESS_CONFIG.deltaEScale
 
 export function fitnessFromAverageDeltaE(averageDeltaE: number): number {
   return 1 / (1 + averageDeltaE / FITNESS_DELTA_E_SCALE)

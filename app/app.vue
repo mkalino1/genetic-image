@@ -57,8 +57,8 @@
               <div class="relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950">
                 <canvas
                   ref="canvas"
-                  :width="DISPLAY_CANVAS_SIZE"
-                  :height="DISPLAY_CANVAS_SIZE"
+                  :width="CANVAS_CONFIG.displaySize"
+                  :height="CANVAS_CONFIG.displaySize"
                   class="block aspect-square w-full"
                   :style="{ backgroundColor: canvasBackgroundColor }"
                   aria-label="Current evolution result"
@@ -147,6 +147,9 @@
 </template>
 
 <script setup lang="ts">
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './utils/imageEvolutionConfig'
+import type { EvolutionParams } from './utils/imageEvolutionConfig'
+
 import type { GenerationProfilingSummary } from './workers/workerTypes'
 
 const toast = useToast()
@@ -302,13 +305,7 @@ const workflowSteps = computed(() => [
   { title: 'Recreate the image', description: 'Create an AI-generated version', done: recreatedImage.value !== '' }
 ])
 
-const evolutionParams = reactive<EvolutionParams>({
-  populationSize: 500,
-  mutationRate: 0.05,
-  shapesPerIndividual: 80,
-  crossoverStrategy: 'uniform',
-  shapeMode: 'polygon'
-})
+const evolutionParams = reactive<EvolutionParams>({ ...EVOLUTION_CONFIG.defaults })
 
 let geneticAlgorithm: GeneticAlgorithm | null = null
 let animationId: number | null = null
@@ -401,11 +398,16 @@ const setTargetImage = async (imageData: string) => {
   await new Promise<void>((resolve) => {
     img.onload = () => {
       const targetCanvas = document.createElement('canvas')
-      targetCanvas.width = WORLD_SIZE
-      targetCanvas.height = WORLD_SIZE
+      targetCanvas.width = CANVAS_CONFIG.worldSize
+      targetCanvas.height = CANVAS_CONFIG.worldSize
       const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true })!
-      targetCtx.drawImage(img, 0, 0, WORLD_SIZE, WORLD_SIZE)
-      targetImageData.value = targetCtx.getImageData(0, 0, WORLD_SIZE, WORLD_SIZE)
+      targetCtx.drawImage(img, 0, 0, CANVAS_CONFIG.worldSize, CANVAS_CONFIG.worldSize)
+      targetImageData.value = targetCtx.getImageData(
+        0,
+        0,
+        CANVAS_CONFIG.worldSize,
+        CANVAS_CONFIG.worldSize
+      )
       // Calculate average color and set background
       canvasBackgroundColor.value = calculateAverageColor(targetImageData.value)
       resolve()

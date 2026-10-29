@@ -1,9 +1,15 @@
+import { EVOLUTION_CONFIG } from './imageEvolutionConfig'
+import type { ShapeMode } from './imageEvolutionConfig'
+
 export interface Individual {
   shapes: Shape[]
   fitness: number
 }
 
-export function createRandomIndividual(shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual {
+export function createRandomIndividual(
+  shapesPerIndividual: number,
+  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode
+): Individual {
   const shapes: Shape[] = []
   for (let i = 0; i < shapesPerIndividual; i++) {
     shapes.push(new Shape({ mode: shapeMode }))
@@ -18,7 +24,11 @@ export function cloneIndividual(ind: Individual): Individual {
   }
 }
 
-export function initializePopulation(populationSize: number, shapesPerIndividual: number, shapeMode: 'fixed' | 'polygon' = 'fixed'): Individual[] {
+export function initializePopulation(
+  populationSize: number,
+  shapesPerIndividual: number,
+  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode
+): Individual[] {
   const population: Individual[] = []
   for (let i = 0; i < populationSize; i++) {
     const individual = createRandomIndividual(shapesPerIndividual, shapeMode)
