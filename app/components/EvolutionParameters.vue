@@ -14,7 +14,7 @@
             <UInput id="population-size" v-model="model.populationSize" type="number" min="10" max="1000" />
             <p class="mt-1 text-xs text-neutral-500">
               Candidates kept each generation; larger populations explore more but take longer.
-              Low diversity adds 40% random candidates before selecting the best.
+              Low fitness variance adds 40% random candidates before selecting the best.
             </p>
           </div>
           <div>

@@ -11,9 +11,9 @@
       <p class="mt-1 text-xs text-neutral-500">A higher score means a closer match.</p>
     </div>
     <div class="rounded-lg bg-neutral-50 p-3 dark:bg-neutral-950">
-      <div class="text-xs text-neutral-500">Diversity</div>
-      <div class="mt-1 font-mono text-lg font-semibold">{{ variance.toFixed(4) }}</div>
-      <p class="mt-1 text-xs text-neutral-500">How varied the population's scores are.</p>
+      <div class="text-xs text-neutral-500">Fitness variance</div>
+      <div class="mt-1 font-mono text-lg font-semibold">{{ fitnessVariance.toFixed(6) }}</div>
+      <p class="mt-1 text-xs text-neutral-500">Spread of fitness scores; this does not measure genetic diversity.</p>
     </div>
     <div class="rounded-lg bg-neutral-50 p-3 dark:bg-neutral-950">
       <div class="text-xs text-neutral-500">Mutation rate</div>
@@ -27,7 +27,7 @@
 defineProps<{
   generation: number
   bestFitness: number
-  variance: number
+  fitnessVariance: number
   adaptiveMutationRate: number
 }>()
 </script> 

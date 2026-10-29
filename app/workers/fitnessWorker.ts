@@ -3,6 +3,7 @@ import { renderShape } from '../utils/rendering'
 import { WORLD_SIZE } from '../utils/canvasDimensions'
 import { calculatePixelWeights } from '../utils/pixelWeights'
 import { unpackFitnessTasks } from '../utils/fitnessTaskSerialization'
+import { fitnessFromAverageDeltaE } from '../utils/fitnessConversion'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)
@@ -172,7 +173,7 @@ function calculateFitness(
   }
 
   const averageDeltaE = totalWeight > 0 ? totalWeightedDeltaE / totalWeight : 0
-  return Math.max(0, 1 - (averageDeltaE / 100))
+  return fitnessFromAverageDeltaE(averageDeltaE)
 }
 
 function convertImageToLab(imageData: ImageData): Float64Array {

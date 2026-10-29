@@ -71,7 +71,7 @@
                 <MetricsDisplay
                   :generation="generation"
                   :best-fitness="bestFitness"
-                  :variance="variance"
+                  :fitness-variance="fitnessVariance"
                   :adaptive-mutation-rate="adaptiveMutationRate"
                 />
                 <DevProfilingPanel
@@ -278,7 +278,7 @@ async function recreateImage() {
 const MINIMUM_EVOLUTION_GENERATIONS = 100
 const generation = ref(0)
 const bestFitness = ref(0)
-const variance = ref(0)
+const fitnessVariance = ref(0)
 const adaptiveMutationRate = ref(0)
 const profilingSummary = ref<GenerationProfilingSummary | null>(null)
 const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
@@ -362,7 +362,7 @@ const evolve = async () => {
     currentBestIndividual.value = geneticAlgorithm.bestIndividual
     generation.value = geneticAlgorithm.generation
     bestFitness.value = geneticAlgorithm.bestFitness
-    variance.value = geneticAlgorithm.variance
+    fitnessVariance.value = geneticAlgorithm.fitnessVariance
     adaptiveMutationRate.value = geneticAlgorithm.adaptiveMutationRate
     if (isDevelopment) {
       profilingSummary.value = geneticAlgorithm.getAverageProfilingMetrics()
@@ -377,7 +377,7 @@ const setTargetImage = async (imageData: string) => {
   targetImageData.value = null
   generation.value = 0
   bestFitness.value = 0
-  variance.value = 0
+  fitnessVariance.value = 0
   adaptiveMutationRate.value = 0
   profilingSummary.value = null
   description.value = ''

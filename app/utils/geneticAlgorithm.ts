@@ -1,4 +1,5 @@
 import { DISPLAY_CANVAS_SIZE, WORLD_SIZE } from './canvasDimensions'
+import { averageDeltaEFromFitness } from './fitnessConversion'
 import type {
   FitnessProfilingMetrics,
   GenerationProfilingMetrics,
@@ -16,7 +17,7 @@ export interface EvolutionParams {
 export class GeneticAlgorithm {
   private static readonly PROFILING_WINDOW_SIZE = 20
   private static readonly STAGNATION_PATIENCE = 10
-  private static readonly MINIMUM_FITNESS_IMPROVEMENT = 0.005
+  private static readonly MINIMUM_DELTA_E_IMPROVEMENT = 0.5
   private static readonly RANDOM_IMMIGRANT_PERCENTAGE = 0.4
   private static readonly ELITE_PERCENTAGE = 0.05
 
@@ -43,7 +44,7 @@ export class GeneticAlgorithm {
   bestIndividual: Individual | null
   bestFitness: number
   generation: number
-  variance: number
+  fitnessVariance: number
   adaptiveMutationRate: number
   stagnationGenerations: number
   bestFitnessAtLastProgress: number
@@ -70,7 +71,7 @@ export class GeneticAlgorithm {
     this.bestIndividual = null
     this.bestFitness = 0
     this.generation = 0
-    this.variance = 0
+    this.fitnessVariance = 0
     this.adaptiveMutationRate = this.mutationRate
     this.stagnationGenerations = 0
     this.bestFitnessAtLastProgress = 0
@@ -108,7 +109,9 @@ export class GeneticAlgorithm {
       if (best.fitness > this.bestFitness) {
         this.bestFitness = best.fitness
       }
-      if (best.fitness > this.bestFitnessAtLastProgress + GeneticAlgorithm.MINIMUM_FITNESS_IMPROVEMENT) {
+      const previousBestDeltaE = averageDeltaEFromFitness(this.bestFitnessAtLastProgress)
+      const currentBestDeltaE = averageDeltaEFromFitness(best.fitness)
+      if (previousBestDeltaE - currentBestDeltaE >= GeneticAlgorithm.MINIMUM_DELTA_E_IMPROVEMENT) {
         this.bestFitnessAtLastProgress = best.fitness
         this.stagnationGenerations = 0
       } else {
@@ -119,7 +122,7 @@ export class GeneticAlgorithm {
       renderIndividual(best, this.displayCtx)
     }
     
-    this.variance = this.calculateVariance()
+    this.fitnessVariance = this.calculateFitnessVariance()
     
     // Increase exploration when the best fitness has stopped improving.
     this.adaptiveMutationRate = this.calculateAdaptiveMutationRate(this.stagnationGenerations)
@@ -136,7 +139,7 @@ export class GeneticAlgorithm {
       this.shapeMode
     )
 
-    if (this.shouldInjectForLowVariance()) {
+    if (this.shouldInjectForLowFitnessVariance()) {
       const immigrantCount = Math.floor(this.populationSize * GeneticAlgorithm.RANDOM_IMMIGRANT_PERCENTAGE)
       for (let i = 0; i < immigrantCount; i++) {
         nextPopulation.push(createRandomIndividual(this.shapesPerIndividual, this.shapeMode))
@@ -204,27 +207,26 @@ export class GeneticAlgorithm {
     }
   }
 
-  private shouldInjectForLowVariance(): boolean {
+  private shouldInjectForLowFitnessVariance(): boolean {
     return this.generation > 20 &&
       this.generation % 20 === 0 &&
-      this.variance < 0.001
+      this.fitnessVariance < 0.001
   }
 
-  private calculateVariance(): number {
-    // Calculate population variance based on fitness
+  private calculateFitnessVariance(): number {
     const fitnesses = this.population.map(ind => ind.fitness)
     const meanFitness = fitnesses.reduce((a, b) => a + b, 0) / fitnesses.length
-    const variance = fitnesses.reduce((sum, fitness) => 
+    const fitnessVariance = fitnesses.reduce((sum, fitness) => 
       sum + Math.pow(fitness - meanFitness, 2), 0) / fitnesses.length
     
-    return variance
+    return fitnessVariance
   }
 
   private calculateAdaptiveMutationRate(stagnationGenerations: number): number {
-    // High variance = lower mutation rate (exploitation). Low variance = higher mutation rate (exploration)
+    // Higher fitness variance favors exploitation; lower variance favors exploration.
     const baseRate = this.mutationRate
-    const diversityFactor = Math.max(0.5, Math.min(1.5, 0.005 / (this.variance + 0.001)))
-    const adaptiveRate = baseRate * diversityFactor
+    const varianceFactor = Math.max(0.5, Math.min(1.5, 0.005 / (this.fitnessVariance + 0.001)))
+    const adaptiveRate = baseRate * varianceFactor
     
     const stagnationFactor = Math.min(
       1.5,
