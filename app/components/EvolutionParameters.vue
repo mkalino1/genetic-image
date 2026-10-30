@@ -9,6 +9,15 @@
         <div class="flex flex-col gap-5">
           <div>
             <div class="mb-1">
+              <label for="hill-climbing" class="text-sm font-medium">Enable hill climbing</label>
+            </div>
+            <USwitch id="hill-climbing" v-model="model.enableHillClimbing" />
+            <p class="mt-1 text-xs text-neutral-500">
+              Locally refine the best candidates each generation. This can improve results but makes generations slower.
+            </p>
+          </div>
+          <div>
+            <div class="mb-1">
               <label for="population-size" class="text-sm font-medium">Population size</label>
             </div>
             <UInput

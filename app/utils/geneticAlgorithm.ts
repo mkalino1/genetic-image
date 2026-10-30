@@ -24,6 +24,7 @@ export class GeneticAlgorithm {
   mutationRate: number
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
+  enableHillClimbing: boolean
   shapeMode: ShapeMode
   eliteSize: number
   
@@ -58,6 +59,7 @@ export class GeneticAlgorithm {
     this.mutationRate = params.mutationRate
     this.shapesPerIndividual = params.shapesPerIndividual
     this.crossoverStrategy = params.crossoverStrategy
+    this.enableHillClimbing = params.enableHillClimbing
     this.shapeMode = params.shapeMode ?? EVOLUTION_CONFIG.defaults.shapeMode
     this.eliteSize = Math.max(
       1,
@@ -100,7 +102,11 @@ export class GeneticAlgorithm {
     this.population.sort((a, b) => b.fitness - a.fitness)
     this.population = this.population.slice(0, this.populationSize)
 
-    if (this.eliteSize > 0 && EVOLUTION_CONFIG.hillClimbing.attemptsPerElite > 0) {
+    if (
+      this.enableHillClimbing &&
+      this.eliteSize > 0 &&
+      EVOLUTION_CONFIG.hillClimbing.attemptsPerElite > 0
+    ) {
       const refinedElites = await hillClimbIndividuals(
         this.population.slice(0, this.eliteSize),
         EVOLUTION_CONFIG.hillClimbing.attemptsPerElite,

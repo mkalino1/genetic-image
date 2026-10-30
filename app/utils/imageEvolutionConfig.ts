@@ -6,6 +6,7 @@ export interface EvolutionParams {
   mutationRate: number
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
+  enableHillClimbing: boolean
   shapeMode?: ShapeMode
 }
 
@@ -21,6 +22,7 @@ export const EVOLUTION_CONFIG = {
     mutationRate: 0.05,
     shapesPerIndividual: 120,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
+    enableHillClimbing: false,
     shapeMode: 'polygon' as ShapeMode
   },
   parameterBounds: {
