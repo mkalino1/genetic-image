@@ -6,16 +6,14 @@ type FitnessProfileCallback = (profile: FitnessProfilingMetrics) => void
 
 export class WorkerPool {
   private workers: Worker[] = []
-  private batchSize: number
   private initializedTarget: ImageData | null = null
   private targetInitialization: Promise<void> | null = null
 
-  constructor(populationSize: number) {
+  constructor() {
     const optimalWorkerCount = Math.min(
       navigator.hardwareConcurrency || WORKER_CONFIG.fallbackCount,
       WORKER_CONFIG.maximumCount
     )
-    this.batchSize = Math.max(1, Math.ceil(populationSize / optimalWorkerCount))
     this.initializeWorkers(optimalWorkerCount)
   }
 
@@ -105,17 +103,14 @@ export class WorkerPool {
     if (this.workers.length === 0) {
       throw new Error('No fitness workers could be initialized')
     }
-
     await this.initializeTarget(targetImageData)
-
     const results = new Map<number, number>()
-    const batchSize = Math.max(
-      this.batchSize,
-      Math.ceil(individuals.length / this.workers.length)
-    )
+    const batchCount = Math.min(individuals.length, this.workers.length)
     const batches: FitnessTask[][] = []
-    for (let i = 0; i < individuals.length; i += batchSize) {
-      batches.push(individuals.slice(i, i + batchSize))
+    for (let index = 0; index < batchCount; index++) {
+      const start = Math.floor(index * individuals.length / batchCount)
+      const end = Math.floor((index + 1) * individuals.length / batchCount)
+      batches.push(individuals.slice(start, end))
     }
 
     const packedBatches = batches.map(batch => packFitnessTasks(batch))

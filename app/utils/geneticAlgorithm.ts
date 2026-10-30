@@ -1,6 +1,7 @@
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './imageEvolutionConfig'
 import type { CrossoverStrategy, EvolutionParams, ShapeMode } from './imageEvolutionConfig'
 import { weightedDeltaEFromFitness } from './fitnessConversion'
+import { hillClimbIndividuals } from './imageEvaluationMultithread'
 import type {
   FitnessProfilingMetrics,
   GenerationProfilingMetrics,
@@ -74,7 +75,7 @@ export class GeneticAlgorithm {
     this.bestFitnessAtLastProgress = 0
 
     // Initialize worker pool for parallel fitness calculations
-    this.workerPool = new WorkerPool(this.populationSize)
+    this.workerPool = new WorkerPool()
   }
 
   async evolve(): Promise<void> {
@@ -98,6 +99,21 @@ export class GeneticAlgorithm {
     // Sort by fitness (best first)
     this.population.sort((a, b) => b.fitness - a.fitness)
     this.population = this.population.slice(0, this.populationSize)
+
+    if (this.eliteSize > 0 && EVOLUTION_CONFIG.hillClimbing.attemptsPerElite > 0) {
+      const refinedElites = await hillClimbIndividuals(
+        this.population.slice(0, this.eliteSize),
+        EVOLUTION_CONFIG.hillClimbing.attemptsPerElite,
+        this.targetImageData,
+        this.workerPool
+      )
+      for (let index = 0; index < refinedElites.length; index++) {
+        const refinedElite = refinedElites[index]
+        if (refinedElite) {
+          this.population[index] = refinedElite
+        }
+      }
+    }
 
     // Update best fitness and render best individual
     const best = this.population[0]

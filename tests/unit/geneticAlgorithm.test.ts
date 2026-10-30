@@ -3,6 +3,7 @@
 import type { Individual } from '../../app/utils/populationCreation'
 import { CANVAS_CONFIG } from '../../app/utils/imageEvolutionConfig'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/utils/shape'
+import { hillClimbIndividuals } from '../../app/utils/imageEvaluationMultithread'
 
 const WORLD_SIZE = CANVAS_CONFIG.worldSize
 
@@ -269,5 +270,46 @@ describe('population fitness evaluation', () => {
     await expect(
       evaluatePopulation(population, {} as ImageData, workerPool)
     ).rejects.toThrow('Fitness result missing for individual 0')
+  })
+})
+
+describe('hill climbing', () => {
+  it('evaluates all mutations in one worker-pool call and keeps only improvements', async () => {
+    const individual = createIndividual(0.5, [createShape(10), createShape(20)])
+    const originalShapeX = individual.shapes[0]!.x
+    const calculateFitnessBatches = vi.fn().mockResolvedValue(new Map([
+      [0, 0.8],
+      [1, 0.7]
+    ]))
+    const workerPool = { calculateFitnessBatches }
+
+    const refined = await hillClimbIndividuals(
+      [individual],
+      2,
+      {} as ImageData,
+      workerPool
+    )
+
+    expect(calculateFitnessBatches).toHaveBeenCalledTimes(1)
+    expect(calculateFitnessBatches.mock.calls[0]?.[0]).toHaveLength(2)
+    expect(refined[0]!.fitness).toBe(0.8)
+    expect(refined[0]).not.toBe(individual)
+    expect(individual.fitness).toBe(0.5)
+    expect(individual.shapes[0]!.x).toBe(originalShapeX)
+  })
+
+  it('does not replace an individual when a mutation is not better', async () => {
+    const individual = createIndividual(0.8, [createShape(10)])
+    const calculateFitnessBatches = vi.fn().mockResolvedValue(new Map([[0, 0.8]]))
+
+    const refined = await hillClimbIndividuals(
+      [individual],
+      1,
+      {} as ImageData,
+      { calculateFitnessBatches }
+    )
+
+    expect(refined[0]!.fitness).toBe(0.8)
+    expect(refined[0]!.shapes[0]).toMatchObject(individual.shapes[0]!)
   })
 })

@@ -12,12 +12,12 @@ export interface EvolutionParams {
 export const CANVAS_CONFIG = {
   worldSize: 150,
   displaySize: 300,
-  exportSize: 1024
+  exportSize: 512
 } as const
 
 export const EVOLUTION_CONFIG = {
   defaults: {
-    populationSize: 500,
+    populationSize: 200,
     mutationRate: 0.05,
     shapesPerIndividual: 120,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
@@ -29,6 +29,9 @@ export const EVOLUTION_CONFIG = {
     shapesPerIndividual: { min: 1, max: 300 }
   },
   elitismPercentage: 0.05,
+  hillClimbing: {
+    attemptsPerElite: 5
+  },
   selection: {
     tournamentSize: 3
   },

@@ -50,6 +50,13 @@ export function createNewGeneration(
   return newPopulation
 }
 
+export function mutateOneShape(individual: Individual): void {
+  if (individual.shapes.length === 0) return
+
+  const shapeIndex = Math.floor(Math.random() * individual.shapes.length)
+  individual.shapes[shapeIndex]?.mutate()
+}
+
 function selectParent(
   population: Individual[],
   shapesPerIndividual: number,
