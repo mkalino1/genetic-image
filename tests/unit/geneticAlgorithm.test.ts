@@ -1,9 +1,10 @@
 /// <reference types="vitest/globals" />
 
 import type { Individual } from '../../app/utils/populationCreation'
-import { CANVAS_CONFIG } from '../../app/utils/imageEvolutionConfig'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../../app/utils/imageEvolutionConfig'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/utils/shape'
 import { hillClimbIndividuals } from '../../app/utils/imageEvaluationMultithread'
+import { mutateIndividual } from '../../app/utils/geneticOperations'
 
 const WORLD_SIZE = CANVAS_CONFIG.worldSize
 
@@ -236,6 +237,36 @@ describe('next generation', () => {
 
     nextGeneration[0]!.shapes[0]!.x = 999
     expect(elite.shapes[0]!.x).toBe(10)
+  })
+})
+
+describe('shape mutation', () => {
+  it('mutates or replaces shapes without changing the shape count', () => {
+    const originalShapes = [createShape(10), createShape(20)]
+    const individual = createIndividual(0.5, originalShapes)
+    const replacedShape = originalShapes[1]
+    const mutateShape = vi.spyOn(Shape.prototype, 'mutate').mockImplementation(() => {})
+    vi.spyOn(Math, 'random')
+      .mockReturnValue(0.5)
+      .mockReturnValueOnce(0).mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(
+        EVOLUTION_CONFIG.mutation.shapeOperationProbabilities.mutate +
+        EVOLUTION_CONFIG.mutation.shapeOperationProbabilities.replace / 2
+      )
+
+    mutateIndividual(individual, 1, 'polygon')
+
+    expect(mutateShape).toHaveBeenCalledTimes(1)
+    expect(individual.shapes).toHaveLength(originalShapes.length)
+    expect(individual.shapes[0]).toBe(originalShapes[0])
+    expect(individual.shapes[1]).not.toBe(replacedShape)
+    expect(individual.shapes[1]).toMatchObject({ mode: 'polygon' })
+  })
+
+  it('uses operation probabilities that sum to one', () => {
+    const probabilities = EVOLUTION_CONFIG.mutation.shapeOperationProbabilities
+    expect(probabilities.mutate + probabilities.replace).toBe(1)
   })
 })
 

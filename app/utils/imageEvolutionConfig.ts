@@ -13,16 +13,16 @@ export interface EvolutionParams {
 export const CANVAS_CONFIG = {
   worldSize: 150,
   displaySize: 300,
-  exportSize: 512
+  exportSize: 1024
 } as const
 
 export const EVOLUTION_CONFIG = {
   defaults: {
-    populationSize: 200,
+    populationSize: 100,
     mutationRate: 0.05,
     shapesPerIndividual: 120,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
-    enableHillClimbing: false,
+    enableHillClimbing: true,
     shapeMode: 'polygon' as ShapeMode
   },
   parameterBounds: {
@@ -30,7 +30,7 @@ export const EVOLUTION_CONFIG = {
     mutationRate: { min: 0.01, max: 0.3, step: 0.01 },
     shapesPerIndividual: { min: 1, max: 300 }
   },
-  elitismPercentage: 0.05,
+  elitismPercentage: 0.03,
   hillClimbing: {
     attemptsPerElite: 5
   },
@@ -42,6 +42,10 @@ export const EVOLUTION_CONFIG = {
     strongMutationIncrease: 0.1,
     strongMutationMultiplier: 2,
     maximumStrongMutationRate: 0.7,
+    shapeOperationProbabilities: {
+      mutate: 0.98,
+      replace: 0.02
+    },
     varianceTarget: 0.005,
     varianceOffset: 0.001,
     minimumVarianceFactor: 0.5,
