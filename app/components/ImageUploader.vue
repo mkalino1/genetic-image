@@ -19,7 +19,7 @@
           Non-square images are center-cropped to a square
         </div>
         <div class="text-xs text-neutral-500">
-          Supported extensions: .jpg, .jpeg, .png, .gif, .webp, .heic, .heif · max 5 MB
+          Supported extensions: .jpg, .jpeg, .png, .gif, .webp, .heic, .heif · max 10 MB
         </div>
       </div>
     </button>
@@ -110,9 +110,9 @@ const processFile = async (file: File) => {
 
   error.value = ''
   
-  // Validate file size (5MB limit)
-  if (file.size > 5 * 1024 * 1024) {
-    error.value = 'This file is too large. Choose an image up to 5 MB.'
+  // Validate file size (10MB limit)
+  if (file.size > 10 * 1024 * 1024) {
+    error.value = 'This file is too large. Choose an image up to 10 MB.'
     return
   }
 

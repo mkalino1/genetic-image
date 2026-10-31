@@ -73,6 +73,7 @@
                   :best-fitness="bestFitness"
                   :fitness-variance="fitnessVariance"
                   :adaptive-mutation-rate="adaptiveMutationRate"
+                  :elapsed-time-ms="elapsedTimeMs"
                 />
                 <DevProfilingPanel
                   v-if="isDevelopment && profilingSummary"
@@ -283,6 +284,7 @@ const generation = ref(0)
 const bestFitness = ref(0)
 const fitnessVariance = ref(0)
 const adaptiveMutationRate = ref(0)
+const elapsedTimeMs = ref(0)
 const profilingSummary = ref<GenerationProfilingSummary | null>(null)
 const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
 const canRecreate = computed(() =>
@@ -309,6 +311,8 @@ const evolutionParams = reactive<EvolutionParams>({ ...EVOLUTION_CONFIG.defaults
 
 let geneticAlgorithm: GeneticAlgorithm | null = null
 let animationId: number | null = null
+let evolutionStartedAt: number | null = null
+let elapsedTimer: number | null = null
 
 const startEvolution = async () => {
   const imageData = targetImageData.value
@@ -329,6 +333,13 @@ const startEvolution = async () => {
   profilingSummary.value = null
   try {
     geneticAlgorithm = new GeneticAlgorithm(displayCanvas, imageData, evolutionParams)
+    elapsedTimeMs.value = 0
+    evolutionStartedAt = Date.now()
+    elapsedTimer = window.setInterval(() => {
+      if (evolutionStartedAt !== null) {
+        elapsedTimeMs.value = Date.now() - evolutionStartedAt
+      }
+    }, 1000)
     isEvolving.value = true
     evolve()
   } catch (err) {
@@ -342,6 +353,14 @@ const startEvolution = async () => {
 
 const stopEvolution = () => {
   isEvolving.value = false
+  if (evolutionStartedAt !== null) {
+    elapsedTimeMs.value = Date.now() - evolutionStartedAt
+    evolutionStartedAt = null
+  }
+  if (elapsedTimer !== null) {
+    window.clearInterval(elapsedTimer)
+    elapsedTimer = null
+  }
   if (animationId !== null) {
     cancelAnimationFrame(animationId)
     animationId = null
@@ -350,6 +369,8 @@ const stopEvolution = () => {
     geneticAlgorithm.cleanup()
   }
 }
+
+onUnmounted(stopEvolution)
 
 const evolve = async () => {
   if (!isEvolving.value) return
@@ -373,6 +394,7 @@ const setTargetImage = async (imageData: string) => {
   currentBestIndividual.value = null
   targetImageData.value = null
   generation.value = 0
+  elapsedTimeMs.value = 0
   bestFitness.value = 0
   fitnessVariance.value = 0
   adaptiveMutationRate.value = 0
