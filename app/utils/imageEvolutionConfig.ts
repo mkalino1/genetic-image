@@ -1,5 +1,6 @@
 export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point' | 'randomized' | 'adaptive'
 export type ShapeMode = 'fixed' | 'polygon'
+export type FitnessMetric = 'deltaE' | 'rgbMeanSquared'
 
 export interface EvolutionParams {
   populationSize: number
@@ -7,6 +8,7 @@ export interface EvolutionParams {
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
   enableHillClimbing: boolean
+  fitnessMetric: FitnessMetric
   shapeMode?: ShapeMode
 }
 
@@ -23,6 +25,7 @@ export const EVOLUTION_CONFIG = {
     shapesPerIndividual: 120,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
     enableHillClimbing: true,
+    fitnessMetric: 'deltaE' as FitnessMetric,
     shapeMode: 'polygon' as ShapeMode
   },
   parameterBounds: {
@@ -58,7 +61,7 @@ export const EVOLUTION_CONFIG = {
   },
   stagnation: {
     patience: 10,
-    minimumDeltaEImprovement: 0.5
+    minimumNormalizedErrorImprovement: 0.005
   },
   diversityRecovery: {
     firstGeneration: 21,
@@ -115,6 +118,7 @@ export const SHAPE_CONFIG = {
 export const FITNESS_CONFIG = {
   deltaEScale: 100,
   deltaEPower: 1.25,
+  rgbMeanSquaredScale: 10_000,
   pixelWeights: {
     minimum: 1,
     maximum: 2,

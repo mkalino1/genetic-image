@@ -289,7 +289,7 @@ describe('population fitness evaluation', () => {
     expect(calculateFitnessBatches).toHaveBeenCalledWith([
       { individualId: 0, shapes: population[0]!.shapes },
       { individualId: 1, shapes: population[1]!.shapes }
-    ], targetImageData)
+    ], targetImageData, 'deltaE')
   })
 
   it('rejects when the worker omits a fitness result', async () => {

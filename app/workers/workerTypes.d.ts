@@ -1,4 +1,5 @@
 import type { ShapeRenderData } from '../utils/shape'
+import type { FitnessMetric } from '../utils/imageEvolutionConfig'
 
 export interface FitnessTask {
   individualId: number
@@ -45,7 +46,7 @@ export interface GenerationProfilingSummary {
 
 export type FitnessWorkerRequest =
   | { type: 'initialize_target'; targetImageData: ImageData }
-  | { type: 'batch_fitness_calculation'; batch: PackedFitnessBatch; profile?: boolean }
+  | { type: 'batch_fitness_calculation'; batch: PackedFitnessBatch; metric: FitnessMetric; profile?: boolean }
 
 export type FitnessWorkerResponse =
   | { type: 'target_initialized'; success: true }

@@ -1,6 +1,6 @@
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './imageEvolutionConfig'
-import type { CrossoverStrategy, EvolutionParams, ShapeMode } from './imageEvolutionConfig'
-import { weightedDeltaEFromFitness } from './fitnessConversion'
+import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from './imageEvolutionConfig'
+import { fitnessErrorScale, weightedErrorFromFitness } from './fitnessConversion'
 import { hillClimbIndividuals } from './imageEvaluationMultithread'
 import type {
   FitnessProfilingMetrics,
@@ -25,6 +25,7 @@ export class GeneticAlgorithm {
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
   enableHillClimbing: boolean
+  fitnessMetric: FitnessMetric
   shapeMode: ShapeMode
   eliteSize: number
   
@@ -60,6 +61,7 @@ export class GeneticAlgorithm {
     this.shapesPerIndividual = params.shapesPerIndividual
     this.crossoverStrategy = params.crossoverStrategy
     this.enableHillClimbing = params.enableHillClimbing
+    this.fitnessMetric = params.fitnessMetric
     this.shapeMode = params.shapeMode ?? EVOLUTION_CONFIG.defaults.shapeMode
     this.eliteSize = Math.max(
       1,
@@ -93,6 +95,7 @@ export class GeneticAlgorithm {
       this.population,
       this.targetImageData,
       this.workerPool,
+      this.fitnessMetric,
       profilingEnabled ? (profile) => {
         workerProfile = profile
       } : undefined
@@ -111,7 +114,8 @@ export class GeneticAlgorithm {
         this.population.slice(0, this.eliteSize),
         EVOLUTION_CONFIG.hillClimbing.attemptsPerElite,
         this.targetImageData,
-        this.workerPool
+        this.workerPool,
+        this.fitnessMetric
       )
       for (let index = 0; index < refinedElites.length; index++) {
         const refinedElite = refinedElites[index]
@@ -128,11 +132,13 @@ export class GeneticAlgorithm {
       if (best.fitness > this.bestFitness) {
         this.bestFitness = best.fitness
       }
-      const previousBestDeltaE = weightedDeltaEFromFitness(this.bestFitnessAtLastProgress)
-      const currentBestDeltaE = weightedDeltaEFromFitness(best.fitness)
+      const previousBestError = weightedErrorFromFitness(this.bestFitnessAtLastProgress, this.fitnessMetric)
+      const currentBestError = weightedErrorFromFitness(best.fitness, this.fitnessMetric)
+      const minimumErrorImprovement =
+        EVOLUTION_CONFIG.stagnation.minimumNormalizedErrorImprovement *
+        fitnessErrorScale(this.fitnessMetric)
       if (
-        previousBestDeltaE - currentBestDeltaE >=
-        EVOLUTION_CONFIG.stagnation.minimumDeltaEImprovement
+        previousBestError - currentBestError >= minimumErrorImprovement
       ) {
         this.bestFitnessAtLastProgress = best.fitness
         this.stagnationGenerations = 0

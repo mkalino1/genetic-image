@@ -1,4 +1,6 @@
 import type { FitnessProfilingMetrics } from '../workers/workerTypes'
+import { EVOLUTION_CONFIG } from './imageEvolutionConfig'
+import type { FitnessMetric } from './imageEvolutionConfig'
 import { cloneIndividual } from './populationCreation'
 import { mutateOneShape } from './geneticOperations'
 
@@ -9,6 +11,7 @@ export async function evaluatePopulation(
   population: Individual[],
   targetImageData: ImageData,
   workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>,
+  metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric,
   onProfile?: (profile: FitnessProfilingMetrics) => void
 ): Promise<void> {
   const individualsToProcess = population.map((individual, individualId) => ({
@@ -17,8 +20,8 @@ export async function evaluatePopulation(
   }))
 
   const fitnessResults = onProfile
-    ? await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData, onProfile)
-    : await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData)
+    ? await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData, metric, onProfile)
+    : await workerPool.calculateFitnessBatches(individualsToProcess, targetImageData, metric)
   
   for (let i = 0; i < population.length; i++) {
     const individual = population[i]
@@ -36,7 +39,8 @@ export async function hillClimbIndividuals(
   individuals: Individual[],
   attempts: number,
   targetImageData: ImageData,
-  workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>
+  workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>,
+  metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric
 ): Promise<Individual[]> {
   const improvedIndividuals = individuals.map(cloneIndividual)
   const candidatesByIndividual = improvedIndividuals.map(() => [] as Individual[])
@@ -56,7 +60,7 @@ export async function hillClimbIndividuals(
 
   const allCandidates = candidatesByIndividual.flat()
   if (allCandidates.length > 0) {
-    await evaluatePopulation(allCandidates, targetImageData, workerPool)
+    await evaluatePopulation(allCandidates, targetImageData, workerPool, metric)
 
     for (let index = 0; index < improvedIndividuals.length; index++) {
       let best = improvedIndividuals[index]

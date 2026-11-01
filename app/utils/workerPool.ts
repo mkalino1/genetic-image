@@ -1,6 +1,7 @@
 import type { FitnessProfilingMetrics, FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../workers/workerTypes'
 import { packFitnessTasks } from './fitnessTaskSerialization'
-import { WORKER_CONFIG } from './imageEvolutionConfig'
+import { EVOLUTION_CONFIG, WORKER_CONFIG } from './imageEvolutionConfig'
+import type { FitnessMetric } from './imageEvolutionConfig'
 
 type FitnessProfileCallback = (profile: FitnessProfilingMetrics) => void
 
@@ -98,6 +99,7 @@ export class WorkerPool {
   async calculateFitnessBatches(
     individuals: FitnessTask[],
     targetImageData: ImageData,
+    metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric,
     onProfile?: FitnessProfileCallback
   ): Promise<Map<number, number>> {
     if (this.workers.length === 0) {
@@ -123,6 +125,7 @@ export class WorkerPool {
       const response = await this.sendMessageToWorker(worker, {
         type: 'batch_fitness_calculation',
         batch,
+        metric,
         profile: Boolean(onProfile)
       }, [batch.shapes])
       if (response.type !== 'batch_fitness_result') {

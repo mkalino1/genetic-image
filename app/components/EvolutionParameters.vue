@@ -70,6 +70,13 @@
           </div>
           <div>
             <div class="mb-1">
+              <label for="fitness-metric" class="text-sm font-medium">Fitness metric</label>
+            </div>
+            <USelect id="fitness-metric" v-model="model.fitnessMetric" :items="fitnessMetricOptions" />
+            <p class="mt-1 text-xs text-neutral-500">{{ fitnessMetricDescriptions[model.fitnessMetric] }}</p>
+          </div>
+          <div>
+            <div class="mb-1">
               <label for="shape-mode" class="text-sm font-medium">Shape type</label>
             </div>
             <USelect id="shape-mode" v-model="model.shapeMode" :items="shapeTypOptions" />
@@ -83,7 +90,7 @@
 
 <script lang="ts" setup>
 import { EVOLUTION_CONFIG, SHAPE_CONFIG } from '../utils/imageEvolutionConfig'
-import type { CrossoverStrategy, ShapeMode } from '../utils/imageEvolutionConfig'
+import type { CrossoverStrategy, FitnessMetric, ShapeMode } from '../utils/imageEvolutionConfig'
 
 const model = defineModel<EvolutionParams>({ required: true })
 const parameterBounds = EVOLUTION_CONFIG.parameterBounds
@@ -108,6 +115,21 @@ const crossoverStrategyDescriptions: Record<CrossoverStrategy, string> = {
   two_point: 'Take a segment from one parent and the rest from the other.',
   randomized: 'Randomly use uniform, single-point or two-point crossover.',
   adaptive: 'Choose crossover based on the best fitness so far.'
+}
+
+const fitnessMetricLabels: Record<FitnessMetric, string> = {
+  deltaE: 'Delta E',
+  rgbMeanSquared: 'MSE'
+}
+
+const fitnessMetricOptions = (['deltaE', 'rgbMeanSquared'] satisfies FitnessMetric[]).map(value => ({
+  label: fitnessMetricLabels[value],
+  value
+}))
+
+const fitnessMetricDescriptions: Record<FitnessMetric, string> = {
+  deltaE: 'Perceptual color difference; the closest match to how humans judge color.',
+  rgbMeanSquared: 'Average squared RGB-channel difference; large errors count more.'
 }
 
 const shapeModeLabels: Record<ShapeMode, string> = {
