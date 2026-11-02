@@ -25,13 +25,23 @@ describe('Delta E fitness metric', () => {
       width: 1,
       height: 1
     } as ImageData
+    const evolvedImageData = {
+      data: new Uint8ClampedArray([60, 120, 200, 255]),
+      width: 1,
+      height: 1
+    } as ImageData
     const targetLab = convertImageToLab(targetImageData)
+    const evolvedLab = convertImageToLab(evolvedImageData)
+    const deltaL = targetLab[0]! - evolvedLab[0]!
+    const deltaA = targetLab[1]! - evolvedLab[1]!
+    const deltaB = targetLab[2]! - evolvedLab[2]!
+    const deltaESquared = deltaL ** 2 + deltaA ** 2 + deltaB ** 2
 
     expect(calculateDeltaEFitness(
-      new Uint8ClampedArray([60, 120, 200, 255]),
+      evolvedImageData.data,
       targetLab,
       new Float32Array([1]),
       1
-    )).toBeLessThan(1)
+    )).toBeCloseTo(1 / (1 + deltaESquared / 10_000))
   })
 })

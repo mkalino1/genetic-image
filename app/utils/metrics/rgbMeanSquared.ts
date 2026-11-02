@@ -34,5 +34,5 @@ export function calculateRgbMeanSquaredFitness(
   }
 
   const meanSquaredError = totalWeight > 0 ? totalWeightedError / totalWeight : 0
-  return fitnessFromError(meanSquaredError, 'rgbMeanSquared')
+  return fitnessFromError(meanSquaredError)
 }

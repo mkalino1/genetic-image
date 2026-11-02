@@ -1,7 +1,5 @@
 import {
-  FITNESS_DELTA_E_POWER,
-  fitnessFromWeightedDeltaE,
-  weightedPowerMeanDeltaE
+  fitnessFromError
 } from '../fitnessConversion'
 
 const LAB_DELTA = 6 / 29
@@ -56,7 +54,7 @@ export function calculateDeltaEFitness(
   pixelWeights: Float32Array,
   pixelCount: number
 ): number {
-  let totalWeightedPoweredDeltaE = 0
+  let totalWeightedDeltaESquared = 0
   let totalWeight = 0
 
   for (let pixel = 0, rgbaOffset = 0; pixel < pixelCount; pixel++, rgbaOffset += 4) {
@@ -112,15 +110,14 @@ export function calculateDeltaEFitness(
     const pixelWeight = pixelWeights[pixel]
     if (pixelWeight === undefined) continue
     const deltaESquared = deltaL * deltaL + deltaA * deltaA + deltaB * deltaB
-    totalWeightedPoweredDeltaE += Math.pow(deltaESquared, FITNESS_DELTA_E_POWER / 2) * pixelWeight
+    totalWeightedDeltaESquared += deltaESquared * pixelWeight
     totalWeight += pixelWeight
   }
 
-  const weightedDeltaE = weightedPowerMeanDeltaE(
-    totalWeightedPoweredDeltaE,
-    totalWeight
-  )
-  return fitnessFromWeightedDeltaE(weightedDeltaE)
+  const meanWeightedDeltaESquared = totalWeight > 0
+    ? totalWeightedDeltaESquared / totalWeight
+    : 0
+  return fitnessFromError(meanWeightedDeltaESquared)
 }
 
 function toLinearRgb(value: number): number {

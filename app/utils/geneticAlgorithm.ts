@@ -1,6 +1,6 @@
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './imageEvolutionConfig'
 import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from './imageEvolutionConfig'
-import { fitnessErrorScale, weightedErrorFromFitness } from './fitnessConversion'
+import { FITNESS_ERROR_SCALE, weightedErrorFromFitness } from './fitnessConversion'
 import { hillClimbIndividuals } from './imageEvaluationMultithread'
 import type {
   FitnessProfilingMetrics,
@@ -132,11 +132,11 @@ export class GeneticAlgorithm {
       if (best.fitness > this.bestFitness) {
         this.bestFitness = best.fitness
       }
-      const previousBestError = weightedErrorFromFitness(this.bestFitnessAtLastProgress, this.fitnessMetric)
-      const currentBestError = weightedErrorFromFitness(best.fitness, this.fitnessMetric)
+      const previousBestError = weightedErrorFromFitness(this.bestFitnessAtLastProgress)
+      const currentBestError = weightedErrorFromFitness(best.fitness)
       const minimumErrorImprovement =
         EVOLUTION_CONFIG.stagnation.minimumNormalizedErrorImprovement *
-        fitnessErrorScale(this.fitnessMetric)
+        FITNESS_ERROR_SCALE
       if (
         previousBestError - currentBestError >= minimumErrorImprovement
       ) {

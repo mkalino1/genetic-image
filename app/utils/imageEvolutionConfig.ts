@@ -116,9 +116,6 @@ export const SHAPE_CONFIG = {
 } as const
 
 export const FITNESS_CONFIG = {
-  deltaEScale: 100,
-  deltaEPower: 1.25,
-  rgbMeanSquaredScale: 10_000,
   pixelWeights: {
     minimum: 1,
     maximum: 2,
