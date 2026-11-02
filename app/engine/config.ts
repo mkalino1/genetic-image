@@ -63,12 +63,6 @@ export const EVOLUTION_CONFIG = {
     patience: 10,
     minimumNormalizedErrorImprovement: 0.005
   },
-  diversityRecovery: {
-    firstGeneration: 21,
-    generationInterval: 20,
-    minimumFitnessVariance: 0.001,
-    randomImmigrantFraction: 0.4
-  },
   crossover: {
     availableStrategies: ['uniform', 'single_point', 'two_point', 'randomized', 'adaptive'] as CrossoverStrategy[],
     adaptiveLowFitnessThreshold: 0.92,

@@ -168,15 +168,6 @@ export class GeneticAlgorithm {
       this.shapeMode
     )
 
-    if (this.shouldInjectForLowFitnessVariance()) {
-      const immigrantCount = Math.floor(
-        this.populationSize * EVOLUTION_CONFIG.diversityRecovery.randomImmigrantFraction
-      )
-      for (let i = 0; i < immigrantCount; i++) {
-        nextPopulation.push(createRandomIndividual(this.shapesPerIndividual, this.shapeMode))
-      }
-      console.log(`Added ${immigrantCount} random individuals at generation ${this.generation}`)
-    }
     this.population = nextPopulation
 
     if (profilingEnabled && workerProfile) {
@@ -236,13 +227,6 @@ export class GeneticAlgorithm {
     if (this.workerPool) {
       this.workerPool.terminate()
     }
-  }
-
-  private shouldInjectForLowFitnessVariance(): boolean {
-    const recovery = EVOLUTION_CONFIG.diversityRecovery
-    return this.generation >= recovery.firstGeneration &&
-      this.generation % recovery.generationInterval === 0 &&
-      this.fitnessVariance < recovery.minimumFitnessVariance
   }
 
   private calculateFitnessVariance(): number {

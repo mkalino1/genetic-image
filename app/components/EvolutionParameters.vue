@@ -29,7 +29,6 @@
             />
             <p class="mt-1 text-xs text-neutral-500">
               Candidates kept each generation; larger populations explore more but take longer.
-              Low fitness variance adds {{ Math.round(EVOLUTION_CONFIG.diversityRecovery.randomImmigrantFraction * 100) }}% random candidates before selecting the best.
             </p>
           </div>
           <div>
