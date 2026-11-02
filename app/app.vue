@@ -148,10 +148,10 @@
 </template>
 
 <script setup lang="ts">
-import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './utils/imageEvolutionConfig'
-import type { EvolutionParams } from './utils/imageEvolutionConfig'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './engine/config'
+import type { EvolutionParams } from './engine/config'
 
-import type { GenerationProfilingSummary } from './workers/workerTypes'
+import type { GenerationProfilingSummary } from './web-workers/workerTypes'
 
 const toast = useToast()
 

@@ -1,6 +1,6 @@
-import { FITNESS_CONFIG } from './imageEvolutionConfig'
+import { FITNESS_CONFIG } from '../config'
 
-export function calculatePixelWeights(targetLab: Float64Array, width: number, height: number): Float32Array {
+export function calculateEdgeDetectionWeights(targetLab: Float64Array, width: number, height: number): Float32Array {
   if (width <= 0 || height <= 0 || targetLab.length !== width * height * 3) {
     throw new RangeError('Target Lab data dimensions do not match the provided width and height')
   }

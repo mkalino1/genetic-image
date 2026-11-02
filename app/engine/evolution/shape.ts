@@ -1,6 +1,6 @@
-import { renderShape } from './rendering'
-import { CANVAS_CONFIG, EVOLUTION_CONFIG, SHAPE_CONFIG } from './imageEvolutionConfig'
-import type { ShapeMode } from './imageEvolutionConfig'
+import { renderShape } from '../image/shapeRendering'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG, SHAPE_CONFIG } from '../config'
+import type { ShapeMode } from '../config'
 
 const WORLD_SIZE = CANVAS_CONFIG.worldSize
 export const MIN_SHAPE_SIZE = WORLD_SIZE * SHAPE_CONFIG.minimumSizeFraction

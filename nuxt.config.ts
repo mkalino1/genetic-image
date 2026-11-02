@@ -7,6 +7,9 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxt/test-utils'
   ],
+  imports: {
+    dirs: ['engine/**']
+  },
   css: ['~/assets/main.css'],
   nitro: {
     prerender: {

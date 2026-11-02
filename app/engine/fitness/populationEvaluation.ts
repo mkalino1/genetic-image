@@ -1,8 +1,9 @@
-import type { FitnessProfilingMetrics } from '../workers/workerTypes'
-import { EVOLUTION_CONFIG } from './imageEvolutionConfig'
-import type { FitnessMetric } from './imageEvolutionConfig'
-import { cloneIndividual } from './populationCreation'
-import { mutateOneShape } from './geneticOperations'
+import type { FitnessProfilingMetrics } from '../../web-workers/workerTypes'
+import { EVOLUTION_CONFIG } from '../config'
+import type { FitnessMetric } from '../config'
+import { cloneIndividual } from '../evolution/populationCreation'
+import { mutateOneShape } from '../evolution/geneticOperations'
+import type { FitnessWorkerPool } from './fitnessWorkerPool'
 
 /**
  * Evaluates, renders, and scores the population in parallel using Web Workers.
@@ -10,7 +11,7 @@ import { mutateOneShape } from './geneticOperations'
 export async function evaluatePopulation(
   population: Individual[],
   targetImageData: ImageData,
-  workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>,
+  workerPool: Pick<FitnessWorkerPool, 'calculateFitnessBatches'>,
   metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric,
   onProfile?: (profile: FitnessProfilingMetrics) => void
 ): Promise<void> {
@@ -39,7 +40,7 @@ export async function hillClimbIndividuals(
   individuals: Individual[],
   attempts: number,
   targetImageData: ImageData,
-  workerPool: Pick<WorkerPool, 'calculateFitnessBatches'>,
+  workerPool: Pick<FitnessWorkerPool, 'calculateFitnessBatches'>,
   metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric
 ): Promise<Individual[]> {
   const improvedIndividuals = individuals.map(cloneIndividual)

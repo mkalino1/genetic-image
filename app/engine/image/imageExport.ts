@@ -1,4 +1,4 @@
-import { CANVAS_CONFIG } from './imageEvolutionConfig'
+import { CANVAS_CONFIG } from '../config'
 
 export function renderIndividualToPngBlob(individual: Individual, backgroundColor: string): Promise<Blob> {
   const canvas = document.createElement('canvas')

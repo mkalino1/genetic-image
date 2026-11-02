@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GenerationProfilingSummary } from '../workers/workerTypes'
+import type { GenerationProfilingSummary } from '../web-workers/workerTypes'
 
 defineProps<{
   summary: GenerationProfilingSummary

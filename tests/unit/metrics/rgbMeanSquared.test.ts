@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { calculateRgbMeanSquaredFitness } from '../../../app/utils/metrics/rgbMeanSquared'
+import { calculateRgbMeanSquaredFitness } from '../../../app/engine/fitness/metrics/rgbMeanSquared'
 
 describe('mean squared RGB fitness metric', () => {
   it('uses pixel weights when calculating fitness from RGB channel errors', () => {

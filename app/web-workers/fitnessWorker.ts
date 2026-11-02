@@ -1,11 +1,11 @@
 import type { FitnessWorkerProfilingMetrics, FitnessResult, FitnessWorkerRequest } from './workerTypes'
-import { renderShape } from '../utils/rendering'
-import { CANVAS_CONFIG } from '../utils/imageEvolutionConfig'
-import { calculatePixelWeights } from '../utils/pixelWeights'
-import { unpackFitnessTasks } from '../utils/fitnessTaskSerialization'
-import type { FitnessMetric } from '../utils/imageEvolutionConfig'
-import { calculateDeltaEFitness, convertImageToLab } from '../utils/metrics/deltaE'
-import { calculateRgbMeanSquaredFitness } from '../utils/metrics/rgbMeanSquared'
+import { renderShape } from '../engine/image/shapeRendering'
+import { CANVAS_CONFIG } from '../engine/config'
+import { calculateEdgeDetectionWeights } from '../engine/fitness/edgeDetectionWeights'
+import { unpackFitnessTasks } from '../engine/fitness/fitnessTaskSerialization'
+import type { FitnessMetric } from '../engine/config'
+import { calculateDeltaEFitness, convertImageToLab } from '../engine/fitness/metrics/deltaE'
+import { calculateRgbMeanSquaredFitness } from '../engine/fitness/metrics/rgbMeanSquared'
 let targetLab: Float64Array | null = null
 let targetRgb: Uint8ClampedArray | null = null
 let targetPixelWeights: Float32Array | null = null
@@ -27,7 +27,7 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
       targetPixelCount = e.data.targetImageData.data.length / 4
       targetRgb = e.data.targetImageData.data
       targetLab = convertImageToLab(e.data.targetImageData)
-      targetPixelWeights = calculatePixelWeights(
+      targetPixelWeights = calculateEdgeDetectionWeights(
         targetLab,
         e.data.targetImageData.width,
         e.data.targetImageData.height

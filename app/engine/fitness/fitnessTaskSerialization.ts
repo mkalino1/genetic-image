@@ -1,5 +1,5 @@
-import type { ShapeRenderData } from './shape'
-import type { FitnessTask, PackedFitnessBatch } from '../workers/workerTypes'
+import type { ShapeRenderData } from '../evolution/shape'
+import type { FitnessTask, PackedFitnessBatch } from '../../web-workers/workerTypes'
 
 const VERTEX_COUNT = 10
 const SHAPE_STRIDE = 3 + VERTEX_COUNT * 2 + 10

@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { calculateDeltaEFitness, convertImageToLab } from '../../../app/utils/metrics/deltaE'
+import { calculateDeltaEFitness, convertImageToLab } from '../../../app/engine/fitness/metrics/deltaE'
 
 describe('Delta E fitness metric', () => {
   it('returns maximum fitness when the images match', () => {

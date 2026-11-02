@@ -3,7 +3,7 @@
 import {
   fitnessFromError,
   weightedErrorFromFitness
-} from '../../app/utils/fitnessConversion'
+} from '../../app/engine/fitness/fitnessScoreConversion'
 
 describe('fitness conversion', () => {
   it('returns the maximum fitness for a perfect match', () => {

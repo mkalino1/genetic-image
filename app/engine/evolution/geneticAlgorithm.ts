@@ -1,12 +1,13 @@
-import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './imageEvolutionConfig'
-import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from './imageEvolutionConfig'
-import { FITNESS_ERROR_SCALE, weightedErrorFromFitness } from './fitnessConversion'
-import { hillClimbIndividuals } from './imageEvaluationMultithread'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
+import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from '../config'
+import { FITNESS_ERROR_SCALE, weightedErrorFromFitness } from '../fitness/fitnessScoreConversion'
+import { hillClimbIndividuals } from '../fitness/populationEvaluation'
+import { FitnessWorkerPool } from '../fitness/fitnessWorkerPool'
 import type {
   FitnessProfilingMetrics,
   GenerationProfilingMetrics,
   GenerationProfilingSummary
-} from '../workers/workerTypes'
+} from '../../web-workers/workerTypes'
 
 export class GeneticAlgorithm {
   // Onscreen canvas for rendering the current best individual
@@ -17,7 +18,7 @@ export class GeneticAlgorithm {
   targetImageData: ImageData
   
   // Worker pool for parallel fitness calculations
-  workerPool: WorkerPool
+  workerPool: FitnessWorkerPool
   
   // Parameters
   populationSize: number
@@ -79,7 +80,7 @@ export class GeneticAlgorithm {
     this.bestFitnessAtLastProgress = 0
 
     // Initialize worker pool for parallel fitness calculations
-    this.workerPool = new WorkerPool()
+    this.workerPool = new FitnessWorkerPool()
   }
 
   async evolve(): Promise<void> {

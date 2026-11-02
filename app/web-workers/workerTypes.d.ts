@@ -1,5 +1,5 @@
-import type { ShapeRenderData } from '../utils/shape'
-import type { FitnessMetric } from '../utils/imageEvolutionConfig'
+import type { ShapeRenderData } from '../engine/evolution/shape'
+import type { FitnessMetric } from '../engine/config'
 
 export interface FitnessTask {
   individualId: number

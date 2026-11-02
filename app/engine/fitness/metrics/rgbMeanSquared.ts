@@ -1,4 +1,4 @@
-import { fitnessFromError } from '../fitnessConversion'
+import { fitnessFromError } from '../fitnessScoreConversion'
 
 export function calculateRgbMeanSquaredFitness(
   evolvedData: Uint8ClampedArray,

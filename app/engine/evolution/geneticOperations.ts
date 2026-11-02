@@ -1,5 +1,5 @@
-import { EVOLUTION_CONFIG } from './imageEvolutionConfig'
-import type { CrossoverStrategy, ShapeMode } from './imageEvolutionConfig'
+import { EVOLUTION_CONFIG } from '../config'
+import type { CrossoverStrategy, ShapeMode } from '../config'
 
 export function createNewGeneration(
   population: Individual[],

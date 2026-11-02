@@ -1,5 +1,5 @@
-import { EVOLUTION_CONFIG } from './imageEvolutionConfig'
-import type { ShapeMode } from './imageEvolutionConfig'
+import { EVOLUTION_CONFIG } from '../config'
+import type { ShapeMode } from '../config'
 
 export interface Individual {
   shapes: Shape[]

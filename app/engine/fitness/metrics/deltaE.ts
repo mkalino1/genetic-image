@@ -1,6 +1,6 @@
 import {
   fitnessFromError
-} from '../fitnessConversion'
+} from '../fitnessScoreConversion'
 
 const LAB_DELTA = 6 / 29
 const LAB_DELTA_CUBE = Math.pow(LAB_DELTA, 3)

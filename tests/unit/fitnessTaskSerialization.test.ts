@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 
-import { packFitnessTasks, unpackFitnessTasks } from '../../app/utils/fitnessTaskSerialization'
-import type { FitnessTask } from '../../app/workers/workerTypes'
+import { packFitnessTasks, unpackFitnessTasks } from '../../app/engine/fitness/fitnessTaskSerialization'
+import type { FitnessTask } from '../../app/web-workers/workerTypes'
 
 describe('fitness task serialization', () => {
   it('round-trips fixed shapes and polygons with up to 10 vertices', () => {

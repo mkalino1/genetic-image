@@ -1,12 +1,12 @@
 /// <reference types="vitest/globals" />
 
-import { calculatePixelWeights } from '../../app/utils/pixelWeights'
+import { calculateEdgeDetectionWeights } from '../../app/engine/fitness/edgeDetectionWeights'
 
-describe('calculatePixelWeights', () => {
+describe('calculateEdgeDetectionWeights', () => {
   it('assigns the base weight to pixels in a uniform image', () => {
     const targetLab = new Float64Array(4 * 3 * 3).fill(50)
 
-    expect(calculatePixelWeights(targetLab, 4, 3)).toEqual(new Float32Array(12).fill(1))
+    expect(calculateEdgeDetectionWeights(targetLab, 4, 3)).toEqual(new Float32Array(12).fill(1))
   })
 
   it('gives higher weights to luminance and color edges, bounded at two', () => {
@@ -22,7 +22,7 @@ describe('calculatePixelWeights', () => {
       }
     }
 
-    const weights = calculatePixelWeights(targetLab, width, height)
+    const weights = calculateEdgeDetectionWeights(targetLab, width, height)
 
     expect(weights[1]).toBeGreaterThan(1)
     expect(weights[2]).toBeGreaterThan(1)
@@ -32,6 +32,6 @@ describe('calculatePixelWeights', () => {
   })
 
   it('rejects target data whose dimensions do not match', () => {
-    expect(() => calculatePixelWeights(new Float64Array(3), 2, 2)).toThrow(RangeError)
+    expect(() => calculateEdgeDetectionWeights(new Float64Array(3), 2, 2)).toThrow(RangeError)
   })
 })

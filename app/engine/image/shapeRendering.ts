@@ -1,4 +1,4 @@
-import type { ShapeRenderData } from './shape'
+import type { ShapeRenderData } from '../evolution/shape'
 
 export function renderShape(shape: ShapeRenderData, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
   ctx.save()

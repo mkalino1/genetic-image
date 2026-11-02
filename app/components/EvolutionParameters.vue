@@ -89,8 +89,8 @@
 </template>
 
 <script lang="ts" setup>
-import { EVOLUTION_CONFIG, SHAPE_CONFIG } from '../utils/imageEvolutionConfig'
-import type { CrossoverStrategy, FitnessMetric, ShapeMode } from '../utils/imageEvolutionConfig'
+import { EVOLUTION_CONFIG, SHAPE_CONFIG } from '../engine/config'
+import type { CrossoverStrategy, FitnessMetric, ShapeMode } from '../engine/config'
 
 const model = defineModel<EvolutionParams>({ required: true })
 const parameterBounds = EVOLUTION_CONFIG.parameterBounds

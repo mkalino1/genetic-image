@@ -1,10 +1,10 @@
 /// <reference types="vitest/globals" />
 
-import type { Individual } from '../../app/utils/populationCreation'
-import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../../app/utils/imageEvolutionConfig'
-import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/utils/shape'
-import { hillClimbIndividuals } from '../../app/utils/imageEvaluationMultithread'
-import { mutateIndividual } from '../../app/utils/geneticOperations'
+import type { Individual } from '../../app/engine/evolution/populationCreation'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../../app/engine/config'
+import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/engine/evolution/shape'
+import { hillClimbIndividuals } from '../../app/engine/fitness/populationEvaluation'
+import { mutateIndividual } from '../../app/engine/evolution/geneticOperations'
 
 const WORLD_SIZE = CANVAS_CONFIG.worldSize
 

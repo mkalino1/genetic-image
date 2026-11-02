@@ -22,7 +22,7 @@ This can serve as an ultra-space-efficient lossy image compression method.
 - **Tech stack:** Vue 3, Nuxt 4, and TypeScript.
 
 ## How to use it
-1. **Upload Your Image** : Drag and drop or select a JPG, JPEG, PNG, GIF, WebP, HEIC, or HEIF image up to 5 MB. Non-square images are center-cropped to a square before evolution.
+1. **Upload Your Image** : Drag and drop or select a JPG, JPEG, PNG, GIF, WebP, HEIC, or HEIF image up to 10 MB. Non-square images are center-cropped to a square before evolution.
 2. **Tweak the Settings** : Customize evolution parameters like population size, mutation rate, and shapes per individual, or keep the smart defaults.
 3. **Start the Evolution** : Hit the start button and watch as colorful geometric shapes come alive, evolving in real-time to mimic your image.
 4. **Generate a Description** : Click "Describe" to let AI write a description of the original image.

@@ -1,11 +1,11 @@
-import type { FitnessProfilingMetrics, FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../workers/workerTypes'
+import type { FitnessProfilingMetrics, FitnessResult, FitnessTask, FitnessWorkerRequest, FitnessWorkerResponse } from '../../web-workers/workerTypes'
 import { packFitnessTasks } from './fitnessTaskSerialization'
-import { EVOLUTION_CONFIG, WORKER_CONFIG } from './imageEvolutionConfig'
-import type { FitnessMetric } from './imageEvolutionConfig'
+import { EVOLUTION_CONFIG, WORKER_CONFIG } from '../config'
+import type { FitnessMetric } from '../config'
 
 type FitnessProfileCallback = (profile: FitnessProfilingMetrics) => void
 
-export class WorkerPool {
+export class FitnessWorkerPool {
   private workers: Worker[] = []
   private initializedTarget: ImageData | null = null
   private targetInitialization: Promise<void> | null = null
@@ -21,7 +21,7 @@ export class WorkerPool {
   private initializeWorkers(count: number): void {
     for (let i = 0; i < count; i++) {
       try {
-        const worker = new Worker(new URL('../workers/fitnessWorker.ts', import.meta.url), { type: 'module' })
+        const worker = new Worker(new URL('../../web-workers/fitnessWorker.ts', import.meta.url), { type: 'module' })
         this.workers.push(worker)
       } catch (error) {
         console.error(`Failed to initialize worker ${i}:`, error)
