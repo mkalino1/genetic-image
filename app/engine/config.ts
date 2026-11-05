@@ -61,7 +61,9 @@ export const EVOLUTION_CONFIG = {
   },
   stagnation: {
     patience: 10,
-    minimumNormalizedErrorImprovement: 0.005
+    minimumNormalizedErrorImprovement: 0.005,
+    cataclysmInterval: 800,
+    cataclysmMutationStepMultiplier: 10
   },
   crossover: {
     availableStrategies: ['uniform', 'single_point', 'two_point', 'randomized', 'adaptive'] as CrossoverStrategy[],

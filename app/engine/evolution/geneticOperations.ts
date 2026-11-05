@@ -56,6 +56,39 @@ export function createNewGeneration(
   return newPopulation
 }
 
+export function createCataclysmGeneration(
+  population: Individual[],
+  populationSize: number,
+  eliteSize: number,
+  mutationStepMultiplier: number
+): Individual[] {
+  const elites = population.slice(0, eliteSize)
+  if (populationSize > 0 && elites.length === 0) {
+    throw new Error('Cannot create a cataclysm generation without elites')
+  }
+  
+  console.log('Creating cataclysm generation')
+  const newPopulation = elites
+    .slice(0, populationSize)
+    .map(individual => cloneIndividual(individual))
+
+  while (newPopulation.length < populationSize && elites.length > 0) {
+    const source = elites[Math.floor(Math.random() * elites.length)]
+    if (!source) continue
+
+    const mutant: Individual = {
+      shapes: source.shapes.map(shape => shape.clone()),
+      fitness: 0
+    }
+    for (const shape of mutant.shapes) {
+      shape.mutateAll(mutationStepMultiplier)
+    }
+    newPopulation.push(mutant)
+  }
+
+  return newPopulation
+}
+
 export function mutateOneShape(individual: Individual): void {
   if (individual.shapes.length === 0) return
 

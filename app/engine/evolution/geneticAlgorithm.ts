@@ -157,16 +157,27 @@ export class GeneticAlgorithm {
     this.adaptiveMutationRate = this.calculateAdaptiveMutationRate(this.stagnationGenerations)
 
     // Create new population through crossover and mutation
-    const nextPopulation = createNewGeneration(
-      this.population,
-      this.populationSize,
-      this.eliteSize,
-      this.shapesPerIndividual,
-      this.adaptiveMutationRate,
-      this.crossoverStrategy,
-      this.bestFitness,
-      this.shapeMode
-    )
+    const stagnation = EVOLUTION_CONFIG.stagnation
+    const shouldTriggerCataclysm =
+      this.stagnationGenerations >= stagnation.cataclysmInterval &&
+      this.stagnationGenerations % stagnation.cataclysmInterval === 0
+    const nextPopulation = shouldTriggerCataclysm
+      ? createCataclysmGeneration(
+          this.population,
+          this.populationSize,
+          this.eliteSize,
+          stagnation.cataclysmMutationStepMultiplier
+        )
+      : createNewGeneration(
+          this.population,
+          this.populationSize,
+          this.eliteSize,
+          this.shapesPerIndividual,
+          this.adaptiveMutationRate,
+          this.crossoverStrategy,
+          this.bestFitness,
+          this.shapeMode
+        )
 
     this.population = nextPopulation
 
