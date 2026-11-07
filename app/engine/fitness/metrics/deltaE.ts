@@ -52,7 +52,8 @@ export function calculateDeltaEFitness(
   evolvedData: Uint8ClampedArray,
   targetLab: Float64Array,
   pixelWeights: Float32Array,
-  pixelCount: number
+  pixelCount: number,
+  errorMap?: Float32Array
 ): number {
   let totalWeightedDeltaESquared = 0
   let totalWeight = 0
@@ -110,7 +111,9 @@ export function calculateDeltaEFitness(
     const pixelWeight = pixelWeights[pixel]
     if (pixelWeight === undefined) continue
     const deltaESquared = deltaL * deltaL + deltaA * deltaA + deltaB * deltaB
-    totalWeightedDeltaESquared += deltaESquared * pixelWeight
+    const weightedError = deltaESquared * pixelWeight
+    if (errorMap) errorMap[pixel] = weightedError
+    totalWeightedDeltaESquared += weightedError
     totalWeight += pixelWeight
   }
 

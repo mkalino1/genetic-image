@@ -20,7 +20,8 @@ export interface PackedFitnessBatch {
 export interface FitnessResult {
   individualId: number
   fitness: number
-} 
+  errorMap?: Float32Array
+}
 
 export interface FitnessWorkerProfilingMetrics {
   evaluatedIndividuals: number
@@ -46,7 +47,7 @@ export interface GenerationProfilingSummary {
 
 export type FitnessWorkerRequest =
   | { type: 'initialize_target'; targetImageData: ImageData }
-  | { type: 'batch_fitness_calculation'; batch: PackedFitnessBatch; metric: FitnessMetric; profile?: boolean }
+  | { type: 'batch_fitness_calculation'; batch: PackedFitnessBatch; metric: FitnessMetric; profile?: boolean; includeErrorMap?: boolean }
 
 export type FitnessWorkerResponse =
   | { type: 'target_initialized'; success: true }

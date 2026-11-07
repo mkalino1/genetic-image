@@ -4,7 +4,8 @@ export function calculateRgbMeanSquaredFitness(
   evolvedData: Uint8ClampedArray,
   targetData: Uint8ClampedArray,
   pixelWeights: Float32Array,
-  pixelCount: number
+  pixelCount: number,
+  errorMap?: Float32Array
 ): number {
   let totalWeightedError = 0
   let totalWeight = 0
@@ -28,8 +29,10 @@ export function calculateRgbMeanSquaredFitness(
     const deltaG = evolvedG - targetG
     const deltaB = evolvedB - targetB
     const pixelError = (deltaR * deltaR + deltaG * deltaG + deltaB * deltaB) / 3
+    const weightedError = pixelError * pixelWeight
 
-    totalWeightedError += pixelError * pixelWeight
+    if (errorMap) errorMap[pixel] = weightedError
+    totalWeightedError += weightedError
     totalWeight += pixelWeight
   }
 

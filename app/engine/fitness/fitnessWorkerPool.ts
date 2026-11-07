@@ -173,6 +173,39 @@ export class FitnessWorkerPool {
     return results
   }
 
+  async calculateFitnessErrorMap(
+    individual: FitnessTask,
+    targetImageData: ImageData,
+    metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric
+  ): Promise<Float32Array> {
+    if (this.workers.length === 0) {
+      throw new Error('No fitness workers could be initialized')
+    }
+    await this.initializeTarget(targetImageData)
+
+    const worker = this.workers[0]
+    if (!worker) {
+      throw new Error('No worker available for error map calculation')
+    }
+
+    const batch = packFitnessTasks([individual])
+    const response = await this.sendMessageToWorker(worker, {
+      type: 'batch_fitness_calculation',
+      batch,
+      metric,
+      includeErrorMap: true
+    }, [batch.shapes])
+    if (response.type !== 'batch_fitness_result') {
+      throw new Error('Worker returned an unexpected response for error map calculation')
+    }
+
+    const result = response.results.find(item => item.individualId === individual.individualId)
+    if (!result?.errorMap) {
+      throw new Error('Worker did not return the requested error map')
+    }
+    return result.errorMap
+  }
+
   terminate(): void {
     for (const worker of this.workers) {
       worker.terminate()

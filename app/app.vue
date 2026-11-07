@@ -67,6 +67,17 @@
                   {{ hasTargetImage ? 'Start the evolution to see the image take shape here.' : 'Upload a reference image to get started.' }}
                 </div>
               </div>
+              <div v-if="bestErrorMap" class="mt-5">
+                <h3 class="text-sm font-semibold">Error heatmap</h3>
+                <p class="mb-2 mt-1 text-xs text-neutral-500">
+                  Brighter areas have more weighted pixel error compared with the reference.
+                </p>
+                <ErrorMapDisplay
+                  :error-map="bestErrorMap"
+                  :width="CANVAS_CONFIG.worldSize"
+                  :height="CANVAS_CONFIG.worldSize"
+                />
+              </div>
               <div class="mt-5 space-y-4">
                 <MetricsDisplay
                   :generation="generation"
@@ -281,6 +292,7 @@ async function recreateImage() {
 const MINIMUM_EVOLUTION_GENERATIONS = 100
 const generation = ref(0)
 const bestFitness = ref(0)
+const bestErrorMap = shallowRef<Float32Array | null>(null)
 const fitnessVariance = ref(0)
 const elapsedTimeMs = ref(0)
 const profilingSummary = ref<GenerationProfilingSummary | null>(null)
@@ -328,6 +340,7 @@ const startEvolution = async () => {
     recreatedImage.value = ''
   }
   currentBestIndividual.value = null
+  bestErrorMap.value = null
   profilingSummary.value = null
   try {
     geneticAlgorithm = new GeneticAlgorithm(displayCanvas, imageData, evolutionParams)
@@ -376,6 +389,7 @@ const evolve = async () => {
     await geneticAlgorithm.evolve()
     // Update UI with current values
     currentBestIndividual.value = geneticAlgorithm.bestIndividual
+    bestErrorMap.value = geneticAlgorithm.bestErrorMap
     generation.value = geneticAlgorithm.generation
     bestFitness.value = geneticAlgorithm.bestFitness
     fitnessVariance.value = geneticAlgorithm.fitnessVariance
@@ -389,6 +403,7 @@ const evolve = async () => {
 const setTargetImage = async (imageData: string) => {
   stopEvolution()
   currentBestIndividual.value = null
+  bestErrorMap.value = null
   targetImageData.value = null
   generation.value = 0
   elapsedTimeMs.value = 0

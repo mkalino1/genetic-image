@@ -45,6 +45,9 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
     const initializedTargetPixelWeights = targetPixelWeights
     const workerContext = fitnessCanvasContext
     const results: FitnessResult[] = []
+    if (e.data.includeErrorMap && e.data.batch.individuals.length !== 1) {
+      throw new Error('Error maps can only be requested for one individual')
+    }
     const profiling = e.data.profile
       ? {
           evaluatedIndividuals: 0,
@@ -74,6 +77,7 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
       if (profiling) profiling.getImageDataMs += performance.now() - imageReadStartedAt
 
       const fitnessStartedAt = profiling ? performance.now() : 0
+      const errorMap = e.data.includeErrorMap ? new Float32Array(targetPixelCount) : undefined
       results.push({
         individualId,
         fitness: calculateFitness(
@@ -82,15 +86,21 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
           initializedTargetRgb,
           initializedTargetPixelWeights,
           targetPixelCount,
-          e.data.metric
-        )
+          e.data.metric,
+          errorMap
+        ),
+        ...(errorMap ? { errorMap } : {})
       })
       if (profiling) {
         profiling.fitnessMs += performance.now() - fitnessStartedAt
         profiling.evaluatedIndividuals++
       }
     }
-    self.postMessage({ type: 'batch_fitness_result', results, profile: profiling, success: true })
+    const transferList = results.flatMap(result => result.errorMap ? [result.errorMap.buffer] : [])
+    self.postMessage(
+      { type: 'batch_fitness_result', results, profile: profiling, success: true },
+      transferList
+    )
   } catch (error) {
     console.error('Worker fitness calculation failed:', error)
     self.postMessage({
@@ -107,20 +117,23 @@ function calculateFitness(
   targetRgb: Uint8ClampedArray,
   pixelWeights: Float32Array,
   pixelCount: number,
-  metric: FitnessMetric
+  metric: FitnessMetric,
+  errorMap?: Float32Array
 ): number {
   if (metric === 'rgbMeanSquared') {
     return calculateRgbMeanSquaredFitness(
       imageData.data,
       targetRgb,
       pixelWeights,
-      pixelCount
+      pixelCount,
+      errorMap
     )
   }
   return calculateDeltaEFitness(
     imageData.data,
     targetLab,
     pixelWeights,
-    pixelCount
+    pixelCount,
+    errorMap
   )
 }

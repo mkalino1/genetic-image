@@ -33,6 +33,7 @@ export class GeneticAlgorithm {
   // State
   population: Individual[]
   bestIndividual: Individual | null
+  bestErrorMap: Float32Array | null
   bestFitness: number
   generation: number
   fitnessVariance: number
@@ -71,6 +72,7 @@ export class GeneticAlgorithm {
     // State
     this.population = initializePopulation(this.populationSize, this.shapesPerIndividual, this.shapeMode)
     this.bestIndividual = null
+    this.bestErrorMap = null
     this.bestFitness = 0
     this.generation = 0
     this.fitnessVariance = 0
@@ -122,6 +124,7 @@ export class GeneticAlgorithm {
           this.population[index] = refinedElite
         }
       }
+      this.population.sort((a, b) => b.fitness - a.fitness)
     }
 
     // Update best fitness and render best individual
@@ -147,6 +150,11 @@ export class GeneticAlgorithm {
     }
     if (best) {
       renderIndividual(best, this.displayCtx)
+      this.bestErrorMap = await this.workerPool.calculateFitnessErrorMap(
+        { individualId: 0, shapes: best.shapes },
+        this.targetImageData,
+        this.fitnessMetric
+      )
     }
     
     this.fitnessVariance = this.calculateFitnessVariance()
