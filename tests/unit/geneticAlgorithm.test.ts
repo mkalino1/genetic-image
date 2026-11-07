@@ -335,7 +335,7 @@ describe('shape mutation', () => {
     const mutateShape = vi.spyOn(Shape.prototype, 'mutate').mockImplementation(() => {})
     vi.spyOn(Math, 'random')
       .mockReturnValue(0.5)
-      .mockReturnValueOnce(0).mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0).mockReturnValueOnce(0.1).mockReturnValueOnce(0.5)
       .mockReturnValueOnce(0)
       .mockReturnValueOnce(
         EVOLUTION_CONFIG.mutation.shapeOperationProbabilities.mutate +
@@ -345,10 +345,25 @@ describe('shape mutation', () => {
     mutateIndividual(individual, 1, 'polygon')
 
     expect(mutateShape).toHaveBeenCalledTimes(1)
+    expect(mutateShape).toHaveBeenCalledWith(1)
     expect(individual.shapes).toHaveLength(originalShapes.length)
     expect(individual.shapes[0]).toBe(originalShapes[0])
     expect(individual.shapes[1]).not.toBe(replacedShape)
     expect(individual.shapes[1]).toMatchObject({ mode: 'polygon' })
+  })
+
+  it('applies a five-times-stronger mutation on a big jump', () => {
+    const individual = createIndividual(0.5, [createShape(10)])
+    const mutateShape = vi.spyOn(Shape.prototype, 'mutate').mockImplementation(() => {})
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0)
+
+    mutateIndividual(individual, 1)
+
+    expect(mutateShape).toHaveBeenCalledOnce()
+    expect(mutateShape).toHaveBeenCalledWith(EVOLUTION_CONFIG.mutation.bigJumpStepMultiplier)
   })
 
   it('uses operation probabilities that sum to one', () => {

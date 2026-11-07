@@ -218,7 +218,10 @@ export function mutateIndividual(
 
     const operation = Math.random()
     if (operation < probabilities.mutate) {
-      individual.shapes[index]?.mutate()
+      const stepMultiplier = Math.random() < mutation.bigJumpProbability
+        ? mutation.bigJumpStepMultiplier
+        : 1
+      individual.shapes[index]?.mutate(stepMultiplier)
     } else {
       individual.shapes[index] = new Shape({ mode: shapeMode })
     }

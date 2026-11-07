@@ -41,6 +41,8 @@ export const EVOLUTION_CONFIG = {
     tournamentSize: 3
   },
   mutation: {
+    bigJumpProbability: 0.05,
+    bigJumpStepMultiplier: 5,
     shapeOperationProbabilities: {
       mutate: 0.98,
       replace: 0.02
