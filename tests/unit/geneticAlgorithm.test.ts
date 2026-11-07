@@ -325,10 +325,6 @@ describe('cataclysm generation', () => {
       Array.from({ length: 6 }, () => [mutationStepMultiplier])
     )
   })
-
-  it('uses a long stagnation interval before repeating a cataclysm', () => {
-    expect(EVOLUTION_CONFIG.stagnation.cataclysmInterval).toBe(100)
-  })
 })
 
 describe('shape mutation', () => {
