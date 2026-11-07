@@ -19,7 +19,7 @@
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.generationMs) }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-neutral-500">Worker evaluation</dt>
+        <dt class="text-xs text-neutral-500">Worker evaluation (worker average)</dt>
         <dd class="font-mono text-sm">{{ formatMilliseconds(summary.metrics.workerEvaluationWallMs) }}</dd>
       </div>
       <div>
@@ -45,9 +45,6 @@
         </dd>
       </div>
     </dl>
-    <p class="mt-2 text-xs text-neutral-500">
-      Worker stage times are averaged across workers; worker evaluation is elapsed wall time.
-    </p>
   </section>
 </template>
 

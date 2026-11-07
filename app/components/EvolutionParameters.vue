@@ -44,7 +44,7 @@
               :step="parameterBounds.mutationRate.step"
             />
             <p class="mt-1 text-xs text-neutral-500">
-              Chance to mutate each shape in an individual. This rate adapts automatically. The last {{ Math.round(EVOLUTION_CONFIG.mutation.stronglyMutatedTailFraction * 100) }}% of children mutate up to {{ EVOLUTION_CONFIG.mutation.strongMutationMultiplier }} times as often.
+              Chance to mutate each shape in an individual.
             </p>
           </div>
           <div>

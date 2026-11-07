@@ -12,20 +12,6 @@ export function createNewGeneration(
   shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode
 ): Individual[] {
   const newPopulation: Individual[] = []
-  const stronglyMutatedStart = Math.max(
-    eliteSize,
-    populationSize - Math.ceil(
-      populationSize * EVOLUTION_CONFIG.mutation.stronglyMutatedTailFraction
-    )
-  )
-  const mutation = EVOLUTION_CONFIG.mutation
-  const strongMutationRate = Math.min(
-    mutation.maximumStrongMutationRate,
-    Math.max(
-      mutationRate + mutation.strongMutationIncrease,
-      mutationRate * mutation.strongMutationMultiplier
-    )
-  )
 
   // Elitism: keep best individuals
   for (let i = 0; i < eliteSize && i < population.length; i++) {
@@ -46,10 +32,7 @@ export function createNewGeneration(
       crossoverStrategy,
       bestFitness
     )
-    const childMutationRate = newPopulation.length >= stronglyMutatedStart
-      ? strongMutationRate
-      : mutationRate
-    mutateIndividual(child, childMutationRate, shapeMode)
+    mutateIndividual(child, mutationRate, shapeMode)
     newPopulation.push(child)
   }
 

@@ -72,7 +72,6 @@
                   :generation="generation"
                   :best-fitness="bestFitness"
                   :fitness-variance="fitnessVariance"
-                  :adaptive-mutation-rate="adaptiveMutationRate"
                   :elapsed-time-ms="elapsedTimeMs"
                 />
                 <DevProfilingPanel
@@ -283,7 +282,6 @@ const MINIMUM_EVOLUTION_GENERATIONS = 100
 const generation = ref(0)
 const bestFitness = ref(0)
 const fitnessVariance = ref(0)
-const adaptiveMutationRate = ref(0)
 const elapsedTimeMs = ref(0)
 const profilingSummary = ref<GenerationProfilingSummary | null>(null)
 const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
@@ -381,7 +379,6 @@ const evolve = async () => {
     generation.value = geneticAlgorithm.generation
     bestFitness.value = geneticAlgorithm.bestFitness
     fitnessVariance.value = geneticAlgorithm.fitnessVariance
-    adaptiveMutationRate.value = geneticAlgorithm.adaptiveMutationRate
     if (isDevelopment) {
       profilingSummary.value = geneticAlgorithm.getAverageProfilingMetrics()
     }
@@ -397,7 +394,6 @@ const setTargetImage = async (imageData: string) => {
   elapsedTimeMs.value = 0
   bestFitness.value = 0
   fitnessVariance.value = 0
-  adaptiveMutationRate.value = 0
   profilingSummary.value = null
   description.value = ''
   if (recreatedImage.value) {

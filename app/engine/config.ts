@@ -21,7 +21,7 @@ export const CANVAS_CONFIG = {
 export const EVOLUTION_CONFIG = {
   defaults: {
     populationSize: 100,
-    mutationRate: 0.05,
+    mutationRate: 0.1,
     shapesPerIndividual: 120,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
     enableHillClimbing: true,
@@ -41,26 +41,12 @@ export const EVOLUTION_CONFIG = {
     tournamentSize: 3
   },
   mutation: {
-    stronglyMutatedTailFraction: 0.1,
-    strongMutationIncrease: 0.1,
-    strongMutationMultiplier: 2,
-    maximumStrongMutationRate: 0.7,
     shapeOperationProbabilities: {
       mutate: 0.98,
       replace: 0.02
-    },
-    varianceTarget: 0.005,
-    varianceOffset: 0.001,
-    minimumVarianceFactor: 0.5,
-    maximumVarianceFactor: 1.5,
-    maximumStagnationFactor: 1.5,
-    stagnationFactorDivisor: 2,
-    randomJitterFraction: 0.1,
-    minimumRate: 0.01,
-    maximumRate: 0.3
+    }
   },
   stagnation: {
-    patience: 10,
     minimumNormalizedErrorImprovement: 0.005,
     cataclysmInterval: 800,
     cataclysmMutationStepMultiplier: 10

@@ -36,7 +36,6 @@ export class GeneticAlgorithm {
   bestFitness: number
   generation: number
   fitnessVariance: number
-  adaptiveMutationRate: number
   stagnationGenerations: number
   bestFitnessAtLastProgress: number
   profilingHistory: GenerationProfilingMetrics[] = []
@@ -75,7 +74,6 @@ export class GeneticAlgorithm {
     this.bestFitness = 0
     this.generation = 0
     this.fitnessVariance = 0
-    this.adaptiveMutationRate = this.mutationRate
     this.stagnationGenerations = 0
     this.bestFitnessAtLastProgress = 0
 
@@ -153,9 +151,6 @@ export class GeneticAlgorithm {
     
     this.fitnessVariance = this.calculateFitnessVariance()
     
-    // Increase exploration when the best fitness has stopped improving.
-    this.adaptiveMutationRate = this.calculateAdaptiveMutationRate(this.stagnationGenerations)
-
     // Create new population through crossover and mutation
     const stagnation = EVOLUTION_CONFIG.stagnation
     const shouldTriggerCataclysm =
@@ -173,7 +168,7 @@ export class GeneticAlgorithm {
           this.populationSize,
           this.eliteSize,
           this.shapesPerIndividual,
-          this.adaptiveMutationRate,
+          this.mutationRate,
           this.crossoverStrategy,
           this.bestFitness,
           this.shapeMode
@@ -247,34 +242,6 @@ export class GeneticAlgorithm {
       sum + Math.pow(fitness - meanFitness, 2), 0) / fitnesses.length
     
     return fitnessVariance
-  }
-
-  private calculateAdaptiveMutationRate(stagnationGenerations: number): number {
-    // Higher fitness variance favors exploitation; lower variance favors exploration.
-    const baseRate = this.mutationRate
-    const mutation = EVOLUTION_CONFIG.mutation
-    const varianceFactor = Math.max(
-      mutation.minimumVarianceFactor,
-      Math.min(
-        mutation.maximumVarianceFactor,
-        mutation.varianceTarget / (this.fitnessVariance + mutation.varianceOffset)
-      )
-    )
-    const adaptiveRate = baseRate * varianceFactor
-    
-    const stagnationFactor = Math.min(
-      mutation.maximumStagnationFactor,
-      1 + stagnationGenerations / (
-        mutation.stagnationFactorDivisor * EVOLUTION_CONFIG.stagnation.patience
-      )
-    )
-    const jitter = adaptiveRate * mutation.randomJitterFraction * Math.random()
-    const finalRate = Math.max(
-      mutation.minimumRate,
-      Math.min(mutation.maximumRate, adaptiveRate * stagnationFactor + jitter)
-    )
-    
-    return finalRate
   }
 
 }
