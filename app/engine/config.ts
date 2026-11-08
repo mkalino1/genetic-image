@@ -22,7 +22,7 @@ export const EVOLUTION_CONFIG = {
   defaults: {
     populationSize: 100,
     mutationRate: 0.1,
-    shapesPerIndividual: 120,
+    shapesPerIndividual: 100,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
     enableHillClimbing: true,
     fitnessMetric: 'deltaE' as FitnessMetric,

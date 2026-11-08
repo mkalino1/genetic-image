@@ -186,7 +186,8 @@ export class GeneticAlgorithm {
           this.mutationRate,
           this.crossoverStrategy,
           this.bestFitness,
-          this.shapeMode
+          this.shapeMode,
+          this.bestErrorMap ?? undefined
         )
 
     this.population = nextPopulation

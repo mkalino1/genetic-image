@@ -6,6 +6,7 @@ import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../../app/engine/config'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/engine/evolution/shape'
 import { hillClimbIndividuals } from '../../app/engine/fitness/populationEvaluation'
 import {
+  createErrorMapSampler,
   createCataclysmGeneration,
   mutateIndividual
 } from '../../app/engine/evolution/geneticOperations'
@@ -356,6 +357,46 @@ describe('cataclysm generation', () => {
 })
 
 describe('shape mutation', () => {
+  it('samples a location from a high-error block instead of its hottest pixel', () => {
+    const errorMap = new Float32Array(20 * 10)
+    for (let y = 0; y < 10; y++) {
+      errorMap.fill(10, y * 20 + 10, y * 20 + 20)
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+
+    const samplePosition = createErrorMapSampler(errorMap, 20, 10)
+
+    expect(samplePosition()).toEqual({ x: 10, y: 0 })
+  })
+
+  it('returns no guided position for a perfect-match error map', () => {
+    const samplePosition = createErrorMapSampler(new Float32Array(20 * 10), 20, 10)
+
+    expect(samplePosition()).toBeNull()
+  })
+
+  it('places guided replacement shapes in a high-error region', () => {
+    const errorMap = new Float32Array(WORLD_SIZE * WORLD_SIZE)
+    for (let y = 30; y < 40; y++) {
+      errorMap.fill(1, y * WORLD_SIZE + 20, y * WORLD_SIZE + 30)
+    }
+    const individual = createIndividual(0.5, [createShape(10)])
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(EVOLUTION_CONFIG.mutation.shapeOperationProbabilities.mutate)
+      .mockReturnValueOnce(0)
+      .mockReturnValue(0)
+
+    mutateIndividual(
+      individual,
+      1,
+      'fixed',
+      createErrorMapSampler(errorMap, WORLD_SIZE, WORLD_SIZE)
+    )
+
+    expect(individual.shapes[0]).toMatchObject({ x: 20, y: 30 })
+  })
+
   it('mutates or replaces shapes without changing the shape count', () => {
     const originalShapes = [createShape(10), createShape(20)]
     const individual = createIndividual(0.5, originalShapes)
