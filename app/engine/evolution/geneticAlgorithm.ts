@@ -1,5 +1,7 @@
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
 import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from '../config'
+import { samplePopulationByRank } from './populationCreation'
+import type { Individual, RankedIndividual } from './populationCreation'
 import { FITNESS_ERROR_SCALE, weightedErrorFromFitness } from '../fitness/fitnessScoreConversion'
 import { hillClimbIndividuals } from '../fitness/populationEvaluation'
 import { FitnessWorkerPool } from '../fitness/fitnessWorkerPool'
@@ -8,6 +10,8 @@ import type {
   GenerationProfilingMetrics,
   GenerationProfilingSummary
 } from '../../web-workers/workerTypes'
+
+const MAX_POPULATION_SAMPLES = 4
 
 export class GeneticAlgorithm {
   // Onscreen canvas for rendering the current best individual
@@ -32,6 +36,7 @@ export class GeneticAlgorithm {
   
   // State
   population: Individual[]
+  populationSamples: RankedIndividual[]
   bestIndividual: Individual | null
   bestErrorMap: Float32Array | null
   bestFitness: number
@@ -71,6 +76,7 @@ export class GeneticAlgorithm {
 
     // State
     this.population = initializePopulation(this.populationSize, this.shapesPerIndividual, this.shapeMode)
+    this.populationSamples = []
     this.bestIndividual = null
     this.bestErrorMap = null
     this.bestFitness = 0
@@ -126,6 +132,7 @@ export class GeneticAlgorithm {
       }
       this.population.sort((a, b) => b.fitness - a.fitness)
     }
+    this.populationSamples = samplePopulationByRank(this.population, MAX_POPULATION_SAMPLES)
 
     // Update best fitness and render best individual
     const best = this.population[0]

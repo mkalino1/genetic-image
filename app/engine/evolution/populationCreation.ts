@@ -6,6 +6,29 @@ export interface Individual {
   fitness: number
 }
 
+export interface RankedIndividual {
+  individual: Individual
+  rank: number
+}
+
+export function samplePopulationByRank(
+  population: Individual[],
+  maximumSamples: number
+): RankedIndividual[] {
+  const sampleCount = Math.min(Math.max(0, Math.floor(maximumSamples)), population.length)
+
+  return Array.from({ length: sampleCount }, (_, index) => {
+    const populationIndex = sampleCount <= 1
+      ? 0
+      : Math.round(index * (population.length - 1) / (sampleCount - 1))
+
+    return {
+      individual: population[populationIndex]!,
+      rank: populationIndex + 1
+    }
+  })
+}
+
 export function createRandomIndividual(
   shapesPerIndividual: number,
   shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode

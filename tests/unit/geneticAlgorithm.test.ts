@@ -1,5 +1,6 @@
 /// <reference types="vitest/globals" />
 
+import { samplePopulationByRank } from '../../app/engine/evolution/populationCreation'
 import type { Individual } from '../../app/engine/evolution/populationCreation'
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../../app/engine/config'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/engine/evolution/shape'
@@ -33,6 +34,33 @@ function createShape(x: number): Shape {
     z: 50
   })
 }
+
+describe('population rank sampling', () => {
+  it('samples four individuals evenly across the sorted population', () => {
+    const population = Array.from({ length: 100 }, (_, index) =>
+      createIndividual(1 - index / 100, [])
+    )
+
+    const samples = samplePopulationByRank(population, 4)
+
+    expect(samples.map(sample => sample.rank)).toEqual([1, 34, 67, 100])
+    expect(samples.map(sample => sample.individual)).toEqual([
+      population[0],
+      population[33],
+      population[66],
+      population[99]
+    ])
+  })
+
+  it('returns every individual when the population is smaller than the sample count', () => {
+    const population = [createIndividual(0.9, []), createIndividual(0.8, [])]
+
+    expect(samplePopulationByRank(population, 4)).toEqual([
+      { individual: population[0], rank: 1 },
+      { individual: population[1], rank: 2 }
+    ])
+  })
+})
 
 describe('population creation and cloning', () => {
   it('creates the requested number of individuals and shapes', () => {

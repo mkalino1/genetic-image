@@ -67,6 +67,21 @@
                   {{ hasTargetImage ? 'Start the evolution to see the image take shape here.' : 'Upload a reference image to get started.' }}
                 </div>
               </div>
+              <section v-if="populationSamples.length" class="mt-5" aria-label="Population samples">
+                <h3 class="text-sm font-semibold">Population samples</h3>
+                <p class="mb-3 mt-1 text-xs text-neutral-500">
+                  Four individuals evenly spaced by fitness rank in the latest generation.
+                </p>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <PopulationSamplePreview
+                    v-for="sample in populationSamples"
+                    :key="sample.rank"
+                    :individual="sample.individual"
+                    :rank="sample.rank"
+                    :background-color="canvasBackgroundColor"
+                  />
+                </div>
+              </section>
               <div v-if="bestErrorMap" class="mt-5">
                 <h3 class="text-sm font-semibold">Error heatmap</h3>
                 <p class="mb-2 mt-1 text-xs text-neutral-500">
@@ -170,6 +185,7 @@ const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
 const isEvolving = ref(false)
 const currentBestIndividual = shallowRef<Individual | null>(null)
+const populationSamples = shallowRef<RankedIndividual[]>([])
 
 const targetImage = ref('')
 const targetImageData = ref<ImageData | null>(null)
@@ -340,6 +356,7 @@ const startEvolution = async () => {
     recreatedImage.value = ''
   }
   currentBestIndividual.value = null
+  populationSamples.value = []
   bestErrorMap.value = null
   profilingSummary.value = null
   try {
@@ -389,6 +406,7 @@ const evolve = async () => {
     await geneticAlgorithm.evolve()
     // Update UI with current values
     currentBestIndividual.value = geneticAlgorithm.bestIndividual
+    populationSamples.value = geneticAlgorithm.populationSamples
     bestErrorMap.value = geneticAlgorithm.bestErrorMap
     generation.value = geneticAlgorithm.generation
     bestFitness.value = geneticAlgorithm.bestFitness
@@ -403,6 +421,7 @@ const evolve = async () => {
 const setTargetImage = async (imageData: string) => {
   stopEvolution()
   currentBestIndividual.value = null
+  populationSamples.value = []
   bestErrorMap.value = null
   targetImageData.value = null
   generation.value = 0
