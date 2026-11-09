@@ -17,7 +17,7 @@ const labCacheL = new Float64Array(LAB_CACHE_SIZE)
 const labCacheA = new Float64Array(LAB_CACHE_SIZE)
 const labCacheB = new Float64Array(LAB_CACHE_SIZE)
 
-export function convertImageToLab(imageData: ImageData): Float64Array {
+export function convertImageToLab(imageData: Pick<ImageData, 'data'>): Float64Array {
   const data = imageData.data
   const labData = new Float64Array(data.length / 4 * 3)
 

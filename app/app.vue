@@ -175,6 +175,7 @@
 <script setup lang="ts">
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './engine/config'
 import type { EvolutionParams } from './engine/config'
+import { calculateBackgroundColor } from './engine/image/backgroundColor'
 
 import type { GenerationProfilingSummary } from './web-workers/workerTypes'
 
@@ -460,33 +461,10 @@ const setTargetImage = async (imageData: string) => {
         CANVAS_CONFIG.worldSize,
         CANVAS_CONFIG.worldSize
       )
-      // Calculate average color and set background
-      canvasBackgroundColor.value = calculateAverageColor(targetImageData.value)
+      const backgroundColor = calculateBackgroundColor(targetImageData.value)
+      canvasBackgroundColor.value = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`
       resolve()
     }
   })
-}
-
-const calculateAverageColor = (imageData: ImageData): string => {
-  const data = imageData.data
-  let r = 0, g = 0, b = 0, count = 0
-
-  for (let i = 0; i < data.length; i += 4) {
-    r += data[i]!
-    g += data[i + 1]!
-    b += data[i + 2]!
-    count++
-  }
-
-  r = Math.round(r / count)
-  g = Math.round(g / count)
-  b = Math.round(b / count)
-
-  // Lighten the color
-  r = Math.min(255, Math.round(r * 1.5))
-  g = Math.min(255, Math.round(g * 1.5))
-  b = Math.min(255, Math.round(b * 1.5))
-
-  return `rgb(${r}, ${g}, ${b})`
 }
 </script>

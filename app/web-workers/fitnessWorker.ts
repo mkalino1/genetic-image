@@ -6,10 +6,12 @@ import { unpackFitnessTasks } from '../engine/fitness/fitnessTaskSerialization'
 import type { FitnessMetric } from '../engine/config'
 import { calculateDeltaEFitness, convertImageToLab } from '../engine/fitness/metrics/deltaE'
 import { calculateRgbMeanSquaredFitness } from '../engine/fitness/metrics/rgbMeanSquared'
+import { calculateBackgroundColor, compositeImageData } from '../engine/image/backgroundColor'
 let targetLab: Float64Array | null = null
-let targetRgb: Uint8ClampedArray | null = null
+let targetRgb: Uint8ClampedArray<ArrayBuffer> | null = null
 let targetPixelWeights: Float32Array | null = null
 let targetPixelCount = 0
+let targetBackgroundColor: ReturnType<typeof calculateBackgroundColor> | null = null
 let canvas: OffscreenCanvas | null = null
 let fitnessCanvasContext: OffscreenCanvasRenderingContext2D | null = null
 
@@ -25,8 +27,11 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
         throw new Error('Could not initialize fitness worker canvas')
       }
       targetPixelCount = e.data.targetImageData.data.length / 4
-      targetRgb = e.data.targetImageData.data
-      targetLab = convertImageToLab(e.data.targetImageData)
+      targetBackgroundColor = calculateBackgroundColor(e.data.targetImageData)
+      targetRgb = compositeImageData(e.data.targetImageData, targetBackgroundColor)
+      targetLab = convertImageToLab({
+        data: targetRgb
+      })
       targetPixelWeights = calculateEdgeDetectionWeights(
         targetLab,
         e.data.targetImageData.width,
@@ -36,7 +41,7 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
       return
     }
 
-    if (!targetLab || !targetRgb || !targetPixelWeights || !fitnessCanvasContext) {
+    if (!targetLab || !targetRgb || !targetPixelWeights || !targetBackgroundColor || !fitnessCanvasContext) {
       throw new Error('Fitness worker has not been initialized')
     }
 
@@ -67,6 +72,8 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
 
       const renderingStartedAt = profiling ? performance.now() : 0
       workerContext.clearRect(0, 0, workerContext.canvas.width, workerContext.canvas.height)
+      workerContext.fillStyle = `rgb(${targetBackgroundColor.r}, ${targetBackgroundColor.g}, ${targetBackgroundColor.b})`
+      workerContext.fillRect(0, 0, workerContext.canvas.width, workerContext.canvas.height)
       for (const shape of sortedShapes) {
         renderShape(shape, workerContext)
       }
