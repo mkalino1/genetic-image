@@ -112,6 +112,15 @@ export class GeneticAlgorithm {
     this.population.sort((a, b) => b.fitness - a.fitness)
     this.population = this.population.slice(0, this.populationSize)
 
+    const leadingIndividual = this.population[0]
+    if (leadingIndividual) {
+      this.bestErrorMap = await this.workerPool.calculateFitnessErrorMap(
+        { individualId: 0, shapes: leadingIndividual.shapes },
+        this.targetImageData,
+        this.fitnessMetric
+      )
+    }
+
     if (
       this.enableHillClimbing &&
       this.eliteSize > 0 &&
@@ -122,7 +131,8 @@ export class GeneticAlgorithm {
         EVOLUTION_CONFIG.hillClimbing.attemptsPerElite,
         this.targetImageData,
         this.workerPool,
-        this.fitnessMetric
+        this.fitnessMetric,
+        this.bestErrorMap ?? undefined
       )
       for (let index = 0; index < refinedElites.length; index++) {
         const refinedElite = refinedElites[index]
@@ -157,11 +167,6 @@ export class GeneticAlgorithm {
     }
     if (best) {
       renderIndividual(best, this.displayCtx)
-      this.bestErrorMap = await this.workerPool.calculateFitnessErrorMap(
-        { individualId: 0, shapes: best.shapes },
-        this.targetImageData,
-        this.fitnessMetric
-      )
     }
     
     this.fitnessVariance = this.calculateFitnessVariance()

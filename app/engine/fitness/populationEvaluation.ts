@@ -1,8 +1,8 @@
 import type { FitnessProfilingMetrics } from '../../web-workers/workerTypes'
-import { EVOLUTION_CONFIG } from '../config'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
 import type { FitnessMetric } from '../config'
 import { cloneIndividual } from '../evolution/populationCreation'
-import { mutateOneShape } from '../evolution/geneticOperations'
+import { createErrorWeightedShapeSampler, mutateOneShape } from '../evolution/geneticOperations'
 import type { FitnessWorkerPool } from './fitnessWorkerPool'
 
 /**
@@ -41,11 +41,22 @@ export async function hillClimbIndividuals(
   attempts: number,
   targetImageData: ImageData,
   workerPool: Pick<FitnessWorkerPool, 'calculateFitnessBatches'>,
-  metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric
+  metric: FitnessMetric = EVOLUTION_CONFIG.defaults.fitnessMetric,
+  errorMap?: Float32Array
 ): Promise<Individual[]> {
   const improvedIndividuals = individuals.map(cloneIndividual)
   const candidatesByIndividual = improvedIndividuals.map(() => [] as Individual[])
   const attemptCount = Math.max(0, Math.floor(attempts))
+  const shapeIndexSamplers = improvedIndividuals.map(individual => {
+    return errorMap && individual.shapes.length > 0
+      ? createErrorWeightedShapeSampler(
+          errorMap,
+          individual.shapes,
+          CANVAS_CONFIG.worldSize,
+          CANVAS_CONFIG.worldSize
+        )
+      : undefined
+  })
 
   for (let attempt = 0; attempt < attemptCount; attempt++) {
     for (let index = 0; index < improvedIndividuals.length; index++) {
@@ -54,7 +65,7 @@ export async function hillClimbIndividuals(
       if (!individual || !candidates) continue
 
       const candidate = cloneIndividual(individual)
-      mutateOneShape(candidate)
+      mutateOneShape(candidate, shapeIndexSamplers[index])
       candidates.push(candidate)
     }
   }

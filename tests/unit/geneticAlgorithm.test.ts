@@ -7,6 +7,7 @@ import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/engine/evolution/shape
 import { hillClimbIndividuals } from '../../app/engine/fitness/populationEvaluation'
 import {
   createErrorMapSampler,
+  createErrorWeightedShapeSampler,
   createCataclysmGeneration,
   mutateIndividual
 } from '../../app/engine/evolution/geneticOperations'
@@ -375,6 +376,38 @@ describe('shape mutation', () => {
     expect(samplePosition()).toBeNull()
   })
 
+  it('weights shape selection toward shapes covering high-error regions', () => {
+    const errorMap = new Float32Array(WORLD_SIZE * WORLD_SIZE)
+    for (let y = 15; y < 25; y++) {
+      errorMap.fill(1, y * WORLD_SIZE + 95, y * WORLD_SIZE + 105)
+    }
+    const sampleShapeIndex = createErrorWeightedShapeSampler(
+      errorMap,
+      [createShape(10), createShape(100)],
+      WORLD_SIZE,
+      WORLD_SIZE
+    )
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+
+    expect(sampleShapeIndex()).toBe(1)
+  })
+
+  it('keeps a random exploration path when using error-guided shape selection', () => {
+    const errorMap = new Float32Array(WORLD_SIZE * WORLD_SIZE)
+    errorMap.fill(1)
+    const sampleShapeIndex = createErrorWeightedShapeSampler(
+      errorMap,
+      [createShape(10), createShape(100)],
+      WORLD_SIZE,
+      WORLD_SIZE
+    )
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.99)
+
+    expect(sampleShapeIndex()).toBe(1)
+  })
+
   it('places guided replacement shapes in a high-error region', () => {
     const errorMap = new Float32Array(WORLD_SIZE * WORLD_SIZE)
     for (let y = 30; y < 40; y++) {
@@ -478,23 +511,29 @@ describe('population fitness evaluation', () => {
 describe('hill climbing', () => {
   it('evaluates all mutations in one worker-pool call and keeps only improvements', async () => {
     const individual = createIndividual(0.5, [createShape(10), createShape(20)])
+    const secondIndividual = createIndividual(0.4, [createShape(30)])
     const originalShapeX = individual.shapes[0]!.x
     const calculateFitnessBatches = vi.fn().mockResolvedValue(new Map([
       [0, 0.8],
-      [1, 0.7]
+      [1, 0.7],
+      [2, 0.9],
+      [3, 0.6]
     ]))
-    const workerPool = { calculateFitnessBatches }
+    const errorMap = new Float32Array(WORLD_SIZE * WORLD_SIZE)
 
     const refined = await hillClimbIndividuals(
-      [individual],
+      [individual, secondIndividual],
       2,
       {} as ImageData,
-      workerPool
+      { calculateFitnessBatches },
+      'deltaE',
+      errorMap
     )
 
     expect(calculateFitnessBatches).toHaveBeenCalledTimes(1)
-    expect(calculateFitnessBatches.mock.calls[0]?.[0]).toHaveLength(2)
+    expect(calculateFitnessBatches.mock.calls[0]?.[0]).toHaveLength(4)
     expect(refined[0]!.fitness).toBe(0.8)
+    expect(refined[1]!.fitness).toBe(0.9)
     expect(refined[0]).not.toBe(individual)
     expect(individual.fitness).toBe(0.5)
     expect(individual.shapes[0]!.x).toBe(originalShapeX)
@@ -508,7 +547,9 @@ describe('hill climbing', () => {
       [individual],
       1,
       {} as ImageData,
-      { calculateFitnessBatches }
+      { calculateFitnessBatches },
+      'deltaE',
+      new Float32Array(WORLD_SIZE * WORLD_SIZE)
     )
 
     expect(refined[0]!.fitness).toBe(0.8)
