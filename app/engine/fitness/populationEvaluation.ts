@@ -2,7 +2,8 @@ import type { FitnessProfilingMetrics } from '../../web-workers/workerTypes'
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
 import type { FitnessMetric } from '../config'
 import { cloneIndividual } from '../evolution/populationCreation'
-import { createErrorWeightedShapeSampler, mutateOneShape } from '../evolution/geneticOperations'
+import { mutateOneShape } from '../evolution/geneticOperations'
+import { createHighErrorOverlappingShapeSampler } from '../evolution/samplers/highErrorOverlappingShapeSampler'
 import type { FitnessWorkerPool } from './fitnessWorkerPool'
 
 /**
@@ -49,7 +50,7 @@ export async function hillClimbIndividuals(
   const attemptCount = Math.max(0, Math.floor(attempts))
   const shapeIndexSamplers = improvedIndividuals.map(individual => {
     return errorMap && individual.shapes.length > 0
-      ? createErrorWeightedShapeSampler(
+      ? createHighErrorOverlappingShapeSampler(
           errorMap,
           individual.shapes,
           CANVAS_CONFIG.worldSize,

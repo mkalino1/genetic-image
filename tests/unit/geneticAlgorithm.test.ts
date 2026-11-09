@@ -6,11 +6,11 @@ import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../../app/engine/config'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/engine/evolution/shape'
 import { hillClimbIndividuals } from '../../app/engine/fitness/populationEvaluation'
 import {
-  createErrorMapSampler,
-  createErrorWeightedShapeSampler,
   createCataclysmGeneration,
   mutateIndividual
 } from '../../app/engine/evolution/geneticOperations'
+import { createHighErrorCoordinateSampler } from '../../app/engine/evolution/samplers/highErrorCoordinateSampler'
+import { createHighErrorOverlappingShapeSampler } from '../../app/engine/evolution/samplers/highErrorOverlappingShapeSampler'
 
 const WORLD_SIZE = CANVAS_CONFIG.worldSize
 
@@ -365,13 +365,13 @@ describe('shape mutation', () => {
     }
     vi.spyOn(Math, 'random').mockReturnValue(0)
 
-    const samplePosition = createErrorMapSampler(errorMap, 20, 10)
+    const samplePosition = createHighErrorCoordinateSampler(errorMap, 20, 10)
 
     expect(samplePosition()).toEqual({ x: 10, y: 0 })
   })
 
   it('returns no guided position for a perfect-match error map', () => {
-    const samplePosition = createErrorMapSampler(new Float32Array(20 * 10), 20, 10)
+    const samplePosition = createHighErrorCoordinateSampler(new Float32Array(20 * 10), 20, 10)
 
     expect(samplePosition()).toBeNull()
   })
@@ -381,7 +381,7 @@ describe('shape mutation', () => {
     for (let y = 15; y < 25; y++) {
       errorMap.fill(1, y * WORLD_SIZE + 95, y * WORLD_SIZE + 105)
     }
-    const sampleShapeIndex = createErrorWeightedShapeSampler(
+    const sampleShapeIndex = createHighErrorOverlappingShapeSampler(
       errorMap,
       [createShape(10), createShape(100)],
       WORLD_SIZE,
@@ -395,7 +395,7 @@ describe('shape mutation', () => {
   it('keeps a random exploration path when using error-guided shape selection', () => {
     const errorMap = new Float32Array(WORLD_SIZE * WORLD_SIZE)
     errorMap.fill(1)
-    const sampleShapeIndex = createErrorWeightedShapeSampler(
+    const sampleShapeIndex = createHighErrorOverlappingShapeSampler(
       errorMap,
       [createShape(10), createShape(100)],
       WORLD_SIZE,
@@ -424,7 +424,7 @@ describe('shape mutation', () => {
       individual,
       1,
       'fixed',
-      createErrorMapSampler(errorMap, WORLD_SIZE, WORLD_SIZE)
+      createHighErrorCoordinateSampler(errorMap, WORLD_SIZE, WORLD_SIZE)
     )
 
     expect(individual.shapes[0]).toMatchObject({ x: 20, y: 30 })
