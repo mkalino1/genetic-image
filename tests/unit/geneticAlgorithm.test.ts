@@ -2,7 +2,7 @@
 
 import { samplePopulationByRank } from '../../app/engine/evolution/populationCreation'
 import type { Individual } from '../../app/engine/evolution/populationCreation'
-import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../../app/engine/config'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG, SHAPE_CONFIG } from '../../app/engine/config'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/engine/evolution/shape'
 import { hillClimbIndividuals } from '../../app/engine/fitness/populationEvaluation'
 import {
@@ -208,6 +208,13 @@ describe('shape mutation', () => {
     expect(shape.vertexAngleOffsets).toEqual([0, 0, 0])
   })
 
+  it('initializes alpha at its configured minimum', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const shape = new Shape({ type: 'rectangle', mode: 'fixed' })
+
+    expect(shape.alpha).toBe(SHAPE_CONFIG.initialAlphaMinimum)
+  })
+
   it('keeps dimensions, alpha, and colors within their lower bounds', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const shape = new Shape({
@@ -215,7 +222,7 @@ describe('shape mutation', () => {
       mode: 'fixed',
       width: 5,
       height: 5,
-      alpha: 0.3,
+      alpha: SHAPE_CONFIG.minimumAlpha,
       color: { r: 0, g: 0, b: 0 }
     })
 
@@ -223,7 +230,7 @@ describe('shape mutation', () => {
 
     expect(shape.width).toBeGreaterThanOrEqual(MIN_SHAPE_SIZE)
     expect(shape.height).toBeGreaterThanOrEqual(MIN_SHAPE_SIZE)
-    expect(shape.alpha).toBeGreaterThanOrEqual(0.3)
+    expect(shape.alpha).toBeGreaterThanOrEqual(SHAPE_CONFIG.minimumAlpha)
     expect(shape.color.r).toBeGreaterThanOrEqual(0)
     expect(shape.color.g).toBeGreaterThanOrEqual(0)
     expect(shape.color.b).toBeGreaterThanOrEqual(0)
