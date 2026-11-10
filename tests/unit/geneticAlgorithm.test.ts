@@ -37,6 +37,20 @@ function createShape(x: number): Shape {
   })
 }
 
+function createTargetImageData(): Pick<ImageData, 'width' | 'height' | 'data'> {
+  const data = new Uint8ClampedArray(WORLD_SIZE * WORLD_SIZE * 4)
+  for (let y = 0; y < WORLD_SIZE; y++) {
+    for (let x = 0; x < WORLD_SIZE; x++) {
+      const offset = (y * WORLD_SIZE + x) * 4
+      data[offset] = x
+      data[offset + 1] = y
+      data[offset + 2] = x + y
+      data[offset + 3] = 255
+    }
+  }
+  return { width: WORLD_SIZE, height: WORLD_SIZE, data }
+}
+
 describe('population rank sampling', () => {
   it('samples four individuals evenly across the sorted population', () => {
     const population = Array.from({ length: 100 }, (_, index) =>
@@ -65,6 +79,16 @@ describe('population rank sampling', () => {
 })
 
 describe('population creation and cloning', () => {
+  it('initializes each shape with the target color at its position', () => {
+    const targetImageData = createTargetImageData()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+
+    const population = initializePopulation(1, 1, 'fixed', targetImageData)
+    const shape = population[0]!.shapes[0]!
+
+    expect(shape).toMatchObject({ x: 75, y: 75, color: { r: 75, g: 75, b: 150 } })
+  })
+
   it('creates the requested number of individuals and shapes', () => {
     const population = initializePopulation(4, 3)
 
@@ -435,6 +459,23 @@ describe('shape mutation', () => {
     )
 
     expect(individual.shapes[0]).toMatchObject({ x: 20, y: 30 })
+  })
+
+  it('gives a replacement shape the target color at its new position', () => {
+    const targetImageData = createTargetImageData()
+    const individual = createIndividual(0.5, [createShape(10)])
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(EVOLUTION_CONFIG.mutation.shapeOperationProbabilities.mutate)
+      .mockReturnValue(0)
+
+    mutateIndividual(individual, 1, 'fixed', () => ({ x: 20, y: 30 }), targetImageData)
+
+    expect(individual.shapes[0]).toMatchObject({
+      x: 20,
+      y: 30,
+      color: { r: 20, g: 30, b: 50 }
+    })
   })
 
   it('mutates or replaces shapes without changing the shape count', () => {

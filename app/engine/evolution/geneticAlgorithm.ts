@@ -75,7 +75,12 @@ export class GeneticAlgorithm {
     )
 
     // State
-    this.population = initializePopulation(this.populationSize, this.shapesPerIndividual, this.shapeMode)
+    this.population = initializePopulation(
+      this.populationSize,
+      this.shapesPerIndividual,
+      this.shapeMode,
+      this.targetImageData
+    )
     this.populationSamples = []
     this.bestIndividual = null
     this.bestErrorMap = null
@@ -192,7 +197,8 @@ export class GeneticAlgorithm {
           this.crossoverStrategy,
           this.bestFitness,
           this.shapeMode,
-          this.bestErrorMap ?? undefined
+          this.bestErrorMap ?? undefined,
+          this.targetImageData
         )
 
     this.population = nextPopulation

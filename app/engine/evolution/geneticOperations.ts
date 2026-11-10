@@ -2,6 +2,8 @@ import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
 import type { CrossoverStrategy, ShapeMode } from '../config'
 import { createHighErrorCoordinateSampler } from './samplers/highErrorCoordinateSampler'
 import type { HighErrorCoordinateSampler } from './samplers/highErrorCoordinateSampler'
+import { createShapeForTarget } from './shapeCreation'
+import type { TargetImageData } from './shapeCreation'
 
 export function createNewGeneration(
   population: Individual[],
@@ -12,7 +14,8 @@ export function createNewGeneration(
   crossoverStrategy: CrossoverStrategy,
   bestFitness: number,
   shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode,
-  errorMap?: Float32Array
+  errorMap?: Float32Array,
+  targetImageData?: TargetImageData
 ): Individual[] {
   const newPopulation: Individual[] = []
   const highErrorCoordinateSampler = errorMap
@@ -29,8 +32,8 @@ export function createNewGeneration(
 
   // Generate rest of population through crossover and mutation
   while (newPopulation.length < populationSize) {
-    const parent1 = selectParent(population, shapesPerIndividual, shapeMode)
-    const parent2 = selectParent(population, shapesPerIndividual, shapeMode)
+    const parent1 = selectParent(population, shapesPerIndividual, shapeMode, targetImageData)
+    const parent2 = selectParent(population, shapesPerIndividual, shapeMode, targetImageData)
     const child = crossover(
       parent1,
       parent2,
@@ -38,7 +41,7 @@ export function createNewGeneration(
       crossoverStrategy,
       bestFitness
     )
-    mutateIndividual(child, mutationRate, shapeMode, highErrorCoordinateSampler)
+    mutateIndividual(child, mutationRate, shapeMode, highErrorCoordinateSampler, targetImageData)
     newPopulation.push(child)
   }
 
@@ -88,14 +91,15 @@ export function mutateOneShape(individual: Individual, sampleShapeIndex?: () => 
 function selectParent(
   population: Individual[],
   shapesPerIndividual: number,
-  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode
+  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode,
+  targetImageData?: TargetImageData
 ): Individual {
   // Tournament selection
   const tournamentSize = EVOLUTION_CONFIG.selection.tournamentSize
   let best: Individual | null = null
 
   if (population.length === 0) {
-    return createRandomIndividual(shapesPerIndividual, shapeMode)
+    return createRandomIndividual(shapesPerIndividual, shapeMode, targetImageData)
   }
 
   for (let i = 0; i < tournamentSize; i++) {
@@ -109,7 +113,7 @@ function selectParent(
 
   // Fallback: if best is still null, return a random individual
   if (!best) {
-    return createRandomIndividual(shapesPerIndividual, shapeMode)
+    return createRandomIndividual(shapesPerIndividual, shapeMode, targetImageData)
   }
   return best
 }
@@ -215,7 +219,8 @@ export function mutateIndividual(
   individual: Individual,
   mutationRate: number,
   shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode,
-  highErrorCoordinateSampler?: HighErrorCoordinateSampler
+  highErrorCoordinateSampler?: HighErrorCoordinateSampler,
+  targetImageData?: TargetImageData
 ): void {
   const mutation = EVOLUTION_CONFIG.mutation
   const probabilities = mutation.shapeOperationProbabilities
@@ -231,10 +236,7 @@ export function mutateIndividual(
       individual.shapes[index]?.mutate(stepMultiplier)
     } else {
       const position = highErrorCoordinateSampler?.() ?? null
-      individual.shapes[index] = new Shape({
-        mode: shapeMode,
-        ...(position ? { x: position.x, y: position.y } : {})
-      })
+      individual.shapes[index] = createShapeForTarget(shapeMode, targetImageData, position ?? undefined)
     }
   }
 }

@@ -1,5 +1,7 @@
 import { EVOLUTION_CONFIG } from '../config'
 import type { ShapeMode } from '../config'
+import { createShapeForTarget } from './shapeCreation'
+import type { TargetImageData } from './shapeCreation'
 
 export interface Individual {
   shapes: Shape[]
@@ -31,11 +33,12 @@ export function samplePopulationByRank(
 
 export function createRandomIndividual(
   shapesPerIndividual: number,
-  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode
+  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode,
+  targetImageData?: TargetImageData
 ): Individual {
   const shapes: Shape[] = []
   for (let i = 0; i < shapesPerIndividual; i++) {
-    shapes.push(new Shape({ mode: shapeMode }))
+    shapes.push(createShapeForTarget(shapeMode, targetImageData))
   }
   return { shapes, fitness: 0 }
 }
@@ -50,11 +53,12 @@ export function cloneIndividual(ind: Individual): Individual {
 export function initializePopulation(
   populationSize: number,
   shapesPerIndividual: number,
-  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode
+  shapeMode: ShapeMode = EVOLUTION_CONFIG.defaults.shapeMode,
+  targetImageData?: TargetImageData
 ): Individual[] {
   const population: Individual[] = []
   for (let i = 0; i < populationSize; i++) {
-    const individual = createRandomIndividual(shapesPerIndividual, shapeMode)
+    const individual = createRandomIndividual(shapesPerIndividual, shapeMode, targetImageData)
     population.push(individual)
   }
   return population
