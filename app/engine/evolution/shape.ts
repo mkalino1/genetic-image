@@ -181,11 +181,11 @@ export class Shape implements ShapeRenderData {
       case 8:
       case 9: {
         const colorChannel = ['r', 'g', 'b'][mutationTarget - 7] as keyof RGBColor
-        this.color[colorChannel] = mutateNumber(
+        this.color[colorChannel] = Math.round(mutateNumber(
           this.color[colorChannel],
           SHAPE_CONFIG.mutationSteps.color * stepMultiplier,
-          { minimum: 0, maximum: 255, integerDelta: 'floor' }
-        )
+          { minimum: 0, maximum: 255 }
+        ))
         break
       }
       case 10:
@@ -255,15 +255,14 @@ export class Shape implements ShapeRenderData {
       SHAPE_CONFIG.mutationSteps.depth * stepMultiplier
     )
     for (const channel of ['r', 'g', 'b'] as const) {
-      this.color[channel] = mutateNumber(
+      this.color[channel] = Math.round(mutateNumber(
         this.color[channel],
         SHAPE_CONFIG.mutationSteps.color * stepMultiplier,
         {
           minimum: 0,
-          maximum: 255,
-          integerDelta: 'round'
+          maximum: 255
         }
-      )
+      ))
     }
 
     if (this.mode === 'fixed') {
@@ -334,7 +333,6 @@ function randomMutationDelta(step: number): number {
 interface MutationOptions {
   minimum?: number
   maximum?: number
-  integerDelta?: 'floor' | 'round'
 }
 
 function mutateNumber(
@@ -342,11 +340,7 @@ function mutateNumber(
   step: number,
   options: MutationOptions = {}
 ): number {
-  let delta = randomMutationDelta(step)
-  if (options.integerDelta === 'floor') delta = Math.floor(delta)
-  if (options.integerDelta === 'round') delta = Math.round(delta)
-
-  let mutatedValue = value + delta
+  let mutatedValue = value + randomMutationDelta(step)
   if (options.minimum !== undefined && options.maximum !== undefined) {
     mutatedValue = clamp(mutatedValue, options.minimum, options.maximum)
   }

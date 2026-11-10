@@ -280,16 +280,13 @@ async function recreateImage() {
 
   isRecreating.value = true
   try {
-    const evolvedCanvas = canvas.value
-    if (!evolvedCanvas) {
+    const individual = currentBestIndividual.value
+    if (!individual) {
       throw new Error('Could not read the evolution result.')
     }
-    const blob = await new Promise<Blob | null>((resolve) => evolvedCanvas.toBlob(resolve, 'image/jpeg', 0.7))
-    if (!blob) {
-      throw new Error('Could not prepare the image for recreation.')
-    }
+    const blob = await renderIndividualToPngBlob(individual, canvasBackgroundColor.value)
     const form = new FormData()
-    form.append('image', blob, 'evolved.jpg')
+    form.append('image', blob, 'evolved.png')
     form.append('description', description.value)
     const result = await $fetch('/api/recreate', { method: 'POST', body: form, responseType: 'blob' })  as Blob;
     const imageUrl = URL.createObjectURL(result)
