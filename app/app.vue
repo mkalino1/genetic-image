@@ -173,151 +173,61 @@
 </template>
 
 <script setup lang="ts">
-import { CANVAS_CONFIG, EVOLUTION_CONFIG } from './engine/config'
-import type { EvolutionParams } from './engine/config'
-import { calculateBackgroundColor } from './engine/image/backgroundColor'
-
-import type { GenerationProfilingSummary } from './web-workers/workerTypes'
-
-const toast = useToast()
-
-const isDevelopment = import.meta.dev
+import { CANVAS_CONFIG, MINIMUM_EVOLUTION_GENERATIONS } from './engine/config'
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
-const canvasBackgroundColor = ref('rgb(255, 255, 255)') // default white
-const isEvolving = ref(false)
-const currentBestIndividual = shallowRef<Individual | null>(null)
-const populationSamples = shallowRef<RankedIndividual[]>([])
+const target = useTargetImage(canvas)
+const evolution = useEvolution({
+  canvas,
+  targetImage: target.targetImage,
+  targetImageData: target.targetImageData,
+  onStarted: () => ai.clearRecreatedImage()
+})
+const ai = useAiRecreation({
+  targetImage: target.targetImage,
+  hasTargetImage: target.hasTargetImage,
+  currentBestIndividual: evolution.currentBestIndividual,
+  canvasBackgroundColor: target.canvasBackgroundColor,
+  generation: evolution.generation
+})
+const download = useDownload({
+  individual: evolution.currentBestIndividual,
+  backgroundColor: target.canvasBackgroundColor,
+  generation: evolution.generation
+})
 
-const targetImage = ref('')
-const targetImageData = ref<ImageData | null>(null)
+const {
+  canvasBackgroundColor,
+  hasTargetImage,
+  setTargetImage: loadTargetImage
+} = target
+const {
+  isEvolving,
+  currentBestIndividual,
+  populationSamples,
+  generation,
+  bestFitness,
+  bestErrorMap,
+  fitnessVariance,
+  elapsedTimeMs,
+  profilingSummary,
+  evolutionParams,
+  startEvolution,
+  stopEvolution,
+  reset: resetEvolution
+} = evolution
+const { downloadEvolutionImage } = download
+const {
+  description,
+  isDescribing,
+  recreatedImage,
+  isRecreating,
+  canRecreate,
+  describeImage,
+  recreateImage,
+  reset: resetAi
+} = ai
+const isDevelopment = import.meta.dev
 
-async function downloadEvolutionImage() {
-  const individual = currentBestIndividual.value
-  if (!individual) return
-
-  try {
-    const blob = await renderIndividualToPngBlob(individual, canvasBackgroundColor.value)
-    const imageUrl = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = imageUrl
-    link.download = `evolved-image-generation-${generation.value}.png`
-    link.click()
-    window.setTimeout(() => URL.revokeObjectURL(imageUrl), 0)
-  } catch (err) {
-    toast.add({
-      title: 'Could not download image',
-      icon: 'lucide:alert-triangle',
-      description: err instanceof Error ? err.message : String(err)
-    })
-  }
-}
-
-const description = ref('')
-const isDescribing = ref(false)
-
-async function describeImage() {
-  if (!hasTargetImage.value || isDescribing.value) {
-    toast.add({
-      title: 'Choose an image first',
-      icon: 'lucide:alert-triangle',
-      description: 'Upload the image you want to describe.'
-    })
-    return
-  }
-  isDescribing.value = true
-  description.value = ''
-  try {
-    const blob = await fetch(targetImage.value).then(res => res.blob())
-    const form = new FormData()
-    form.append('image', blob, 'image.jpg')
-
-    const response = await fetch('/api/describe', { method: 'POST', body: form })
-    if (!response.ok) {
-      throw new Error(`Description request failed (${response.status}).`)
-    }
-    if (!response.body) {
-      throw new Error('The description response did not include a readable stream.')
-    }
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      description.value += decoder.decode(value, { stream: true })
-    }
-    description.value += decoder.decode()
-    if (!description.value.trim()) {
-      throw new Error('The AI returned an empty description.')
-    }
-  } catch (err) {
-    description.value = ''
-    toast.add({
-      title: 'Could not describe image',
-      icon: 'lucide:alert-triangle',
-      description: err instanceof Error ? err.message : String(err)
-    })
-  } finally {
-    isDescribing.value = false
-  }
-}
-
-const recreatedImage = ref('')
-const isRecreating = ref(false)
-
-async function recreateImage() {
-  if (!canRecreate.value) {
-    toast.add({
-      title: 'Missing information',
-      icon: 'lucide:alert-triangle',
-      description: `Upload an image, complete at least ${MINIMUM_EVOLUTION_GENERATIONS} evolution iterations.`
-    })
-    return
-  }
-  if (recreatedImage.value) {
-    URL.revokeObjectURL(recreatedImage.value)
-  }
-
-  isRecreating.value = true
-  try {
-    const individual = currentBestIndividual.value
-    if (!individual) {
-      throw new Error('Could not read the evolution result.')
-    }
-    const blob = await renderIndividualToPngBlob(individual, canvasBackgroundColor.value)
-    const form = new FormData()
-    form.append('image', blob, 'evolved.png')
-    form.append('description', description.value)
-    const result = await $fetch('/api/recreate', { method: 'POST', body: form, responseType: 'blob' })  as Blob;
-    const imageUrl = URL.createObjectURL(result)
-    recreatedImage.value = imageUrl
-  } catch (err) {
-    toast.add({
-      title: 'Could not recreate image',
-      icon: 'lucide:alert-triangle',
-      description: err instanceof Error ? err.message : String(err)
-    })
-  } finally {
-    isRecreating.value = false
-  }
-}
-
-// Metrics
-const MINIMUM_EVOLUTION_GENERATIONS = 100
-const generation = ref(0)
-const bestFitness = ref(0)
-const bestErrorMap = shallowRef<Float32Array | null>(null)
-const fitnessVariance = ref(0)
-const elapsedTimeMs = ref(0)
-const profilingSummary = ref<GenerationProfilingSummary | null>(null)
-const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
-const canRecreate = computed(() =>
-  hasTargetImage.value
-  && generation.value >= MINIMUM_EVOLUTION_GENERATIONS
-  && description.value.trim() !== ''
-  && !isDescribing.value
-  && !isRecreating.value
-)
 const evolutionStatus = computed(() => {
   if (isEvolving.value) return 'Evolution in progress'
   if (generation.value > 0) return 'Result available'
@@ -331,137 +241,9 @@ const workflowSteps = computed(() => [
   { title: 'Recreate the image', description: 'Create an AI-generated version', done: recreatedImage.value !== '' }
 ])
 
-const evolutionParams = reactive<EvolutionParams>({ ...EVOLUTION_CONFIG.defaults })
-
-let geneticAlgorithm: GeneticAlgorithm | null = null
-let animationId: number | null = null
-let evolutionStartedAt: number | null = null
-let elapsedTimer: number | null = null
-
-const startEvolution = async () => {
-  const imageData = targetImageData.value
-  const displayCanvas = canvas.value
-  if (!targetImage.value || !imageData || !displayCanvas || isEvolving.value) {
-    toast.add({
-      title: 'Could not start evolution',
-      icon: 'lucide:alert-triangle',
-      description: 'Upload an image and wait for it to finish processing.'
-    })
-    return
-  }
-  if (recreatedImage.value) {
-    URL.revokeObjectURL(recreatedImage.value)
-    recreatedImage.value = ''
-  }
-  currentBestIndividual.value = null
-  populationSamples.value = []
-  bestErrorMap.value = null
-  profilingSummary.value = null
-  try {
-    geneticAlgorithm = new GeneticAlgorithm(displayCanvas, imageData, evolutionParams)
-    elapsedTimeMs.value = 0
-    evolutionStartedAt = Date.now()
-    elapsedTimer = window.setInterval(() => {
-      if (evolutionStartedAt !== null) {
-        elapsedTimeMs.value = Date.now() - evolutionStartedAt
-      }
-    }, 1000)
-    isEvolving.value = true
-    evolve()
-  } catch (err) {
-    toast.add({
-      title: 'Could not start evolution',
-      icon: 'lucide:alert-triangle',
-      description: err instanceof Error ? err.message : String(err)
-    })
-  }
-}
-
-const stopEvolution = () => {
-  isEvolving.value = false
-  if (evolutionStartedAt !== null) {
-    elapsedTimeMs.value = Date.now() - evolutionStartedAt
-    evolutionStartedAt = null
-  }
-  if (elapsedTimer !== null) {
-    window.clearInterval(elapsedTimer)
-    elapsedTimer = null
-  }
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId)
-    animationId = null
-  }
-  if (geneticAlgorithm) {
-    geneticAlgorithm.cleanup()
-  }
-}
-
-onUnmounted(stopEvolution)
-
-const evolve = async () => {
-  if (!isEvolving.value) return
-  if (geneticAlgorithm) {
-    await geneticAlgorithm.evolve()
-    // Update UI with current values
-    currentBestIndividual.value = geneticAlgorithm.bestIndividual
-    populationSamples.value = geneticAlgorithm.populationSamples
-    bestErrorMap.value = geneticAlgorithm.bestErrorMap
-    generation.value = geneticAlgorithm.generation
-    bestFitness.value = geneticAlgorithm.bestFitness
-    fitnessVariance.value = geneticAlgorithm.fitnessVariance
-    if (isDevelopment) {
-      profilingSummary.value = geneticAlgorithm.getAverageProfilingMetrics()
-    }
-  }
-  animationId = requestAnimationFrame(evolve)
-}
-
 const setTargetImage = async (imageData: string) => {
-  stopEvolution()
-  currentBestIndividual.value = null
-  populationSamples.value = []
-  bestErrorMap.value = null
-  targetImageData.value = null
-  generation.value = 0
-  elapsedTimeMs.value = 0
-  bestFitness.value = 0
-  fitnessVariance.value = 0
-  profilingSummary.value = null
-  description.value = ''
-  if (recreatedImage.value) {
-    URL.revokeObjectURL(recreatedImage.value)
-    recreatedImage.value = ''
-  }
-  targetImage.value = imageData
-  if (!imageData) {
-    canvasBackgroundColor.value = 'rgb(255, 255, 255)'
-    const displayCanvas = canvas.value
-    const context = displayCanvas?.getContext('2d')
-    if (displayCanvas && context) {
-      context.clearRect(0, 0, displayCanvas.width, displayCanvas.height)
-    }
-    return
-  }
-  // Create a detached canvas to resize the target image
-  const img = new window.Image()
-  img.src = targetImage.value
-  await new Promise<void>((resolve) => {
-    img.onload = () => {
-      const targetCanvas = document.createElement('canvas')
-      targetCanvas.width = CANVAS_CONFIG.worldSize
-      targetCanvas.height = CANVAS_CONFIG.worldSize
-      const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true })!
-      targetCtx.drawImage(img, 0, 0, CANVAS_CONFIG.worldSize, CANVAS_CONFIG.worldSize)
-      targetImageData.value = targetCtx.getImageData(
-        0,
-        0,
-        CANVAS_CONFIG.worldSize,
-        CANVAS_CONFIG.worldSize
-      )
-      const backgroundColor = calculateBackgroundColor(targetImageData.value)
-      canvasBackgroundColor.value = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`
-      resolve()
-    }
-  })
+  resetEvolution()
+  resetAi()
+  await loadTargetImage(imageData)
 }
 </script>

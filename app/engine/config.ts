@@ -2,6 +2,8 @@ export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point' | 'rand
 export type ShapeMode = 'fixed' | 'polygon'
 export type FitnessMetric = 'deltaE' | 'rgbMeanSquared'
 
+export const MINIMUM_EVOLUTION_GENERATIONS = 100
+
 export interface EvolutionParams {
   populationSize: number
   mutationRate: number
