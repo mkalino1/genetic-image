@@ -23,7 +23,7 @@ export const CANVAS_CONFIG = {
 export const EVOLUTION_CONFIG = {
   defaults: {
     populationSize: 100,
-    mutationRate: 0.1,
+    mutationRate: 0.06,
     shapesPerIndividual: 100,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
     enableHillClimbing: true,

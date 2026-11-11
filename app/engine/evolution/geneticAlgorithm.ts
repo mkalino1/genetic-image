@@ -5,6 +5,7 @@ import type { Individual, RankedIndividual } from './populationCreation'
 import { FITNESS_ERROR_SCALE, weightedErrorFromFitness } from '../fitness/fitnessScoreConversion'
 import { hillClimbIndividuals } from '../fitness/populationEvaluation'
 import { FitnessWorkerPool } from '../fitness/fitnessWorkerPool'
+import { calculateBackgroundColor } from '../image/backgroundColor'
 import type {
   FitnessProfilingMetrics,
   GenerationProfilingMetrics,
@@ -20,6 +21,7 @@ export class GeneticAlgorithm {
 
   // Target image data
   targetImageData: ImageData
+  backgroundColor: string
   
   // Worker pool for parallel fitness calculations
   workerPool: FitnessWorkerPool
@@ -60,6 +62,8 @@ export class GeneticAlgorithm {
       0
     )
     this.targetImageData = targetImageData
+    const backgroundColor = calculateBackgroundColor(targetImageData)
+    this.backgroundColor = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`
 
     // Parameters
     this.populationSize = params.populationSize
@@ -171,7 +175,7 @@ export class GeneticAlgorithm {
       }
     }
     if (best) {
-      renderIndividual(best, this.displayCtx)
+      renderIndividual(best, this.displayCtx, this.backgroundColor)
     }
     
     this.fitnessVariance = this.calculateFitnessVariance()

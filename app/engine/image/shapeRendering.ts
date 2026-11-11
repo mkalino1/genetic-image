@@ -50,17 +50,30 @@ function renderPolygon(shape: ShapeRenderData, ctx: CanvasRenderingContext2D | O
   ctx.fill()
 }
 
+export function renderCanvasBackground(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  backgroundColor: string
+): void {
+  ctx.save()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.fillStyle = backgroundColor
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.restore()
+}
+
 /**
  * Renders an individual (collection of shapes) to a canvas context.
  * 
  * @param individual - The individual to render, containing an array of shapes
  * @param ctx - The 2D canvas rendering context where the individual will be drawn
  */
-export function renderIndividual(individual: Individual, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
-  ctx.save()
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-  ctx.restore()
+export function renderIndividual(
+  individual: Individual,
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  backgroundColor: string
+): void {
+  renderCanvasBackground(ctx, backgroundColor)
   // Sort shapes by z-index (back to front)
   const sortedShapes = [...individual.shapes].sort((a, b) => a.z - b.z)
   for (const shape of sortedShapes) {

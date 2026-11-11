@@ -14,11 +14,7 @@ export function renderIndividualToPngBlob(individual: Individual, backgroundColo
     CANVAS_CONFIG.exportSize / CANVAS_CONFIG.worldSize,
     CANVAS_CONFIG.exportSize / CANVAS_CONFIG.worldSize
   )
-  renderIndividual(individual, context)
-  context.setTransform(1, 0, 0, 1, 0, 0)
-  context.globalCompositeOperation = 'destination-over'
-  context.fillStyle = backgroundColor
-  context.fillRect(0, 0, CANVAS_CONFIG.exportSize, CANVAS_CONFIG.exportSize)
+  renderIndividual(individual, context, backgroundColor)
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {

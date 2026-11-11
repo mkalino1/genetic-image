@@ -8,8 +8,7 @@
       ref="previewCanvas"
       :width="PREVIEW_SIZE"
       :height="PREVIEW_SIZE"
-      class="block aspect-square w-full rounded bg-neutral-100 dark:bg-neutral-950"
-      :style="{ backgroundColor }"
+      class="block aspect-square w-full rounded"
       :aria-label="`Population individual at rank ${rank}`"
     />
   </div>
@@ -43,7 +42,7 @@ function renderPreview() {
     0,
     0
   )
-  renderIndividual(props.individual, context)
+  renderIndividual(props.individual, context, props.backgroundColor)
 }
 
 onMounted(renderPreview)

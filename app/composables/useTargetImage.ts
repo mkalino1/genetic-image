@@ -1,5 +1,6 @@
 import { CANVAS_CONFIG } from '../engine/config'
 import { calculateBackgroundColor } from '../engine/image/backgroundColor'
+import { renderCanvasBackground } from '../engine/image/shapeRendering'
 import type { ShallowRef } from 'vue'
 
 export function useTargetImage(canvas: Readonly<ShallowRef<HTMLCanvasElement | null>>) {
@@ -8,6 +9,11 @@ export function useTargetImage(canvas: Readonly<ShallowRef<HTMLCanvasElement | n
   const canvasBackgroundColor = ref('rgb(255, 255, 255)')
 
   const hasTargetImage = computed(() => Boolean(targetImage.value && targetImageData.value))
+
+  onMounted(() => {
+    const context = canvas.value?.getContext('2d')
+    if (context) renderCanvasBackground(context, canvasBackgroundColor.value)
+  })
 
   const setTargetImage = async (imageData: string) => {
     targetImage.value = imageData
@@ -18,7 +24,7 @@ export function useTargetImage(canvas: Readonly<ShallowRef<HTMLCanvasElement | n
       const displayCanvas = canvas.value
       const context = displayCanvas?.getContext('2d')
       if (displayCanvas && context) {
-        context.clearRect(0, 0, displayCanvas.width, displayCanvas.height)
+        renderCanvasBackground(context, canvasBackgroundColor.value)
       }
       return
     }
@@ -40,6 +46,10 @@ export function useTargetImage(canvas: Readonly<ShallowRef<HTMLCanvasElement | n
         )
         const backgroundColor = calculateBackgroundColor(targetImageData.value)
         canvasBackgroundColor.value = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`
+        const displayContext = canvas.value?.getContext('2d')
+        if (displayContext) {
+          renderCanvasBackground(displayContext, canvasBackgroundColor.value)
+        }
         resolve()
       }
     })

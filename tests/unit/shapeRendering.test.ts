@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { Shape } from '../../app/engine/evolution/shape'
-import { renderShape } from '../../app/engine/image/shapeRendering'
+import { renderCanvasBackground, renderShape } from '../../app/engine/image/shapeRendering'
 
 function renderPolygonPoints(shape: Shape) {
   const context = {
@@ -53,5 +53,26 @@ describe('polygon rendering', () => {
     expect(Math.max(...xCoordinates!) - Math.min(...xCoordinates!)).toBeGreaterThan(
       Math.max(...yCoordinates!) - Math.min(...yCoordinates!)
     )
+  })
+})
+
+describe('canvas background rendering', () => {
+  it('paints the background across the full canvas without retaining the previous image', () => {
+    const context = {
+      canvas: { width: 32, height: 24 },
+      fillStyle: '',
+      save: vi.fn(),
+      restore: vi.fn(),
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      fillRect: vi.fn()
+    }
+
+    renderCanvasBackground(context as unknown as CanvasRenderingContext2D, 'rgb(12, 34, 56)')
+
+    expect(context.clearRect).toHaveBeenCalledWith(0, 0, 32, 24)
+    expect(context.fillStyle).toBe('rgb(12, 34, 56)')
+    expect(context.fillRect).toHaveBeenCalledWith(0, 0, 32, 24)
+    expect(context.restore).toHaveBeenCalledOnce()
   })
 })

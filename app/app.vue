@@ -60,7 +60,6 @@
                   :width="CANVAS_CONFIG.displaySize"
                   :height="CANVAS_CONFIG.displaySize"
                   class="block aspect-square w-full"
-                  :style="{ backgroundColor: canvasBackgroundColor }"
                   aria-label="Current evolution result"
                 />
                 <div v-if="generation === 0" class="pointer-events-none absolute inset-0 grid place-items-center p-6 text-center text-sm text-neutral-600 dark:text-neutral-300">
