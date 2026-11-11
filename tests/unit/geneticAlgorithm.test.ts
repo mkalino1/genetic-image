@@ -5,10 +5,7 @@ import type { Individual } from '../../app/engine/evolution/populationCreation'
 import { CANVAS_CONFIG, EVOLUTION_CONFIG, SHAPE_CONFIG } from '../../app/engine/config'
 import { MAX_SHAPE_SIZE, MIN_SHAPE_SIZE } from '../../app/engine/evolution/shape'
 import { hillClimbIndividuals } from '../../app/engine/fitness/populationEvaluation'
-import {
-  createCataclysmGeneration,
-  mutateIndividual
-} from '../../app/engine/evolution/geneticOperations'
+import { mutateIndividual } from '../../app/engine/evolution/geneticOperations'
 import { createHighErrorCoordinateSampler } from '../../app/engine/evolution/samplers/highErrorCoordinateSampler'
 import { createHighErrorOverlappingShapeSampler } from '../../app/engine/evolution/samplers/highErrorOverlappingShapeSampler'
 
@@ -175,50 +172,6 @@ describe('shape mutation', () => {
     expect(shape.x).toBe(20 - WORLD_SIZE / 16)
   })
 
-  it('mutates every fixed-shape attribute during a cataclysm', () => {
-    let gaussianRandomCall = 0
-    vi.spyOn(Math, 'random').mockImplementation(() =>
-      gaussianRandomCall++ % 2 === 0 ? Number.EPSILON : 0
-    )
-    const shape = createShape(20)
-    const previousShape = shape.clone()
-
-    shape.mutateAll(2)
-
-    expect(shape.x).not.toBe(previousShape.x)
-    expect(shape.y).not.toBe(previousShape.y)
-    expect(shape.width).not.toBe(previousShape.width)
-    expect(shape.height).not.toBe(previousShape.height)
-    expect(shape.rotation).not.toBe(previousShape.rotation)
-    expect(shape.alpha).not.toBe(previousShape.alpha)
-    expect(shape.z).not.toBe(previousShape.z)
-    expect(shape.color.r).not.toBe(previousShape.color.r)
-    expect(shape.color.g).not.toBe(previousShape.color.g)
-    expect(shape.color.b).not.toBe(previousShape.color.b)
-    expect(shape.type).not.toBe(previousShape.type)
-  })
-
-  it('mutates the side count and every polygon vertex attribute', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.999)
-    const shape = new Shape({
-      mode: 'polygon',
-      numSides: 4,
-      vertexAngleOffsets: [0.1, 0.2, 0.3, 0.4],
-      vertexRadiusMults: [0.8, 0.9, 1, 1.1]
-    })
-    const previousShape = shape.clone()
-
-    shape.mutateAll(2)
-
-    expect(shape.numSides).toBe(previousShape.numSides + 1)
-    expect(shape.vertexAngleOffsets).toHaveLength(shape.numSides)
-    expect(shape.vertexRadiusMults).toHaveLength(shape.numSides)
-    for (let index = 0; index < previousShape.numSides; index++) {
-      expect(shape.vertexAngleOffsets![index]).not.toBe(previousShape.vertexAngleOffsets![index])
-      expect(shape.vertexRadiusMults![index]).not.toBe(previousShape.vertexRadiusMults![index])
-    }
-  })
-
   it('mutates only one polygon vertex parameter at a time', () => {
     const shape = new Shape({
       mode: 'polygon',
@@ -359,38 +312,6 @@ describe('next generation', () => {
 
     nextGeneration[0]!.shapes[0]!.x = 999
     expect(elite.shapes[0]!.x).toBe(10)
-  })
-})
-
-describe('cataclysm generation', () => {
-  it('preserves elites and mutates every shape in the remaining elite clones', () => {
-    const elite = createIndividual(0.95, [createShape(10), createShape(11)])
-    const population = [
-      elite,
-      createIndividual(0.5, [createShape(20), createShape(21)])
-    ]
-    const mutateShape = vi.spyOn(Shape.prototype, 'mutateAll').mockImplementation(() => {})
-
-    const mutationStepMultiplier =
-      EVOLUTION_CONFIG.stagnation.cataclysmMutationStepMultiplier
-    const nextGeneration = createCataclysmGeneration(
-      population,
-      4,
-      1,
-      mutationStepMultiplier
-    )
-
-    expect(nextGeneration).toHaveLength(4)
-    expect(nextGeneration[0]).not.toBe(elite)
-    expect(nextGeneration[0]).toMatchObject(elite)
-    expect(nextGeneration.slice(1).every(individual => individual.fitness === 0)).toBe(true)
-    expect(nextGeneration.slice(1).map(individual =>
-      individual.shapes.map(shape => shape.x)
-    )).toEqual([[10, 11], [10, 11], [10, 11]])
-    expect(mutateShape).toHaveBeenCalledTimes(6)
-    expect(mutateShape.mock.calls).toEqual(
-      Array.from({ length: 6 }, () => [mutationStepMultiplier])
-    )
   })
 })
 

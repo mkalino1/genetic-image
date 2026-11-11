@@ -2,7 +2,6 @@ import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
 import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from '../config'
 import { samplePopulationByRank } from './populationCreation'
 import type { Individual, RankedIndividual } from './populationCreation'
-import { FITNESS_ERROR_SCALE, weightedErrorFromFitness } from '../fitness/fitnessScoreConversion'
 import { hillClimbIndividuals } from '../fitness/populationEvaluation'
 import { FitnessWorkerPool } from '../fitness/fitnessWorkerPool'
 import { calculateBackgroundColor } from '../image/backgroundColor'
@@ -44,8 +43,6 @@ export class GeneticAlgorithm {
   bestFitness: number
   generation: number
   fitnessVariance: number
-  stagnationGenerations: number
-  bestFitnessAtLastProgress: number
   profilingHistory: GenerationProfilingMetrics[] = []
 
   constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: EvolutionParams) {
@@ -91,9 +88,6 @@ export class GeneticAlgorithm {
     this.bestFitness = 0
     this.generation = 0
     this.fitnessVariance = 0
-    this.stagnationGenerations = 0
-    this.bestFitnessAtLastProgress = 0
-
     // Initialize worker pool for parallel fitness calculations
     this.workerPool = new FitnessWorkerPool()
   }
@@ -160,19 +154,6 @@ export class GeneticAlgorithm {
       if (best.fitness > this.bestFitness) {
         this.bestFitness = best.fitness
       }
-      const previousBestError = weightedErrorFromFitness(this.bestFitnessAtLastProgress)
-      const currentBestError = weightedErrorFromFitness(best.fitness)
-      const minimumErrorImprovement =
-        EVOLUTION_CONFIG.stagnation.minimumNormalizedErrorImprovement *
-        FITNESS_ERROR_SCALE
-      if (
-        previousBestError - currentBestError >= minimumErrorImprovement
-      ) {
-        this.bestFitnessAtLastProgress = best.fitness
-        this.stagnationGenerations = 0
-      } else {
-        this.stagnationGenerations++
-      }
     }
     if (best) {
       renderIndividual(best, this.displayCtx, this.backgroundColor)
@@ -181,31 +162,18 @@ export class GeneticAlgorithm {
     this.fitnessVariance = this.calculateFitnessVariance()
     
     // Create new population through crossover and mutation
-    const stagnation = EVOLUTION_CONFIG.stagnation
-    const shouldTriggerCataclysm =
-      this.stagnationGenerations >= stagnation.cataclysmInterval &&
-      this.stagnationGenerations % stagnation.cataclysmInterval === 0
-    const nextPopulation = shouldTriggerCataclysm
-      ? createCataclysmGeneration(
-          this.population,
-          this.populationSize,
-          this.eliteSize,
-          stagnation.cataclysmMutationStepMultiplier
-        )
-      : createNewGeneration(
-          this.population,
-          this.populationSize,
-          this.eliteSize,
-          this.shapesPerIndividual,
-          this.mutationRate,
-          this.crossoverStrategy,
-          this.bestFitness,
-          this.shapeMode,
-          this.bestErrorMap ?? undefined,
-          this.targetImageData
-        )
-
-    this.population = nextPopulation
+    this.population = createNewGeneration(
+      this.population,
+      this.populationSize,
+      this.eliteSize,
+      this.shapesPerIndividual,
+      this.mutationRate,
+      this.crossoverStrategy,
+      this.bestFitness,
+      this.shapeMode,
+      this.bestErrorMap ?? undefined,
+      this.targetImageData
+    )
 
     if (profilingEnabled && workerProfile) {
       const profile: GenerationProfilingMetrics = {
