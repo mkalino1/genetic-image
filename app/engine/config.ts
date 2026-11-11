@@ -1,4 +1,5 @@
 export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point' | 'randomized' | 'adaptive'
+export type OptimizerType = 'genetic' | 'memetic'
 export type ShapeMode = 'fixed' | 'polygon'
 export type FitnessMetric = 'deltaE' | 'rgbMeanSquared'
 
@@ -9,7 +10,7 @@ export interface EvolutionParams {
   mutationRate: number
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
-  enableHillClimbing: boolean
+  optimizer: OptimizerType
   fitnessMetric: FitnessMetric
   shapeMode?: ShapeMode
 }
@@ -26,7 +27,7 @@ export const EVOLUTION_CONFIG = {
     mutationRate: 0.06,
     shapesPerIndividual: 100,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
-    enableHillClimbing: true,
+    optimizer: 'memetic' as OptimizerType,
     fitnessMetric: 'deltaE' as FitnessMetric,
     shapeMode: 'polygon' as ShapeMode
   },

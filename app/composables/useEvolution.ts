@@ -1,6 +1,6 @@
 import { EVOLUTION_CONFIG } from '../engine/config'
 import type { EvolutionParams } from '../engine/config'
-import { GeneticAlgorithm } from '../engine/evolution/geneticAlgorithm'
+import { EvolutionEngine } from '../engine/evolution/evolutionEngine'
 import type { Individual, RankedIndividual } from '../engine/evolution/populationCreation'
 import type { GenerationProfilingSummary } from '../web-workers/workerTypes'
 import type { Ref, ShallowRef } from 'vue'
@@ -26,23 +26,23 @@ export function useEvolution(options: UseEvolutionOptions) {
   const profilingSummary = ref<GenerationProfilingSummary | null>(null)
   const evolutionParams = reactive<EvolutionParams>({ ...EVOLUTION_CONFIG.defaults })
 
-  let geneticAlgorithm: GeneticAlgorithm | null = null
+  let evolutionEngine: EvolutionEngine | null = null
   let animationId: number | null = null
   let evolutionStartedAt: number | null = null
   let elapsedTimer: number | null = null
 
   const evolve = async () => {
     if (!isEvolving.value) return
-    if (geneticAlgorithm) {
-      await geneticAlgorithm.evolve()
-      currentBestIndividual.value = geneticAlgorithm.bestIndividual
-      populationSamples.value = geneticAlgorithm.populationSamples
-      bestErrorMap.value = geneticAlgorithm.bestErrorMap
-      generation.value = geneticAlgorithm.generation
-      bestFitness.value = geneticAlgorithm.bestFitness
-      fitnessVariance.value = geneticAlgorithm.fitnessVariance
+    if (evolutionEngine) {
+      await evolutionEngine.evolve()
+      currentBestIndividual.value = evolutionEngine.bestIndividual
+      populationSamples.value = evolutionEngine.populationSamples
+      bestErrorMap.value = evolutionEngine.bestErrorMap
+      generation.value = evolutionEngine.generation
+      bestFitness.value = evolutionEngine.bestFitness
+      fitnessVariance.value = evolutionEngine.fitnessVariance
       if (isDevelopment) {
-        profilingSummary.value = geneticAlgorithm.getAverageProfilingMetrics()
+        profilingSummary.value = evolutionEngine.getAverageProfilingMetrics()
       }
     }
     animationId = requestAnimationFrame(evolve)
@@ -62,8 +62,8 @@ export function useEvolution(options: UseEvolutionOptions) {
       cancelAnimationFrame(animationId)
       animationId = null
     }
-    if (geneticAlgorithm) {
-      geneticAlgorithm.cleanup()
+    if (evolutionEngine) {
+      evolutionEngine.cleanup()
     }
   }
 
@@ -97,7 +97,7 @@ export function useEvolution(options: UseEvolutionOptions) {
     bestErrorMap.value = null
     profilingSummary.value = null
     try {
-      geneticAlgorithm = new GeneticAlgorithm(displayCanvas, imageData, evolutionParams)
+      evolutionEngine = new EvolutionEngine(displayCanvas, imageData, evolutionParams)
       elapsedTimeMs.value = 0
       evolutionStartedAt = Date.now()
       elapsedTimer = window.setInterval(() => {

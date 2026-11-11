@@ -2,9 +2,10 @@ import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
 import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from '../config'
 import { samplePopulationByRank } from './populationCreation'
 import type { Individual, RankedIndividual } from './populationCreation'
-import { hillClimbIndividuals } from '../fitness/populationEvaluation'
 import { FitnessWorkerPool } from '../fitness/fitnessWorkerPool'
 import { calculateBackgroundColor } from '../image/backgroundColor'
+import { createOptimizer } from './optimizer/optimizerFactory'
+import type { Optimizer } from './optimizer/optimizerFactory'
 import type {
   FitnessProfilingMetrics,
   GenerationProfilingMetrics,
@@ -13,7 +14,7 @@ import type {
 
 const MAX_POPULATION_SAMPLES = 4
 
-export class GeneticAlgorithm {
+export class EvolutionEngine {
   // Onscreen canvas for rendering the current best individual
   displayCanvas: HTMLCanvasElement
   displayCtx: CanvasRenderingContext2D
@@ -30,7 +31,7 @@ export class GeneticAlgorithm {
   mutationRate: number
   shapesPerIndividual: number
   crossoverStrategy: CrossoverStrategy
-  enableHillClimbing: boolean
+  optimizer: Optimizer
   fitnessMetric: FitnessMetric
   shapeMode: ShapeMode
   eliteSize: number
@@ -67,7 +68,7 @@ export class GeneticAlgorithm {
     this.mutationRate = params.mutationRate
     this.shapesPerIndividual = params.shapesPerIndividual
     this.crossoverStrategy = params.crossoverStrategy
-    this.enableHillClimbing = params.enableHillClimbing
+    this.optimizer = createOptimizer(params.optimizer)
     this.fitnessMetric = params.fitnessMetric
     this.shapeMode = params.shapeMode ?? EVOLUTION_CONFIG.defaults.shapeMode
     this.eliteSize = Math.max(
@@ -124,27 +125,20 @@ export class GeneticAlgorithm {
       )
     }
 
-    if (
-      this.enableHillClimbing &&
-      this.eliteSize > 0 &&
-      EVOLUTION_CONFIG.hillClimbing.attemptsPerElite > 0
-    ) {
-      const refinedElites = await hillClimbIndividuals(
-        this.population.slice(0, this.eliteSize),
-        EVOLUTION_CONFIG.hillClimbing.attemptsPerElite,
-        this.targetImageData,
-        this.workerPool,
-        this.fitnessMetric,
-        this.bestErrorMap ?? undefined
-      )
-      for (let index = 0; index < refinedElites.length; index++) {
-        const refinedElite = refinedElites[index]
-        if (refinedElite) {
-          this.population[index] = refinedElite
-        }
-      }
-      this.population.sort((a, b) => b.fitness - a.fitness)
+    const optimizerContext = {
+      targetImageData: this.targetImageData,
+      workerPool: this.workerPool,
+      fitnessMetric: this.fitnessMetric,
+      populationSize: this.populationSize,
+      eliteSize: this.eliteSize,
+      shapesPerIndividual: this.shapesPerIndividual,
+      mutationRate: this.mutationRate,
+      crossoverStrategy: this.crossoverStrategy,
+      bestFitness: this.bestFitness,
+      shapeMode: this.shapeMode,
+      errorMap: this.bestErrorMap ?? undefined
     }
+    this.population = await this.optimizer.refinePopulation(this.population, optimizerContext)
     this.populationSamples = samplePopulationByRank(this.population, MAX_POPULATION_SAMPLES)
 
     // Update best fitness and render best individual
@@ -155,6 +149,7 @@ export class GeneticAlgorithm {
         this.bestFitness = best.fitness
       }
     }
+    optimizerContext.bestFitness = this.bestFitness
     if (best) {
       renderIndividual(best, this.displayCtx, this.backgroundColor)
     }
@@ -162,18 +157,7 @@ export class GeneticAlgorithm {
     this.fitnessVariance = this.calculateFitnessVariance()
     
     // Create new population through crossover and mutation
-    this.population = createNewGeneration(
-      this.population,
-      this.populationSize,
-      this.eliteSize,
-      this.shapesPerIndividual,
-      this.mutationRate,
-      this.crossoverStrategy,
-      this.bestFitness,
-      this.shapeMode,
-      this.bestErrorMap ?? undefined,
-      this.targetImageData
-    )
+    this.population = this.optimizer.createNextGeneration(this.population, optimizerContext)
 
     if (profilingEnabled && workerProfile) {
       const profile: GenerationProfilingMetrics = {

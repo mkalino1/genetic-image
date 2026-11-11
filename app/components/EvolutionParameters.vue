@@ -9,11 +9,11 @@
         <div class="flex flex-col gap-5">
           <div>
             <div class="mb-1">
-              <label for="hill-climbing" class="text-sm font-medium">Enable hill climbing</label>
+              <label for="optimizer" class="text-sm font-medium">Optimization algorithm</label>
             </div>
-            <USwitch id="hill-climbing" v-model="model.enableHillClimbing" />
+            <USelect id="optimizer" v-model="model.optimizer" :items="optimizerOptions" />
             <p class="mt-1 text-xs text-neutral-500">
-              Locally refine the best candidates each generation. This can improve results but makes generations slower.
+              {{ optimizerDescriptions[model.optimizer] }}
             </p>
           </div>
           <div>
@@ -78,7 +78,7 @@
             <div class="mb-1">
               <label for="shape-mode" class="text-sm font-medium">Shape type</label>
             </div>
-            <USelect id="shape-mode" v-model="model.shapeMode" :items="shapeTypOptions" />
+            <USelect id="shape-mode" v-model="model.shapeMode" :items="shapeTypeOptions" />
             <p class="mt-1 text-xs text-neutral-500">{{ shapeModeDescriptions[model.shapeMode ?? 'polygon'] }}</p>
           </div>
         </div>
@@ -89,10 +89,25 @@
 
 <script lang="ts" setup>
 import { EVOLUTION_CONFIG, SHAPE_CONFIG } from '../engine/config'
-import type { CrossoverStrategy, FitnessMetric, ShapeMode } from '../engine/config'
+import type { CrossoverStrategy, FitnessMetric, OptimizerType, ShapeMode } from '../engine/config'
 
 const model = defineModel<EvolutionParams>({ required: true })
 const parameterBounds = EVOLUTION_CONFIG.parameterBounds
+
+const optimizerLabels: Record<OptimizerType, string> = {
+  genetic: 'Genetic',
+  memetic: 'Memetic (with hill climbing)'
+}
+
+const optimizerOptions = (['genetic', 'memetic'] satisfies OptimizerType[]).map(value => ({
+  label: optimizerLabels[value],
+  value
+}))
+
+const optimizerDescriptions: Record<OptimizerType, string> = {
+  genetic: 'Use selection, crossover and mutation without local refinement.',
+  memetic: 'Use selection, crossover and mutation with local hill climbing refinement.'
+}
 
 // Define crossover strategy options for the template
 const crossoverStrategyLabels: Record<CrossoverStrategy, string> = {
@@ -135,7 +150,7 @@ const shapeModeLabels: Record<ShapeMode, string> = {
   polygon: 'Random polygons',
   fixed: 'Fixed shapes'
 }
-const shapeTypOptions = SHAPE_CONFIG.modes.map(value => ({
+const shapeTypeOptions = SHAPE_CONFIG.modes.map(value => ({
   label: shapeModeLabels[value],
   value
 }))
