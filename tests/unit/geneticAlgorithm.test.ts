@@ -147,12 +147,13 @@ describe('shape mutation', () => {
     const originalShape = shape.clone()
     vi.spyOn(Math, 'random').mockReturnValueOnce(0.999)
       .mockReturnValueOnce(0)
-      .mockReturnValue(0)
+      .mockReturnValueOnce(Math.exp(-0.5))
+      .mockReturnValue(0.5)
 
     shape.mutate()
 
     expect(shape.x).toBeLessThan(originalShape.x)
-    expect(originalShape.x - shape.x).toBeLessThanOrEqual(WORLD_SIZE / 80)
+    expect(originalShape.x - shape.x).toBeCloseTo(WORLD_SIZE / 240)
     expect(shape.y).toBe(originalShape.y)
     expect(shape.width).toBe(originalShape.width)
     expect(shape.height).toBe(originalShape.height)
@@ -166,7 +167,8 @@ describe('shape mutation', () => {
     const shape = createShape(20)
     vi.spyOn(Math, 'random').mockReturnValueOnce(0.999)
       .mockReturnValueOnce(0)
-      .mockReturnValue(0)
+      .mockReturnValueOnce(Number.EPSILON)
+      .mockReturnValue(0.5)
 
     shape.mutate(5)
 
@@ -174,7 +176,10 @@ describe('shape mutation', () => {
   })
 
   it('mutates every fixed-shape attribute during a cataclysm', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.999)
+    let gaussianRandomCall = 0
+    vi.spyOn(Math, 'random').mockImplementation(() =>
+      gaussianRandomCall++ % 2 === 0 ? Number.EPSILON : 0
+    )
     const shape = createShape(20)
     const previousShape = shape.clone()
 
@@ -224,11 +229,12 @@ describe('shape mutation', () => {
     vi.spyOn(Math, 'random').mockReturnValueOnce(0.999)
       .mockReturnValueOnce(0.999)
       .mockReturnValueOnce(0)
-      .mockReturnValue(0.999)
+      .mockReturnValueOnce(Math.exp(-0.5))
+      .mockReturnValue(0)
 
     shape.mutate()
 
-    expect(shape.vertexRadiusMults).toEqual([expect.closeTo(1.04, 2), 1, 1])
+    expect(shape.vertexRadiusMults).toEqual([expect.closeTo(1 + SHAPE_CONFIG.polygon.radiusMutationStep / 6, 4), 1, 1])
     expect(shape.vertexAngleOffsets).toEqual([0, 0, 0])
   })
 
