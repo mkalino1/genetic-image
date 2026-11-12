@@ -7,6 +7,7 @@ type FitnessProfileCallback = (profile: FitnessProfilingMetrics) => void
 
 export class FitnessWorkerPool {
   private workers: Worker[] = []
+  private pending = new Set<(error: Error) => void>()
   private initializedTarget: ImageData | null = null
   private targetInitialization: Promise<void> | null = null
 
@@ -35,10 +36,12 @@ export class FitnessWorkerPool {
     transferList: Transferable[] = []
   ): Promise<FitnessWorkerResponse> {
     return new Promise((resolve, reject) => {
+      let rejectPending: ((error: Error) => void) | null = null
       const cleanup = () => {
         clearTimeout(timeout)
         worker.removeEventListener('message', handleMessage)
         worker.removeEventListener('error', handleError)
+        if (rejectPending) this.pending.delete(rejectPending)
       }
 
       const timeout = setTimeout(() => {
@@ -60,6 +63,11 @@ export class FitnessWorkerPool {
         reject(new Error(error.message))
       }
 
+      rejectPending = (error) => {
+        cleanup()
+        reject(error)
+      }
+      this.pending.add(rejectPending)
       worker.addEventListener('message', handleMessage)
       worker.addEventListener('error', handleError)
 
@@ -207,6 +215,10 @@ export class FitnessWorkerPool {
   }
 
   terminate(): void {
+    for (const rejectPending of this.pending) {
+      rejectPending(new Error('Worker pool terminated'))
+    }
+    this.pending.clear()
     for (const worker of this.workers) {
       worker.terminate()
     }

@@ -237,7 +237,7 @@ function clamp(value: number, min: number, max: number): number {
 function randomMutationDelta(step: number): number {
   const normalValue = Math.sqrt(-2 * Math.log(Math.max(Math.random(), Number.EPSILON))) *
     Math.cos(2 * Math.PI * Math.random())
-  return clamp(normalValue, -3, 3) * step / 6
+  return clamp(normalValue, -3, 3) * step / 3
 }
 
 interface MutationOptions {

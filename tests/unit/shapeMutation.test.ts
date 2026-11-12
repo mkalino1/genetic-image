@@ -30,7 +30,7 @@ describe('shape mutation', () => {
     shape.mutate()
 
     const step = CANVAS_CONFIG.worldSize * SHAPE_CONFIG.mutationStepFraction
-    expect(shape.x).toBeCloseTo(CANVAS_CONFIG.worldSize / 2 + step / 6)
+    expect(shape.x).toBeCloseTo(CANVAS_CONFIG.worldSize / 2 + step / 3)
   })
 
   it('caps an extreme Gaussian delta at the previous maximum range', () => {
@@ -55,6 +55,6 @@ describe('shape mutation', () => {
     shape.mutate()
 
     const step = CANVAS_CONFIG.worldSize * SHAPE_CONFIG.mutationStepFraction
-    expect(shape.x).toBeCloseTo(CANVAS_CONFIG.worldSize / 2 + step / 2)
+    expect(shape.x).toBeCloseTo(CANVAS_CONFIG.worldSize / 2 + step)
   })
 })
