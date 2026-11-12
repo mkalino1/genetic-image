@@ -1,4 +1,4 @@
-import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../config'
+import { EVOLUTION_CONFIG } from '../config'
 import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } from '../config'
 import { samplePopulationByRank } from './populationCreation'
 import type { Individual, RankedIndividual } from './populationCreation'
@@ -15,10 +15,6 @@ import type {
 const MAX_POPULATION_SAMPLES = 4
 
 export class EvolutionEngine {
-  // Onscreen canvas for rendering the current best individual
-  displayCanvas: HTMLCanvasElement
-  displayCtx: CanvasRenderingContext2D
-
   // Target image data
   targetImageData: ImageData
   backgroundColor: string
@@ -46,19 +42,7 @@ export class EvolutionEngine {
   fitnessVariance: number
   profilingHistory: GenerationProfilingMetrics[] = []
 
-  constructor(displayCanvas: HTMLCanvasElement, targetImageData: ImageData, params: EvolutionParams) {
-    this.displayCanvas = displayCanvas
-    const displayCtx = displayCanvas.getContext('2d', { willReadFrequently: true })
-    if (!displayCtx) throw new Error('Could not get 2D context')
-    this.displayCtx = displayCtx
-    this.displayCtx.setTransform(
-      CANVAS_CONFIG.displaySize / CANVAS_CONFIG.worldSize,
-      0,
-      0,
-      CANVAS_CONFIG.displaySize / CANVAS_CONFIG.worldSize,
-      0,
-      0
-    )
+  constructor(targetImageData: ImageData, params: EvolutionParams) {
     this.targetImageData = targetImageData
     const backgroundColor = calculateBackgroundColor(targetImageData)
     this.backgroundColor = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`
@@ -141,7 +125,7 @@ export class EvolutionEngine {
     this.population = await this.optimizer.refinePopulation(this.population, optimizerContext)
     this.populationSamples = samplePopulationByRank(this.population, MAX_POPULATION_SAMPLES)
 
-    // Update best fitness and render best individual
+    // Update best fitness
     const best = this.population[0]
     if (best) {
       this.bestIndividual = best
@@ -150,9 +134,6 @@ export class EvolutionEngine {
       }
     }
     optimizerContext.bestFitness = this.bestFitness
-    if (best) {
-      renderIndividual(best, this.displayCtx, this.backgroundColor)
-    }
     
     this.fitnessVariance = this.calculateFitnessVariance()
     

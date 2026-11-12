@@ -58,7 +58,7 @@ export const EVOLUTION_CONFIG = {
     uniformParentProbability: 0.5,
     randomStrategies: ['uniform', 'single_point', 'two_point'] as CrossoverStrategy[]
   },
-  profilingWindowSize: 20
+  profilingWindowSize: 50
 } as const
 
 export const SHAPE_CONFIG = {

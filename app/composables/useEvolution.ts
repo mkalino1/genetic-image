@@ -1,7 +1,8 @@
-import { EVOLUTION_CONFIG } from '../engine/config'
+import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../engine/config'
 import type { EvolutionParams } from '../engine/config'
 import { EvolutionEngine } from '../engine/evolution/evolutionEngine'
 import type { Individual, RankedIndividual } from '../engine/evolution/populationCreation'
+import { renderIndividual } from '../engine/image/shapeRendering'
 import type { GenerationProfilingSummary } from '../web-workers/workerTypes'
 import type { Ref, ShallowRef } from 'vue'
 
@@ -27,14 +28,35 @@ export function useEvolution(options: UseEvolutionOptions) {
   const evolutionParams = reactive<EvolutionParams>({ ...EVOLUTION_CONFIG.defaults })
 
   let evolutionEngine: EvolutionEngine | null = null
+  let displayContext: CanvasRenderingContext2D | null = null
   let animationId: number | null = null
   let evolutionStartedAt: number | null = null
   let elapsedTimer: number | null = null
+  let runId = 0
+  let uiDirty = false
 
-  const evolve = async () => {
-    if (!isEvolving.value) return
-    if (evolutionEngine) {
-      await evolutionEngine.evolve()
+  const runLoop = async (id: number) => {
+    while (id === runId && evolutionEngine) {
+      try {
+        await evolutionEngine.evolve()
+      } catch (err) {
+        if (id !== runId) return
+        toast.add({
+          title: 'Evolution stopped',
+          icon: 'lucide:alert-triangle',
+          description: err instanceof Error ? err.message : String(err)
+        })
+        stopEvolution()
+        return
+      }
+      if (id !== runId) return
+      uiDirty = true
+    }
+  }
+
+  const syncUi = () => {
+    if (uiDirty && evolutionEngine) {
+      uiDirty = false
       currentBestIndividual.value = evolutionEngine.bestIndividual
       populationSamples.value = evolutionEngine.populationSamples
       bestErrorMap.value = evolutionEngine.bestErrorMap
@@ -44,12 +66,18 @@ export function useEvolution(options: UseEvolutionOptions) {
       if (isDevelopment) {
         profilingSummary.value = evolutionEngine.getAverageProfilingMetrics()
       }
+      if (evolutionEngine.bestIndividual && displayContext) {
+        renderIndividual(evolutionEngine.bestIndividual, displayContext, evolutionEngine.backgroundColor)
+      }
     }
-    animationId = requestAnimationFrame(evolve)
+    if (isEvolving.value) animationId = requestAnimationFrame(syncUi)
   }
 
   const stopEvolution = () => {
+    runId++
     isEvolving.value = false
+    uiDirty = true
+    syncUi()
     if (evolutionStartedAt !== null) {
       elapsedTimeMs.value = Date.now() - evolutionStartedAt
       evolutionStartedAt = null
@@ -97,7 +125,17 @@ export function useEvolution(options: UseEvolutionOptions) {
     bestErrorMap.value = null
     profilingSummary.value = null
     try {
-      evolutionEngine = new EvolutionEngine(displayCanvas, imageData, evolutionParams)
+      displayContext = displayCanvas.getContext('2d')
+      if (!displayContext) throw new Error('Could not get 2D context')
+      displayContext.setTransform(
+        CANVAS_CONFIG.displaySize / CANVAS_CONFIG.worldSize,
+        0,
+        0,
+        CANVAS_CONFIG.displaySize / CANVAS_CONFIG.worldSize,
+        0,
+        0
+      )
+      evolutionEngine = new EvolutionEngine(imageData, evolutionParams)
       elapsedTimeMs.value = 0
       evolutionStartedAt = Date.now()
       elapsedTimer = window.setInterval(() => {
@@ -106,7 +144,10 @@ export function useEvolution(options: UseEvolutionOptions) {
         }
       }, 1000)
       isEvolving.value = true
-      evolve()
+      uiDirty = false
+      const id = ++runId
+      runLoop(id)
+      animationId = requestAnimationFrame(syncUi)
     } catch (err) {
       toast.add({
         title: 'Could not start evolution',
