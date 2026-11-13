@@ -25,11 +25,15 @@ export function calculateRgbMeanSquaredFitness(
       pixelWeight === undefined
     ) continue
 
-    const deltaR = evolvedR - targetR
-    const deltaG = evolvedG - targetG
-    const deltaB = evolvedB - targetB
-    const pixelError = (deltaR * deltaR + deltaG * deltaG + deltaB * deltaB) / 3
-    const weightedError = pixelError * pixelWeight
+    const weightedError = calculateRgbMeanSquaredPixelError(
+      evolvedR,
+      evolvedG,
+      evolvedB,
+      targetR,
+      targetG,
+      targetB,
+      pixelWeight
+    )
 
     if (errorMap) errorMap[pixel] = weightedError
     totalWeightedError += weightedError
@@ -38,4 +42,19 @@ export function calculateRgbMeanSquaredFitness(
 
   const meanSquaredError = totalWeight > 0 ? totalWeightedError / totalWeight : 0
   return fitnessFromError(meanSquaredError)
+}
+
+export function calculateRgbMeanSquaredPixelError(
+  r: number,
+  g: number,
+  b: number,
+  targetR: number,
+  targetG: number,
+  targetB: number,
+  weight: number
+): number {
+  const deltaR = r - targetR
+  const deltaG = g - targetG
+  const deltaB = b - targetB
+  return ((deltaR * deltaR + deltaG * deltaG + deltaB * deltaB) / 3) * weight
 }

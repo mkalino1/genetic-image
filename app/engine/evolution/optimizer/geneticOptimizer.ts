@@ -18,7 +18,7 @@ export class GeneticOptimizer implements Optimizer {
       context.bestFitness,
       context.shapeMode,
       context.errorMap,
-      context.targetImageData
+      context.shapeTargetImageData
     )
   }
 }

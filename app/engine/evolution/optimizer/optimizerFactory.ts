@@ -2,11 +2,13 @@ import type { OptimizerType } from '../../config'
 import type { CrossoverStrategy, FitnessMetric, ShapeMode } from '../../config'
 import type { Individual } from '../populationCreation'
 import type { FitnessWorkerPool } from '../../fitness/fitnessWorkerPool'
+import type { TargetImageData } from '../shapeCreation'
 import { GeneticOptimizer } from './geneticOptimizer'
 import { MemeticOptimizer } from './memeticOptimizer'
 
 export interface OptimizerContext {
   targetImageData: ImageData
+  shapeTargetImageData: TargetImageData
   workerPool: Pick<FitnessWorkerPool, 'calculateFitnessBatches'>
   fitnessMetric: FitnessMetric
   populationSize: number
@@ -30,5 +32,7 @@ export function createOptimizer(type: OptimizerType): Optimizer {
       return new GeneticOptimizer()
     case 'memetic':
       return new MemeticOptimizer()
+    case 'hillclimbing':
+      throw new Error('Hill climbing runs as a dedicated session, not a population optimizer')
   }
 }

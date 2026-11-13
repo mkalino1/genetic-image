@@ -1,6 +1,7 @@
 import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../engine/config'
 import type { EvolutionParams } from '../engine/config'
-import { EvolutionEngine } from '../engine/evolution/evolutionEngine'
+import { createEvolutionSession } from '../engine/evolution/evolutionSession'
+import type { EvolutionSession } from '../engine/evolution/evolutionSession'
 import type { Individual, RankedIndividual } from '../engine/evolution/populationCreation'
 import type { EvolutionSnapshot } from '../engine/evolution/evolutionSnapshot'
 import { renderIndividual } from '../engine/image/shapeRendering'
@@ -28,7 +29,7 @@ export function useEvolution(options: UseEvolutionOptions) {
   const profilingSummary = computed<GenerationProfilingSummary | null>(() => snapshot.value?.profiling ?? null)
   const evolutionParams = reactive<EvolutionParams>({ ...EVOLUTION_CONFIG.defaults })
 
-  let evolutionEngine: EvolutionEngine | null = null
+  let evolutionSession: EvolutionSession | null = null
   let displayContext: CanvasRenderingContext2D | null = null
   let animationId: number | null = null
   let evolutionStartedAt: number | null = null
@@ -37,9 +38,9 @@ export function useEvolution(options: UseEvolutionOptions) {
   let lastRenderedSnapshot: EvolutionSnapshot | null = null
 
   const runLoop = async (id: number) => {
-    while (id === runId && evolutionEngine) {
+    while (id === runId && evolutionSession) {
       try {
-        await evolutionEngine.evolve()
+        await evolutionSession.evolve()
       } catch (err) {
         if (id !== runId) return
         toast.add({
@@ -55,11 +56,11 @@ export function useEvolution(options: UseEvolutionOptions) {
   }
 
   const syncUi = () => {
-    const latest = evolutionEngine?.latestSnapshot ?? null
+    const latest = evolutionSession?.latestSnapshot ?? null
     if (latest !== snapshot.value) snapshot.value = latest
     if (latest !== lastRenderedSnapshot) {
-      if (latest?.bestIndividual && displayContext && evolutionEngine) {
-        renderIndividual(latest.bestIndividual, displayContext, evolutionEngine.backgroundColor)
+      if (latest?.bestIndividual && displayContext && evolutionSession) {
+        renderIndividual(latest.bestIndividual, displayContext, evolutionSession.backgroundColor)
       }
       lastRenderedSnapshot = latest
     }
@@ -82,8 +83,9 @@ export function useEvolution(options: UseEvolutionOptions) {
       cancelAnimationFrame(animationId)
       animationId = null
     }
-    if (evolutionEngine) {
-      evolutionEngine.cleanup()
+    if (evolutionSession) {
+      evolutionSession.cleanup()
+      evolutionSession = null
     }
   }
 
@@ -120,7 +122,7 @@ export function useEvolution(options: UseEvolutionOptions) {
         0,
         0
       )
-      evolutionEngine = new EvolutionEngine(imageData, evolutionParams)
+      evolutionSession = createEvolutionSession(imageData, evolutionParams)
       elapsedTimeMs.value = 0
       evolutionStartedAt = Date.now()
       elapsedTimer = window.setInterval(() => {
@@ -133,6 +135,8 @@ export function useEvolution(options: UseEvolutionOptions) {
       runLoop(id)
       animationId = requestAnimationFrame(syncUi)
     } catch (err) {
+      evolutionSession?.cleanup()
+      evolutionSession = null
       toast.add({
         title: 'Could not start evolution',
         icon: 'lucide:alert-triangle',

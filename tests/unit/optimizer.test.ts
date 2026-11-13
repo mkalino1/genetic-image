@@ -17,6 +17,11 @@ function createContext(
       height: 1,
       data: new Uint8ClampedArray(4)
     } as ImageData,
+    shapeTargetImageData: {
+      width: 1,
+      height: 1,
+      data: new Uint8ClampedArray(4)
+    },
     workerPool: { calculateFitnessBatches },
     fitnessMetric: 'deltaE',
     populationSize: 1,

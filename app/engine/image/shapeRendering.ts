@@ -1,4 +1,5 @@
 import type { ShapeRenderData } from '../evolution/shape'
+import { polygonLocalVertices } from './shapeGeometry'
 
 export function renderShape(shape: ShapeRenderData, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
   ctx.save()
@@ -34,15 +35,11 @@ export function renderShape(shape: ShapeRenderData, ctx: CanvasRenderingContext2
 }
 
 function renderPolygon(shape: ShapeRenderData, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void {
-  const sides = shape.numSides
-  const baseAngle = -Math.PI / 4
+  const vertices = polygonLocalVertices(shape)
   ctx.beginPath()
-  for (let i = 0; i < sides; i++) {
-    const angle = baseAngle + (i / sides) * Math.PI * 2 + (shape.vertexAngleOffsets?.[i] || 0)
-    const radiusMultiplier = shape.vertexRadiusMults?.[i] || 1
-    const radius = radiusMultiplier
-    const x = shape.width / 2 * radius * Math.cos(angle)
-    const y = shape.height / 2 * radius * Math.sin(angle)
+  for (let i = 0; i < vertices.length; i += 2) {
+    const x = vertices[i]!
+    const y = vertices[i + 1]!
     if (i === 0) ctx.moveTo(x, y)
     else ctx.lineTo(x, y)
   }

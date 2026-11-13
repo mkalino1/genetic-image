@@ -72,46 +72,17 @@ export function calculateDeltaEFitness(
       targetL === undefined || targetA === undefined || targetB === undefined
     ) continue
 
-    const rgbKey = (evolvedR << 16) | (evolvedG << 8) | evolvedB
-    const cacheIndex = Math.imul(rgbKey, 0x9e3779b1) >>> 18
-    const cacheKey = rgbKey + 1
-    let evolvedL: number
-    let evolvedLabA: number
-    let evolvedLabB: number
-
-    if (labCacheKeys[cacheIndex] === cacheKey) {
-      evolvedL = labCacheL[cacheIndex]!
-      evolvedLabA = labCacheA[cacheIndex]!
-      evolvedLabB = labCacheB[cacheIndex]!
-    } else {
-      const rLinear = toLinearRgb(evolvedR)
-      const gLinear = toLinearRgb(evolvedG)
-      const bLinear = toLinearRgb(evolvedB)
-      const x = rLinear * 0.4124 + gLinear * 0.3576 + bLinear * 0.1805
-      const y = rLinear * 0.2126 + gLinear * 0.7152 + bLinear * 0.0722
-      const z = rLinear * 0.0193 + gLinear * 0.1192 + bLinear * 0.9505
-      const xNorm = x / 0.95047
-      const yNorm = y
-      const zNorm = z / 1.08883
-      const fx = xNorm > LAB_DELTA_CUBE ? Math.pow(xNorm, 1 / 3) : xNorm / LAB_LINEAR_SCALE + 4 / 29
-      const fy = yNorm > LAB_DELTA_CUBE ? Math.pow(yNorm, 1 / 3) : yNorm / LAB_LINEAR_SCALE + 4 / 29
-      const fz = zNorm > LAB_DELTA_CUBE ? Math.pow(zNorm, 1 / 3) : zNorm / LAB_LINEAR_SCALE + 4 / 29
-      evolvedL = 116 * fy - 16
-      evolvedLabA = 500 * (fx - fy)
-      evolvedLabB = 200 * (fy - fz)
-      labCacheKeys[cacheIndex] = cacheKey
-      labCacheL[cacheIndex] = evolvedL
-      labCacheA[cacheIndex] = evolvedLabA
-      labCacheB[cacheIndex] = evolvedLabB
-    }
-
-    const deltaL = targetL - evolvedL
-    const deltaA = targetA - evolvedLabA
-    const deltaB = targetB - evolvedLabB
     const pixelWeight = pixelWeights[pixel]
     if (pixelWeight === undefined) continue
-    const deltaESquared = deltaL * deltaL + deltaA * deltaA + deltaB * deltaB
-    const weightedError = deltaESquared * pixelWeight
+    const weightedError = calculateDeltaEPixelError(
+      evolvedR,
+      evolvedG,
+      evolvedB,
+      targetL,
+      targetA,
+      targetB,
+      pixelWeight
+    )
     if (errorMap) errorMap[pixel] = weightedError
     totalWeightedDeltaESquared += weightedError
     totalWeight += pixelWeight
@@ -121,6 +92,54 @@ export function calculateDeltaEFitness(
     ? totalWeightedDeltaESquared / totalWeight
     : 0
   return fitnessFromError(meanWeightedDeltaESquared)
+}
+
+export function calculateDeltaEPixelError(
+  r: number,
+  g: number,
+  b: number,
+  targetL: number,
+  targetA: number,
+  targetB: number,
+  weight: number
+): number {
+  const rgbKey = (r << 16) | (g << 8) | b
+  const cacheIndex = Math.imul(rgbKey, 0x9e3779b1) >>> 18
+  const cacheKey = rgbKey + 1
+  let evolvedL: number
+  let evolvedA: number
+  let evolvedB: number
+
+  if (labCacheKeys[cacheIndex] === cacheKey) {
+    evolvedL = labCacheL[cacheIndex]!
+    evolvedA = labCacheA[cacheIndex]!
+    evolvedB = labCacheB[cacheIndex]!
+  } else {
+    const rLinear = toLinearRgb(r)
+    const gLinear = toLinearRgb(g)
+    const bLinear = toLinearRgb(b)
+    const x = rLinear * 0.4124 + gLinear * 0.3576 + bLinear * 0.1805
+    const y = rLinear * 0.2126 + gLinear * 0.7152 + bLinear * 0.0722
+    const z = rLinear * 0.0193 + gLinear * 0.1192 + bLinear * 0.9505
+    const xNorm = x / 0.95047
+    const yNorm = y
+    const zNorm = z / 1.08883
+    const fx = xNorm > LAB_DELTA_CUBE ? Math.pow(xNorm, 1 / 3) : xNorm / LAB_LINEAR_SCALE + 4 / 29
+    const fy = yNorm > LAB_DELTA_CUBE ? Math.pow(yNorm, 1 / 3) : yNorm / LAB_LINEAR_SCALE + 4 / 29
+    const fz = zNorm > LAB_DELTA_CUBE ? Math.pow(zNorm, 1 / 3) : zNorm / LAB_LINEAR_SCALE + 4 / 29
+    evolvedL = 116 * fy - 16
+    evolvedA = 500 * (fx - fy)
+    evolvedB = 200 * (fy - fz)
+    labCacheKeys[cacheIndex] = cacheKey
+    labCacheL[cacheIndex] = evolvedL
+    labCacheA[cacheIndex] = evolvedA
+    labCacheB[cacheIndex] = evolvedB
+  }
+
+  const deltaL = targetL - evolvedL
+  const deltaA = targetA - evolvedA
+  const deltaB = targetB - evolvedB
+  return (deltaL * deltaL + deltaA * deltaA + deltaB * deltaB) * weight
 }
 
 function toLinearRgb(value: number): number {

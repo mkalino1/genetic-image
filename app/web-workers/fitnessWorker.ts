@@ -1,17 +1,16 @@
 import type { FitnessWorkerProfilingMetrics, FitnessResult, FitnessWorkerRequest } from './workerTypes'
 import { renderShape } from '../engine/image/shapeRendering'
 import { CANVAS_CONFIG } from '../engine/config'
-import { calculateEdgeDetectionWeights } from '../engine/fitness/edgeDetectionWeights'
 import { unpackFitnessTasks } from '../engine/fitness/fitnessTaskSerialization'
 import type { FitnessMetric } from '../engine/config'
-import { calculateDeltaEFitness, convertImageToLab } from '../engine/fitness/metrics/deltaE'
+import { calculateDeltaEFitness } from '../engine/fitness/metrics/deltaE'
 import { calculateRgbMeanSquaredFitness } from '../engine/fitness/metrics/rgbMeanSquared'
-import { calculateBackgroundColor, compositeImageData } from '../engine/image/backgroundColor'
+import { prepareFitnessTarget } from '../engine/fitness/fitnessTarget'
 let targetLab: Float64Array | null = null
 let targetRgb: Uint8ClampedArray<ArrayBuffer> | null = null
 let targetPixelWeights: Float32Array | null = null
 let targetPixelCount = 0
-let targetBackgroundColor: ReturnType<typeof calculateBackgroundColor> | null = null
+let targetBackgroundColor: string | null = null
 let canvas: OffscreenCanvas | null = null
 let fitnessCanvasContext: OffscreenCanvasRenderingContext2D | null = null
 
@@ -26,17 +25,12 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
       if (!fitnessCanvasContext) {
         throw new Error('Could not initialize fitness worker canvas')
       }
-      targetPixelCount = e.data.targetImageData.data.length / 4
-      targetBackgroundColor = calculateBackgroundColor(e.data.targetImageData)
-      targetRgb = compositeImageData(e.data.targetImageData, targetBackgroundColor)
-      targetLab = convertImageToLab({
-        data: targetRgb
-      })
-      targetPixelWeights = calculateEdgeDetectionWeights(
-        targetLab,
-        e.data.targetImageData.width,
-        e.data.targetImageData.height
-      )
+      const target = prepareFitnessTarget(e.data.targetImageData)
+      targetPixelCount = target.width * target.height
+      targetBackgroundColor = target.backgroundCss
+      targetRgb = target.rgb
+      targetLab = target.lab
+      targetPixelWeights = target.weights
       self.postMessage({ type: 'target_initialized', success: true })
       return
     }
@@ -72,7 +66,7 @@ self.onmessage = function(e: MessageEvent<FitnessWorkerRequest>) {
 
       const renderingStartedAt = profiling ? performance.now() : 0
       workerContext.clearRect(0, 0, workerContext.canvas.width, workerContext.canvas.height)
-      workerContext.fillStyle = `rgb(${targetBackgroundColor.r}, ${targetBackgroundColor.g}, ${targetBackgroundColor.b})`
+      workerContext.fillStyle = targetBackgroundColor
       workerContext.fillRect(0, 0, workerContext.canvas.width, workerContext.canvas.height)
       for (const shape of sortedShapes) {
         renderShape(shape, workerContext)

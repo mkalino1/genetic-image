@@ -3,7 +3,7 @@ import type { CrossoverStrategy, EvolutionParams, FitnessMetric, ShapeMode } fro
 import { samplePopulationByRank } from './populationCreation'
 import type { Individual, RankedIndividual } from './populationCreation'
 import { FitnessWorkerPool } from '../fitness/fitnessWorkerPool'
-import { calculateBackgroundColor } from '../image/backgroundColor'
+import { calculateBackgroundColor, compositeImageData } from '../image/backgroundColor'
 import { createOptimizer } from './optimizer/optimizerFactory'
 import type { Optimizer } from './optimizer/optimizerFactory'
 import type {
@@ -12,12 +12,15 @@ import type {
   GenerationProfilingSummary
 } from '../../web-workers/workerTypes'
 import type { EvolutionSnapshot } from './evolutionSnapshot'
+import type { EvolutionSession } from './evolutionSession'
+import type { TargetImageData } from './shapeCreation'
 
 const MAX_POPULATION_SAMPLES = 4
 
-export class EvolutionEngine {
+export class EvolutionEngine implements EvolutionSession {
   // Target image data
   targetImageData: ImageData
+  shapeTargetImageData: TargetImageData
   backgroundColor: string
   
   // Worker pool for parallel fitness calculations
@@ -48,6 +51,11 @@ export class EvolutionEngine {
     this.targetImageData = targetImageData
     const backgroundColor = calculateBackgroundColor(targetImageData)
     this.backgroundColor = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`
+    this.shapeTargetImageData = {
+      width: targetImageData.width,
+      height: targetImageData.height,
+      data: compositeImageData(targetImageData, backgroundColor)
+    }
 
     // Parameters
     this.populationSize = params.populationSize
@@ -67,7 +75,7 @@ export class EvolutionEngine {
       this.populationSize,
       this.shapesPerIndividual,
       this.shapeMode,
-      this.targetImageData
+      this.shapeTargetImageData
     )
     this.populationSamples = []
     this.bestIndividual = null
@@ -113,6 +121,7 @@ export class EvolutionEngine {
 
     const optimizerContext = {
       targetImageData: this.targetImageData,
+      shapeTargetImageData: this.shapeTargetImageData,
       workerPool: this.workerPool,
       fitnessMetric: this.fitnessMetric,
       populationSize: this.populationSize,

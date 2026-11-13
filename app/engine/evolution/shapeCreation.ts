@@ -8,10 +8,12 @@ export type TargetImageData = Pick<ImageData, 'width' | 'height' | 'data'>
 export function createShapeForTarget(
   shapeMode: ShapeMode,
   targetImageData?: TargetImageData,
-  position?: HighErrorCoordinate
+  position?: HighErrorCoordinate,
+  size?: number
 ): Shape {
   const shape = new Shape({
     mode: shapeMode,
+    ...(size ? { width: size, height: size } : {}),
     ...(position ? { x: position.x, y: position.y } : {})
   })
 

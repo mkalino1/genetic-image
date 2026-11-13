@@ -16,7 +16,7 @@
               {{ optimizerDescriptions[model.optimizer] }}
             </p>
           </div>
-          <div>
+          <div v-if="model.optimizer !== 'hillclimbing'">
             <div class="mb-1">
               <label for="population-size" class="text-sm font-medium">Population size</label>
             </div>
@@ -31,7 +31,7 @@
               Candidates kept each generation; larger populations explore more but take longer.
             </p>
           </div>
-          <div>
+          <div v-if="model.optimizer !== 'hillclimbing'">
             <div class="mb-1">
               <label for="mutation-rate" class="text-sm font-medium">Mutation rate</label>
             </div>
@@ -49,7 +49,9 @@
           </div>
           <div>
             <div class="mb-1">
-              <label for="shapes-per-individual" class="text-sm font-medium">Shapes per image</label>
+              <label for="shapes-per-individual" class="text-sm font-medium">
+                {{ model.optimizer === 'hillclimbing' ? 'Maximum shapes' : 'Shapes per image' }}
+              </label>
             </div>
             <UInput
               id="shapes-per-individual"
@@ -58,9 +60,13 @@
               :min="parameterBounds.shapesPerIndividual.min"
               :max="parameterBounds.shapesPerIndividual.max"
             />
-            <p class="mt-1 text-xs text-neutral-500">More shapes capture finer detail, but slow down each generation.</p>
+            <p class="mt-1 text-xs text-neutral-500">
+              {{ model.optimizer === 'hillclimbing'
+                ? 'Maximum number of shapes the hill climber can add.'
+                : 'More shapes capture finer detail, but slow down each generation.' }}
+            </p>
           </div>
-          <div>
+          <div v-if="model.optimizer !== 'hillclimbing'">
             <div class="mb-1">
               <label for="crossover-strategy" class="text-sm font-medium">Crossover strategy</label>
             </div>
@@ -96,17 +102,19 @@ const parameterBounds = EVOLUTION_CONFIG.parameterBounds
 
 const optimizerLabels: Record<OptimizerType, string> = {
   genetic: 'Genetic',
-  memetic: 'Memetic (with hill climbing)'
+  memetic: 'Memetic (with steepest step elite hill climbing)',
+  hillclimbing: 'Hill climbing'
 }
 
-const optimizerOptions = (['genetic', 'memetic'] satisfies OptimizerType[]).map(value => ({
+const optimizerOptions = (['genetic', 'memetic', 'hillclimbing'] satisfies OptimizerType[]).map(value => ({
   label: optimizerLabels[value],
   value
 }))
 
 const optimizerDescriptions: Record<OptimizerType, string> = {
   genetic: 'Use selection, crossover and mutation without local refinement.',
-  memetic: 'Use selection, crossover and mutation with local hill climbing refinement.'
+  memetic: 'Use selection, crossover and mutation with local hill climbing refinement.',
+  hillclimbing: 'Continuously improve one image with incremental, error-guided shape mutations.'
 }
 
 // Define crossover strategy options for the template

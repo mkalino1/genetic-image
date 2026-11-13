@@ -1,5 +1,6 @@
 import type { ShapeRenderData } from '../engine/evolution/shape'
 import type { FitnessMetric } from '../engine/config'
+import type { HillClimbingParams } from '../engine/evolution/hillclimbing/hillClimber'
 
 export interface FitnessTask {
   individualId: number
@@ -53,3 +54,22 @@ export type FitnessWorkerResponse =
   | { type: 'target_initialized'; success: true }
   | { type: 'batch_fitness_result'; results: FitnessResult[]; profile?: FitnessWorkerProfilingMetrics; success: true }
   | { type: 'worker_error'; error: string; success: false }
+
+export type HillClimbingRequest =
+  | { type: 'init'; targetImageData: ImageData; metric: FitnessMetric; params: HillClimbingParams }
+  | { type: 'start' }
+  | { type: 'pause' }
+  | { type: 'set_params'; params: HillClimbingParams }
+
+export type HillClimbingResponse =
+  | {
+      type: 'snapshot'
+      batch: PackedFitnessBatch
+      fitness: number
+      steps: number
+      accepted: number
+      shapeCount: number
+      stepsPerSecond: number
+      errorMap?: Float32Array
+    }
+  | { type: 'worker_error'; error: string }

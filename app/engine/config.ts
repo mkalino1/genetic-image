@@ -1,5 +1,5 @@
 export type CrossoverStrategy = 'uniform' | 'single_point' | 'two_point' | 'randomized' | 'adaptive'
-export type OptimizerType = 'genetic' | 'memetic'
+export type OptimizerType = 'genetic' | 'memetic' | 'hillclimbing'
 export type ShapeMode = 'fixed' | 'polygon'
 export type FitnessMetric = 'deltaE' | 'rgbMeanSquared'
 
@@ -27,7 +27,7 @@ export const EVOLUTION_CONFIG = {
     mutationRate: 0.06,
     shapesPerIndividual: 100,
     crossoverStrategy: 'uniform' as CrossoverStrategy,
-    optimizer: 'memetic' as OptimizerType,
+    optimizer: 'hillclimbing' as OptimizerType,
     fitnessMetric: 'deltaE' as FitnessMetric,
     shapeMode: 'polygon' as ShapeMode
   },
@@ -109,4 +109,15 @@ export const WORKER_CONFIG = {
   fallbackCount: 8,
   maximumCount: 16,
   requestTimeoutMs: 30_000
+} as const
+
+export const HILL_CLIMBING_CONFIG = {
+  sliceMs: 10,
+  stepsPerBatch: 16,
+  snapshotIntervalMs: 100,
+  samplerRefreshMs: 250,
+  errorMapIntervalMs: 500,
+  fullRecomputeMs: 30_000,
+  addProbability: 0.1,
+  removeProbability: 0.02
 } as const
