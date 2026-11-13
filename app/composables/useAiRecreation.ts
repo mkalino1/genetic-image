@@ -1,12 +1,12 @@
 import { MINIMUM_EVOLUTION_GENERATIONS } from '../engine/config'
 import { renderIndividualToPngBlob } from '../engine/image/imageExport'
 import type { Individual } from '../engine/evolution/populationCreation'
-import type { Ref, ShallowRef } from 'vue'
+import type { Ref } from 'vue'
 
 interface UseAiRecreationOptions {
   targetImage: Readonly<Ref<string>>
   hasTargetImage: Readonly<Ref<boolean>>
-  currentBestIndividual: Readonly<ShallowRef<Individual | null>>
+  currentBestIndividual: Readonly<Ref<Individual | null>>
   canvasBackgroundColor: Readonly<Ref<string>>
   generation: Readonly<Ref<number>>
 }

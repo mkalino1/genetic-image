@@ -1,9 +1,9 @@
 import { renderIndividualToPngBlob } from '../engine/image/imageExport'
 import type { Individual } from '../engine/evolution/populationCreation'
-import type { Ref, ShallowRef } from 'vue'
+import type { Ref } from 'vue'
 
 interface UseDownloadOptions {
-  individual: Readonly<ShallowRef<Individual | null>>
+  individual: Readonly<Ref<Individual | null>>
   backgroundColor: Readonly<Ref<string>>
   generation: Readonly<Ref<number>>
 }

@@ -2,6 +2,7 @@ import { CANVAS_CONFIG, EVOLUTION_CONFIG } from '../engine/config'
 import type { EvolutionParams } from '../engine/config'
 import { EvolutionEngine } from '../engine/evolution/evolutionEngine'
 import type { Individual, RankedIndividual } from '../engine/evolution/populationCreation'
+import type { EvolutionSnapshot } from '../engine/evolution/evolutionSnapshot'
 import { renderIndividual } from '../engine/image/shapeRendering'
 import type { GenerationProfilingSummary } from '../web-workers/workerTypes'
 import type { Ref, ShallowRef } from 'vue'
@@ -15,16 +16,16 @@ interface UseEvolutionOptions {
 
 export function useEvolution(options: UseEvolutionOptions) {
   const toast = useToast()
-  const isDevelopment = import.meta.dev
   const isEvolving = ref(false)
-  const currentBestIndividual = shallowRef<Individual | null>(null)
-  const populationSamples = shallowRef<RankedIndividual[]>([])
-  const generation = ref(0)
-  const bestFitness = ref(0)
-  const bestErrorMap = shallowRef<Float32Array | null>(null)
-  const fitnessVariance = ref(0)
+  const snapshot = shallowRef<EvolutionSnapshot | null>(null)
+  const currentBestIndividual = computed(() => snapshot.value?.bestIndividual ?? null)
+  const populationSamples = computed<readonly RankedIndividual[]>(() => snapshot.value?.populationSamples ?? [])
+  const generation = computed(() => snapshot.value?.generation ?? 0)
+  const bestFitness = computed(() => snapshot.value?.bestFitness ?? 0)
+  const bestErrorMap = computed(() => snapshot.value?.bestErrorMap ?? null)
+  const fitnessVariance = computed(() => snapshot.value?.fitnessVariance ?? 0)
   const elapsedTimeMs = ref(0)
-  const profilingSummary = ref<GenerationProfilingSummary | null>(null)
+  const profilingSummary = computed<GenerationProfilingSummary | null>(() => snapshot.value?.profiling ?? null)
   const evolutionParams = reactive<EvolutionParams>({ ...EVOLUTION_CONFIG.defaults })
 
   let evolutionEngine: EvolutionEngine | null = null
@@ -33,7 +34,7 @@ export function useEvolution(options: UseEvolutionOptions) {
   let evolutionStartedAt: number | null = null
   let elapsedTimer: number | null = null
   let runId = 0
-  let uiDirty = false
+  let lastRenderedSnapshot: EvolutionSnapshot | null = null
 
   const runLoop = async (id: number) => {
     while (id === runId && evolutionEngine) {
@@ -50,25 +51,17 @@ export function useEvolution(options: UseEvolutionOptions) {
         return
       }
       if (id !== runId) return
-      uiDirty = true
     }
   }
 
   const syncUi = () => {
-    if (uiDirty && evolutionEngine) {
-      uiDirty = false
-      currentBestIndividual.value = evolutionEngine.bestIndividual
-      populationSamples.value = evolutionEngine.populationSamples
-      bestErrorMap.value = evolutionEngine.bestErrorMap
-      generation.value = evolutionEngine.generation
-      bestFitness.value = evolutionEngine.bestFitness
-      fitnessVariance.value = evolutionEngine.fitnessVariance
-      if (isDevelopment) {
-        profilingSummary.value = evolutionEngine.getAverageProfilingMetrics()
+    const latest = evolutionEngine?.latestSnapshot ?? null
+    if (latest !== snapshot.value) snapshot.value = latest
+    if (latest !== lastRenderedSnapshot) {
+      if (latest?.bestIndividual && displayContext && evolutionEngine) {
+        renderIndividual(latest.bestIndividual, displayContext, evolutionEngine.backgroundColor)
       }
-      if (evolutionEngine.bestIndividual && displayContext) {
-        renderIndividual(evolutionEngine.bestIndividual, displayContext, evolutionEngine.backgroundColor)
-      }
+      lastRenderedSnapshot = latest
     }
     if (isEvolving.value) animationId = requestAnimationFrame(syncUi)
   }
@@ -76,7 +69,6 @@ export function useEvolution(options: UseEvolutionOptions) {
   const stopEvolution = () => {
     runId++
     isEvolving.value = false
-    uiDirty = true
     syncUi()
     if (evolutionStartedAt !== null) {
       elapsedTimeMs.value = Date.now() - evolutionStartedAt
@@ -97,14 +89,9 @@ export function useEvolution(options: UseEvolutionOptions) {
 
   const reset = () => {
     stopEvolution()
-    currentBestIndividual.value = null
-    populationSamples.value = []
-    bestErrorMap.value = null
-    generation.value = 0
+    snapshot.value = null
+    lastRenderedSnapshot = null
     elapsedTimeMs.value = 0
-    bestFitness.value = 0
-    fitnessVariance.value = 0
-    profilingSummary.value = null
   }
 
   const startEvolution = () => {
@@ -120,10 +107,8 @@ export function useEvolution(options: UseEvolutionOptions) {
     }
 
     options.onStarted?.()
-    currentBestIndividual.value = null
-    populationSamples.value = []
-    bestErrorMap.value = null
-    profilingSummary.value = null
+    snapshot.value = null
+    lastRenderedSnapshot = null
     try {
       displayContext = displayCanvas.getContext('2d')
       if (!displayContext) throw new Error('Could not get 2D context')
@@ -144,7 +129,6 @@ export function useEvolution(options: UseEvolutionOptions) {
         }
       }, 1000)
       isEvolving.value = true
-      uiDirty = false
       const id = ++runId
       runLoop(id)
       animationId = requestAnimationFrame(syncUi)

@@ -150,7 +150,7 @@ describe('shape mutation', () => {
     shape.mutate()
 
     expect(shape.x).toBeLessThan(originalShape.x)
-    expect(originalShape.x - shape.x).toBeCloseTo(WORLD_SIZE / 240)
+    expect(originalShape.x - shape.x).toBeCloseTo(WORLD_SIZE / 120)
     expect(shape.y).toBe(originalShape.y)
     expect(shape.width).toBe(originalShape.width)
     expect(shape.height).toBe(originalShape.height)
@@ -169,7 +169,7 @@ describe('shape mutation', () => {
 
     shape.mutate(5)
 
-    expect(shape.x).toBe(20 - WORLD_SIZE / 16)
+    expect(shape.x).toBe(20 - WORLD_SIZE / 8)
   })
 
   it('mutates only one polygon vertex parameter at a time', () => {
@@ -187,7 +187,7 @@ describe('shape mutation', () => {
 
     shape.mutate()
 
-    expect(shape.vertexRadiusMults).toEqual([expect.closeTo(1 + SHAPE_CONFIG.polygon.radiusMutationStep / 6, 4), 1, 1])
+    expect(shape.vertexRadiusMults).toEqual([expect.closeTo(1 + SHAPE_CONFIG.polygon.radiusMutationStep / 3, 4), 1, 1])
     expect(shape.vertexAngleOffsets).toEqual([0, 0, 0])
   })
 

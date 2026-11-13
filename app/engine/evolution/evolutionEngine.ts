@@ -11,6 +11,7 @@ import type {
   GenerationProfilingMetrics,
   GenerationProfilingSummary
 } from '../../web-workers/workerTypes'
+import type { EvolutionSnapshot } from './evolutionSnapshot'
 
 const MAX_POPULATION_SAMPLES = 4
 
@@ -41,6 +42,7 @@ export class EvolutionEngine {
   generation: number
   fitnessVariance: number
   profilingHistory: GenerationProfilingMetrics[] = []
+  latestSnapshot: EvolutionSnapshot | null = null
 
   constructor(targetImageData: ImageData, params: EvolutionParams) {
     this.targetImageData = targetImageData
@@ -154,6 +156,15 @@ export class EvolutionEngine {
     }
 
     this.generation++
+    this.latestSnapshot = {
+      bestIndividual: this.bestIndividual,
+      populationSamples: this.populationSamples,
+      bestErrorMap: this.bestErrorMap,
+      generation: this.generation,
+      bestFitness: this.bestFitness,
+      fitnessVariance: this.fitnessVariance,
+      profiling: this.getAverageProfilingMetrics()
+    }
   }
 
   getAverageProfilingMetrics(): GenerationProfilingSummary | null {
